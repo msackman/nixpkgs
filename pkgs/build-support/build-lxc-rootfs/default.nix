@@ -6,7 +6,8 @@ assert pkg == null -> pkgs != [];
 
 let
   pkgs_ = if pkgs == [] then [pkg] else pkgs;
-  pkgsDeps = lib.fold (e: acc: [e e] ++ acc) [] pkgs_;
+  pkgsDeps = lib.fold (e: acc: [(toString e) e] ++ acc) [] pkgs_;
+  joinStrings = sep: lib.fold (e: acc: e + sep + acc) "";
 in
   stdenv.mkDerivation {
     name = "${name}-rootfs";
@@ -14,6 +15,6 @@ in
     buildCommand = ''
       mkdir -p $out/rootfs
       mkdir -p $out/lxc
-      printf '%s\n' '${pkgs_}' > $out/pkgs
+      printf '%s\n' '${joinStrings "\n" (map toString pkgs_)}' > $out/pkgs
     '';
   }
