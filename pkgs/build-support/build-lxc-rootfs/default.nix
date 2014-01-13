@@ -31,6 +31,8 @@ let
 
     # root filesystem
     lxc.rootfs = @out@/rootfs
+    # fstab
+    lxc.fstab = @out@/lxc/fstab
 
     # use a dedicated pts for the container (and limit the number of pseudo terminal
     # available)
