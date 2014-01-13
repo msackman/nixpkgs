@@ -6,7 +6,8 @@ assert pkg == null -> pkgs != [];
 
 let
   pkgs_ = if pkgs == [] then [pkg] else pkgs;
-  pkgsDeps = lib.fold (e: acc: [(toString e) (baseNameOf e)] ++ acc) [] pkgs_;
+  depFiles = map baseNameOf pkgs_;
+  pkgsDeps = lib.zipTwoLists depFile pkgs_;
   joinStrings = sep: lib.fold (e: acc: e + sep + acc) "";
 in
   stdenv.mkDerivation {
@@ -15,6 +16,9 @@ in
     buildCommand = ''
       mkdir -p $out/rootfs
       mkdir -p $out/lxc
-      printf '%s\n' '${joinStrings "\n" (map toString pkgs_)}' > $out/pkgs
+      touch -p $out/pkgs
+      for p in ${joinStrings " " depFiles}; do
+        cat $p >> $out/pkgs
+      done
     '';
   }
