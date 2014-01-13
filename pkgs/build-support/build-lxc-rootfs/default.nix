@@ -34,7 +34,7 @@ let
 
     # use a dedicated pts for the container (and limit the number of pseudo terminal
     # available)
-    lxc.pts = 1024
+    #lxc.pts = 1024
 
     # disable the main console
     lxc.console = none
@@ -83,6 +83,7 @@ let
     lxc.mount.entry = dev @out@/rootfs/dev tmpfs size=65536k,nosuid,nodev,noexec 0 0
     #lxc.mount.entry = devpts @out@/rootfs/dev/pts devpts newinstance,ptmxmode=0666,nosuid,noexec 0 0
     #lxc.mount.entry = shm @out@/rootfs/dev/shm tmpfs size=65536k,nosuid,nodev,noexec 0 0
+    lxc.autodev = 1
   '';
 
   mkDev = builtins.toFile "mkDev.in" ''
