@@ -275,6 +275,7 @@ let
 
   buildLXCRootFS = import ../build-support/build-lxc-rootfs {
     inherit stdenv;
+    inherit lib;
   };
 
   dotnetenv = import ../build-support/dotnetenv {
