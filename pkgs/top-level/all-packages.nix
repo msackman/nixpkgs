@@ -273,6 +273,10 @@ let
     inherit less buildEnv;
   };
 
+  buildLXCRootFS = import ../build-support/build-lxc-rootfs {
+    inherit stdenv;
+  };
+
   dotnetenv = import ../build-support/dotnetenv {
     inherit stdenv;
     dotnetfx = dotnetfx40;
