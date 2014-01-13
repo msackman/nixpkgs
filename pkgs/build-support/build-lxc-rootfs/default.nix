@@ -23,7 +23,7 @@ in
     buildCommand = ''
       mkdir -p $out/rootfs
       mkdir -p $out/lxc
-      touch -p $out/pkgs
-      ${map (f: "cat ${f} >> $out\n") depFiles}
+      touch $out/pkgs
+      ${joinStrings "\n" (map (f: "cat ${f} >> $out/pkgs") depFiles)}
     '';
   }
