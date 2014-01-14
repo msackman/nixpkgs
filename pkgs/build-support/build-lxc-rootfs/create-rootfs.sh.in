@@ -1,0 +1,12 @@
+#! @shell@ -e
+
+lxcDir=$1
+
+mkdir $lxcDir
+mkdir -p $lxcDir/rootfs
+mkdir -p $lxcDir/lib
+sed -e "s|@lxcDir@|$lxcDir|g" @out@/lib/fstab.in > $lxcDir/lib/fstab
+sed -e "s|@lxcDir@|$lxcDir|g" @out@/lib/lxc.config.in > $lxcDir/lib/lxc.config
+for d in @mountPoints@; do
+    mkdir -p $lxcDir/rootfs/$d
+done
