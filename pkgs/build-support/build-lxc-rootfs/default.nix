@@ -1,5 +1,5 @@
-{stdenv, lib}:
-{name, pkgs ? [], pkg ? null, lxcFun ? lib.id}:
+{stdenv, lib, lxc}:
+{name, pkgs ? [], pkg ? null, lxcFun ? lib.id, exec}:
 
 assert pkgs == [] -> pkg != null;
 assert pkg == null -> pkgs != [];
@@ -61,7 +61,8 @@ let
     ));
   mountPoints = ["proc" "sys" "dev"]; #manually keep in sync with lxc.mount.entry
 
-  createSh = ./create-rootfs.sh.in;
+  createSh = ./create-lxc.sh.in;
+  startSh = ./start-lxc.sh.in;
 in
   stdenv.mkDerivation {
     name = "${name}-rootfs";
@@ -82,10 +83,16 @@ in
         fi
       done
 
-      sed -e "s|@out@|$out|g" \
-          -e "s|@shell@|${stdenv.shell}|g" \
+      sed -e "s|@shell@|${stdenv.shell}|g" \
+          -e "s|@out@|$out|g" \
           -e "s|@mountPoints@|$mountPoints|g" \
-          ${createSh} > $out/bin/${name}-create-rootfs.sh
-      chmod +x $out/bin/${name}-create-rootfs.sh
+          ${createSh} > $out/bin/${name}-create-lxc.sh
+      chmod +x $out/bin/${name}-create-lxc.sh
+
+      sed -e "s|@shell@|${stdenv.shell}|g" \
+          -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
+          -e "s|@exec@|${exec}|g" \
+          ${startSh} > $out/bin/${name}-start-lxc.sh
+      chmod +x $out/bin/${name}-start-lxc.sh
     '';
   }
