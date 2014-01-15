@@ -882,6 +882,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
 
   DAV = callPackage ../development/libraries/haskell/DAV {};
 
+  dbmigrations = callPackage ../development/libraries/haskell/dbmigrations {};
+
   dbus = callPackage ../development/libraries/haskell/dbus {};
 
   deepseq_1_1_0_0 = callPackage ../development/libraries/haskell/deepseq/1.1.0.0.nix {};
@@ -1378,6 +1380,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
 
   httpDate = callPackage ../development/libraries/haskell/http-date {};
 
+  httpStreams = callPackage ../development/libraries/haskell/http-streams {};
+
   httpTypes = callPackage ../development/libraries/haskell/http-types {};
 
   HUnit_1_2_0_3 = callPackage ../development/libraries/haskell/HUnit/1.2.0.3.nix {};
@@ -1410,6 +1414,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
   indexedFree = callPackage ../development/libraries/haskell/indexed-free {};
 
   instantGenerics = callPackage ../development/libraries/haskell/instant-generics {};
+
+  interlude = callPackage ../development/libraries/haskell/interlude {};
 
   intervals = callPackage ../development/libraries/haskell/intervals {};
 
@@ -1722,6 +1728,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
   OpenGLRaw_1_4_0_0 = callPackage ../development/libraries/haskell/OpenGLRaw/1.4.0.0.nix {};
   OpenGLRaw = self.OpenGLRaw_1_4_0_0;
 
+  opensslStreams = callPackage ../development/libraries/haskell/openssl-streams {};
+
   operational = callPackage ../development/libraries/haskell/operational {};
 
   optparseApplicative = callPackage ../development/libraries/haskell/optparse-applicative {};
@@ -1761,8 +1769,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
   parsec  = self.parsec3;
 
   parsers_0_9 = callPackage ../development/libraries/haskell/parsers/0.9.nix {};
-  parsers_0_10_1_2 = callPackage ../development/libraries/haskell/parsers/0.10.1.2.nix {};
-  parsers = self.parsers_0_10_1_2;
+  parsers_0_10_2 = callPackage ../development/libraries/haskell/parsers/0.10.2.nix {};
+  parsers = self.parsers_0_10_2;
 
   parsimony = callPackage ../development/libraries/haskell/parsimony {};
 
@@ -2411,6 +2419,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
 
   websockets = callPackage ../development/libraries/haskell/websockets {};
 
+  websocketsSnap = callPackage ../development/libraries/haskell/websockets-snap {};
+
   CouchDB = callPackage ../development/libraries/haskell/CouchDB {};
 
   wlPprint = callPackage ../development/libraries/haskell/wl-pprint {};
@@ -2466,6 +2476,8 @@ let result = let callPackage = x : y : modifyPrio (newScope result.finalReturn x
   xssSanitize = callPackage ../development/libraries/haskell/xss-sanitize {};
 
   yaml = callPackage ../development/libraries/haskell/yaml {};
+
+  yamlLight = callPackage ../development/libraries/haskell/yaml-light {};
 
   yap = callPackage ../development/libraries/haskell/yap {};
 
