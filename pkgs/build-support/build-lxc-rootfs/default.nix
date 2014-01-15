@@ -59,7 +59,10 @@ let
         name: acc: "lxc."+name+ " = "+(toString (builtins.getAttr name attrs))
         ) "" (builtins.attrNames attrs)) lxcConfig
     ));
-  mountPoints = ["proc" "sys" "dev"]; #manually keep in sync with lxc.mount.entry
+  mountPoints = ["dev"] ++
+    (map (attrs:
+      baseNameOf (builtins.elemAt (lib.splitString " " attrs."mount.entry") 1)
+    ) (builtins.filter (builtins.hasAttr "mount.entry") lxcConfig));
 
   createSh = ./create-lxc.sh.in;
   startSh = ./start-lxc.sh.in;
