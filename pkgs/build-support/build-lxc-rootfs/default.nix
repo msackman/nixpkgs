@@ -70,6 +70,7 @@ let
 
   createSh = ./lxc-create.sh.in;
   startSh = ./lxc-start.sh.in;
+  moduleNix = ./module.nix.in;
 in
   stdenv.mkDerivation {
     name = "${name}-rootfs";
@@ -102,5 +103,8 @@ in
           -e "s|@exec@|${exec}|g" \
           ${startSh} > $out/bin/lxc-start-${name}.sh
       chmod +x $out/bin/lxc-start-${name}.sh
+
+      sed -e "s|@name@|${name}|g" \
+          ${moduleNix} > $out/lib/module.nix
     '';
   }
