@@ -64,8 +64,8 @@ let
       baseNameOf (builtins.elemAt (lib.splitString " " attrs."mount.entry") 1)
     ) (builtins.filter (builtins.hasAttr "mount.entry") lxcConfig));
 
-  createSh = ./create-lxc.sh.in;
-  startSh = ./start-lxc.sh.in;
+  createSh = ./lxc-create.sh.in;
+  startSh = ./lxc-start.sh.in;
 in
   stdenv.mkDerivation {
     name = "${name}-rootfs";
@@ -90,13 +90,13 @@ in
           -e "s|@out@|$out|g" \
           -e "s|@mountPoints@|$mountPoints|g" \
           -e "s|@postCreateScript@|${postCreateScript}|g" \
-          ${createSh} > $out/bin/${name}-create-lxc.sh
-      chmod +x $out/bin/${name}-create-lxc.sh
+          ${createSh} > $out/bin/lxc-create-${name}.sh
+      chmod +x $out/bin/lxc-create-${name}.sh
 
       sed -e "s|@shell@|${stdenv.shell}|g" \
           -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
           -e "s|@exec@|${exec}|g" \
-          ${startSh} > $out/bin/${name}-start-lxc.sh
-      chmod +x $out/bin/${name}-start-lxc.sh
+          ${startSh} > $out/bin/lxc-start-${name}.sh
+      chmod +x $out/bin/lxc-start-${name}.sh
     '';
   }
