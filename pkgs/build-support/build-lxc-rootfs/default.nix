@@ -1,5 +1,5 @@
 {stdenv, lib, lxc}:
-{name, pkgs ? [], pkg ? null, lxcFun ? lib.id, exec}:
+{name, pkgs ? [], pkg ? null, lxcFun ? lib.id, exec, postCreateScript ? ""}:
 
 assert pkgs == [] -> pkg != null;
 assert pkg == null -> pkgs != [];
@@ -89,6 +89,7 @@ in
       sed -e "s|@shell@|${stdenv.shell}|g" \
           -e "s|@out@|$out|g" \
           -e "s|@mountPoints@|$mountPoints|g" \
+          -e "s|@postCreateScript@|${postCreateScript}|g" \
           ${createSh} > $out/bin/${name}-create-lxc.sh
       chmod +x $out/bin/${name}-create-lxc.sh
 

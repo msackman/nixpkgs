@@ -10,3 +10,6 @@ sed -e "s|@lxcDir@|$lxcDir|g" @out@/lib/lxc.config.in > $lxcDir/lib/lxc.config
 for d in @mountPoints@; do
     mkdir -p $lxcDir/rootfs/$d
 done
+if [ -n "@postCreateScript@" ] && [ -x "@postCreateScript@" ]; then
+   @postCreateScript@ $lxcDir
+fi
