@@ -19,7 +19,7 @@ stdenv.mkDerivation rec {
   };
 
   srcs = [ rabbitmq clusterer ];
-  sourceRoot = origname;
+  sourceRoot = ".";
   patchMakefile = ./Makefile.patch.in;
   patchPackage = ./package.mk.patch.in;
 
@@ -28,21 +28,22 @@ stdenv.mkDerivation rec {
 
   postUnpack =
     ''
-      cp -a ${clusterer.name} ${sourceRoot}/plugins-src/${clusterer.name}-${clusterer.outputHash}
+      cp -a ${clusterer.name} ${origname}/plugins-src/${clusterer.name}-${clusterer.outputHash}
     '';
   postPatch =
     ''
       cat ${patchMakefile} | \
         sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
             -e 's|@rabbitmq@|${origname}|g' | \
-        patch -p1
+        patch -p0
       cat ${patchPackage} | \
         sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
             -e 's|@rabbitmq@|${origname}|g' | \
-        patch -p1
+        patch -p0
     '';
   preBuild =
     ''
+      cd ${origname}
       # Fix the "/usr/bin/env" in "calculate-relative".
       patchShebangs .
     '';
