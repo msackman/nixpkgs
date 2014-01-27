@@ -40,8 +40,9 @@ stdenv.mkDerivation rec {
         sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
             -e 's|@rabbitmq@|${origname}|g' | \
         patch -p0
-      patch ${origname}/scripts/rabbitmq-server < \
-        ${origname}/plugins-src/${clusterer.name}-${clusterer.outputHash}/rabbitmq-server
+      cat ${origname}/plugins-src/${clusterer.name}-${clusterer.outputHash}/rabbitmq-server.patch | \
+        sed -e 's|rabbitmq_clusterer-0.0.0|rabbitmq_clusterer-${version}|g' | \
+        patch ${origname}/scripts/rabbitmq-server
     '';
   preBuild =
     ''
