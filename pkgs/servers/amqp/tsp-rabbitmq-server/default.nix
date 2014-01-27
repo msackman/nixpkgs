@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, erlang, python, libxml2, libxslt, xmlto
+{ stdenv, fetchurl, fetchhg, erlang, python, libxml2, libxslt, xmlto
 , docbook_xml_dtd_45, docbook_xsl, zip, unzip }:
 
 stdenv.mkDerivation rec {
@@ -14,9 +14,9 @@ stdenv.mkDerivation rec {
   clusterer = fetchhg {
     url = "http://rabbit-hg-private/rabbitmq-clusterer";
     sha256 = "0kjzbirzbay7svk19r94b1qspgglw21by922bivil84d6i5qimk2";
-  }
+  };
 
-  srcs = [ rabbit, clusterer ];
+  srcs = [ rabbit clusterer ];
   sourceRoot = rabbit;
 
   buildInputs =
