@@ -1,5 +1,5 @@
-{ stdenv, fetchurl, fetchhg, erlang, python, libxml2, libxslt, xmlto
-, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch }:
+{ stdenv, fetchurl, fetchhg, erlang, python, coreutils, libxml2, libxslt, xmlto
+, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch, makeWrapper }:
 
 stdenv.mkDerivation rec {
   origname = "rabbitmq-server-${version}";
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   patchPackage = ./package.mk.patch.in;
 
   buildInputs =
-    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch ];
+    [ erlang python coreutils libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch makeWrapper ];
 
   postUnpack =
     ''
@@ -64,6 +64,9 @@ stdenv.mkDerivation rec {
   postInstall =
     ''
       echo 'PATH=${erlang}/bin:${PATH:+:}$PATH' >> $out/sbin/rabbitmq-env
+      for f in $out/sbin/*; do
+        wrapProgram $f --suffix PATH : ${coreutils}/bin
+      done
     ''; # */
 
   meta = {
