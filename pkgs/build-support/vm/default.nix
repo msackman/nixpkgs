@@ -766,8 +766,20 @@ rec {
         url = mirror://fedora/linux/releases/8/Everything/i386/os/repodata/primary.xml.gz;
         sha256 = "0kwf0jcp63pygpvgvwl4w58pph24xbcy6db6fnq2f3ly5myhz53n";
       };
-      urlPrefix = mirror://fedora/linux/releases/8/Everything/i386/os;
+      urlPrefix = http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/8/Everything/i386/os;
       packages = commonFedoraPackages;
+    };
+
+    fedora8x86_64 = {
+      name = "fedora-8-x86_64";
+      fullName = "Fedora 8 (x86_64)";
+      packagesList = fetchurl {
+        url = mirror://fedora/linux/releases/8/Everything/x86_64/os/repodata/primary.xml.gz;
+        sha256 = "11bfmpy3nz82zzmj5lfravvzlw514v4718adi4b06ps9zv3zpy8r";
+      };
+      urlPrefix = http://archives.fedoraproject.org/pub/archive/fedora/linux/releases/8/Everything/x86_64/os;
+      packages = commonFedoraPackages;
+      archs = ["noarch" "x86_64"];
     };
 
     fedora9i386 = {
@@ -959,6 +971,32 @@ rec {
         sha256 = "d3f67da6461748f57a06459e6877fd07858828e256f58f032704186a65430fd3";
       };
       urlPrefix = mirror://fedora/linux/releases/19/Everything/x86_64/os;
+      archs = ["noarch" "x86_64"];
+      packages = commonFedoraPackages ++ [ "cronie" "util-linux" ];
+      unifiedSystemDir = true;
+    };
+
+    fedora20i386 = {
+      name = "fedora-20-i386";
+      fullName = "Fedora 20 (i386)";
+      packagesList = fetchurl {
+        url = mirror://fedora/linux/releases/20/Everything/i386/os/repodata/ae9c6ae73a12a64227e6b8e7b2d7e1c2a9515bd9c82f2af006c838e7a445dcb9-primary.xml.gz;
+        sha256 = "1ffw8njfff680vq2lby8v5dm3af2w7bv5rxqwqkl59hj7bknm75f";
+      };
+      urlPrefix = mirror://fedora/linux/releases/20/Everything/i386/os;
+      archs = ["noarch" "i386" "i586" "i686"];
+      packages = commonFedoraPackages ++ [ "cronie" "util-linux" ];
+      unifiedSystemDir = true;
+    };
+
+    fedora20x86_64 = {
+      name = "fedora-20-x86_64";
+      fullName = "Fedora 20 (x86_64)";
+      packagesList = fetchurl {
+        url = mirror://fedora/linux/releases/20/Everything/x86_64/os/repodata/d7777ea6ec66e1c86c3fe1900adf5bf8d877fb77dd06e439bd76bbbec4e82094-primary.xml.gz;
+        sha256 = "1510x32bxfvnplwy81nxfzxpgn7qbgghm4717xnciqb6xjk7wxyp";
+      };
+      urlPrefix = mirror://fedora/linux/releases/20/Everything/x86_64/os;
       archs = ["noarch" "x86_64"];
       packages = commonFedoraPackages ++ [ "cronie" "util-linux" ];
       unifiedSystemDir = true;
