@@ -2,22 +2,23 @@
 , docbook_xml_dtd_45, docbook_xsl, zip, unzip }:
 
 stdenv.mkDerivation rec {
-  name = "tsp-rabbitmq-server-${version}";
+  origname = "rabbitmq-server-${version}";
+  name = "tsp-${name}";
 
   version = "3.2.2";
 
   rabbit = fetchurl {
-    url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/rabbitmq-server-${version}.tar.gz";
+    url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${origname}.tar.gz";
     sha256 = "c6f985d2bf69de60fa543ebfff190f233d2ab8faee78a10cfb065b4e4d1406ba";
   };
 
   clusterer = fetchhg {
-    url = "http://rabbit-hg-private/rabbitmq-clusterer";
-    sha256 = "0kjzbirzbay7svk19r94b1qspgglw21by922bivil84d6i5qimk2";
+    url = "http://rabbit-hg-private.lon.pivotallabs.com/rabbitmq-clusterer";
+    sha256 = "1dvps982i0ixyswjy13vlskxjv5gjm93shg6bzyfw7a8c691sz38";
   };
 
   srcs = [ rabbit clusterer ];
-  sourceRoot = rabbit;
+  sourceRoot = origname;
 
   buildInputs =
     [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip ];
