@@ -7,7 +7,7 @@ stdenv.mkDerivation rec {
   version = "3.2.2";
 
   rabbit = fetchurl {
-    url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${name}.tar.gz";
+    url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/rabbitmq-server-${version}.tar.gz";
     sha256 = "c6f985d2bf69de60fa543ebfff190f233d2ab8faee78a10cfb065b4e4d1406ba";
   };
 
