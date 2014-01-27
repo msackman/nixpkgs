@@ -1,5 +1,5 @@
 { stdenv, fetchurl, fetchhg, erlang, python, libxml2, libxslt, xmlto
-, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch }:
+, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch, netcat }:
 
 stdenv.mkDerivation rec {
   origname = "rabbitmq-server-${version}";
@@ -7,7 +7,7 @@ stdenv.mkDerivation rec {
 
   version = "3.2.2";
 
-  rabbit = fetchurl {
+  rabbitmq = fetchurl {
     url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${origname}.tar.gz";
     sha256 = "c6f985d2bf69de60fa543ebfff190f233d2ab8faee78a10cfb065b4e4d1406ba";
   };
@@ -18,19 +18,28 @@ stdenv.mkDerivation rec {
     sha256 = "1dvps982i0ixyswjy13vlskxjv5gjm93shg6bzyfw7a8c691sz38";
   };
 
-  srcs = [ rabbit clusterer ];
+  srcs = [ rabbitmq clusterer ];
   sourceRoot = origname;
   patchMakefile = ./Makefile.patch.in;
+  patchPackage = ./package.mk.patch.in;
 
   buildInputs =
-    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip ];
+    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch netcat ];
 
   postUnpack =
     ''
       cp -a ${clusterer.name} ${sourceRoot}/plugins-src/${clusterer.name}-${clusterer.outputHash}
+    '';
+  postPatch =
+    ''
       cat ${patchMakefile} | \
-        sed -i -e 's|@rabbitmq-clustrerer@|${clusterer.name}-${clusterer.outputHash}|g' | \
-        patch -p0
+        sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
+            -e 's|@rabbitmq@|${origname}|g' | \
+        patch -p1
+      cat ${patchPackage} | \
+        sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
+            -e 's|@rabbitmq@|${origname}|g' | \
+        patch -p1
     '';
   preBuild =
     ''

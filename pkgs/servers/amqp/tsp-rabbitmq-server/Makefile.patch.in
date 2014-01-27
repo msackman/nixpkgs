@@ -1,5 +1,5 @@
---- plugins-src/Makefile.orig       2014-01-27 13:26:25.833861470 +0100
-+++ plugins-src/Makefile    2014-01-27 13:26:52.063276752 +0100
+--- @rabbitmq@/plugins-src/Makefile.orig       2014-01-27 13:26:25.833861470 +0100
++++ @rabbitmq@/plugins-src/Makefile    2014-01-27 13:26:52.063276752 +0100
 @@ -37,6 +37,7 @@
      rabbitmq-web-stomp-examples \
      sockjs-erlang-wrapper \
