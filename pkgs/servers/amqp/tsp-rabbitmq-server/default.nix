@@ -1,9 +1,9 @@
 { stdenv, fetchurl, fetchhg, erlang, python, libxml2, libxslt, xmlto
-, docbook_xml_dtd_45, docbook_xsl, zip, unzip }:
+, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch }:
 
 stdenv.mkDerivation rec {
   origname = "rabbitmq-server-${version}";
-  name = "tsp-${name}";
+  name = "tsp-${origname}";
 
   version = "3.2.2";
 
@@ -13,16 +13,25 @@ stdenv.mkDerivation rec {
   };
 
   clusterer = fetchhg {
+    name = "rabbitmq-clusterer";
     url = "http://rabbit-hg-private.lon.pivotallabs.com/rabbitmq-clusterer";
     sha256 = "1dvps982i0ixyswjy13vlskxjv5gjm93shg6bzyfw7a8c691sz38";
   };
 
   srcs = [ rabbit clusterer ];
   sourceRoot = origname;
+  patchMakefile = ./Makefile.patch.in;
 
   buildInputs =
     [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip ];
 
+  postUnpack =
+    ''
+      cp -a ${clusterer.name} ${sourceRoot}/plugins-src/${clusterer.name}-${clusterer.outputHash}
+      cat ${patchMakefile} | \
+        sed -i -e 's|@rabbitmq-clustrerer@|${clusterer.name}-${clusterer.outputHash}|g' | \
+        patch -p0
+    '';
   preBuild =
     ''
       # Fix the "/usr/bin/env" in "calculate-relative".
