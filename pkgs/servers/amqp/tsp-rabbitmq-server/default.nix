@@ -1,5 +1,5 @@
 { stdenv, fetchurl, fetchhg, erlang, python, libxml2, libxslt, xmlto
-, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch, netcat }:
+, docbook_xml_dtd_45, docbook_xsl, zip, unzip, gnupatch }:
 
 stdenv.mkDerivation rec {
   origname = "rabbitmq-server-${version}";
@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   patchPackage = ./package.mk.patch.in;
 
   buildInputs =
-    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch netcat ];
+    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch ];
 
   postUnpack =
     ''
