@@ -8,6 +8,7 @@ stdenv.mkDerivation rec {
   version = "3.2.2";
 
   rabbitmq = fetchurl {
+    name = origname;
     url = "http://www.rabbitmq.com/releases/rabbitmq-server/v${version}/${origname}.tar.gz";
     sha256 = "c6f985d2bf69de60fa543ebfff190f233d2ab8faee78a10cfb065b4e4d1406ba";
   };
@@ -40,6 +41,8 @@ stdenv.mkDerivation rec {
         sed -e 's|@rabbitmq-clusterer@|${clusterer.name}-${clusterer.outputHash}|g' \
             -e 's|@rabbitmq@|${origname}|g' | \
         patch -p0
+      patch ${origname}/scripts/rabbitmq-server < \
+        ${origname}/plugins-src/${clusterer.name}-${clusterer.outputHash}/rabbitmq-server
     '';
   preBuild =
     ''
