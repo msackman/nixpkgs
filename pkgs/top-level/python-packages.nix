@@ -1029,7 +1029,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "https://github.com/agrover/configshell-fb/archive/v${version}.tar.gz";
       sha256 = "1dd87xvm98nk3jzybb041gjdahi2z9b53pwqhyxcfj4a91y82ndy";
     };
-    
+
     propagatedBuildInputs = [
       pyparsing
       modules.readline
@@ -1076,7 +1076,6 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       description = "Code coverage measurement for python";
       homepage = http://nedbatchelder.com/code/coverage/;
       license = pkgs.lib.licenses.bsd3;
-      maintainers = [ stdenv.lib.maintainers.shlevy ];
     };
   };
 
@@ -1725,6 +1724,27 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   };
 
 
+  pyramid_chameleon = buildPythonPackage rec {
+    name = "pyramid_chameleon-0.1";
+
+    src = pkgs.fetchurl {
+      url = "https://pypi.python.org/packages/source/p/pyramid_chameleon/${name}.tar.gz";
+      md5 = "39b1327a9890f382200bbfde943833d7";
+    };
+
+    propagatedBuildInputs = [
+      chameleon
+      pyramid
+      zope_interface
+      setuptools
+    ];
+
+    meta = with stdenv.lib; {
+      maintainers = [ maintainers.iElectric ];
+    };
+  };
+
+
   pyramid_jinja2 = buildPythonPackage rec {
     name = "pyramid_jinja2-1.9";
 
@@ -1851,7 +1871,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/h/hypatia/${name}.tar.gz";
       md5 = "3a67683c578754cd8f23317db6d28ffd";
     };
- 
+
     buildInputs = [ zope_interface zodb3 ];
 
     meta = {
@@ -1867,7 +1887,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/z/zope.copy/${name}.zip";
       md5 = "36aa2c96dec4cfeea57f54da2b733eb9";
     };
- 
+
     buildInputs = [ pkgs.unzip zope_interface zope_location zope_schema ];
 
     meta = {
@@ -1883,7 +1903,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/s/statsd/${name}.tar.gz";
       md5 = "476ef5b9004f6e2cb25c7da440bb53d0";
     };
- 
+
     buildInputs = [ ];
 
     meta = {
@@ -1899,7 +1919,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/p/pyramid_zodbconn/${name}.tar.gz";
       md5 = "22e88cc82cafbbe00274e7378434e5fe";
     };
- 
+
     buildInputs = [ pyramid mock ];
     propagatedBuildInputs = [ zodb3 zodburi ];
 
@@ -1916,7 +1936,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/p/pyramid_mailer/${name}.tar.gz";
       md5 = "43800c7c894097a23140da58e3638c93";
     };
- 
+
     buildInputs = [ pyramid transaction ];
     propagatedBuildInputs = [ repoze_sendmail ];
 
@@ -1933,7 +1953,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/r/repoze.sendmail/${name}.tar.gz";
       md5 = "81d15f1f03cc67d6f56f2091c594ef57";
     };
- 
+
     buildInputs = [ transaction ];
 
     meta = {
@@ -1949,7 +1969,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "http://pypi.python.org/packages/source/z/zodburi/${name}.tar.gz";
       md5 = "52cc13c32ffe4ee7b5f5abc79f70f3c2";
     };
- 
+
     buildInputs = [ zodb3 mock ];
 
     meta = {
@@ -2195,7 +2215,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   };
 
   django = django_1_6;
-  
+
   django_1_6 = buildPythonPackage rec {
     name = "Django-${version}";
     version = "1.6";
@@ -6086,6 +6106,36 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   };
 
+  spambayes = buildPythonPackage rec {
+    name = "spambayes-1.1a6";
+
+    src = fetchurl {
+      url = "mirror://sourceforge/spambayes/${name}.tar.gz";
+      sha256 = "0lqhn2v0avgwxmk4dq9lkwr2g39ls2p6x8hqk5w07wd462cjsx8l";
+    };
+
+    propagatedBuildInputs = [ pydns lockfile ];
+
+    meta = with stdenv.lib; {
+      description = "Statistical anti-spam filter, initially based on the work of Paul Graham";
+      homepage = http://spambayes.sourceforge.net/;
+    };
+  };
+
+  pydns = buildPythonPackage rec {
+    name = "pydns-2.3.6";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/p/pydns/${name}.tar.gz";
+      sha256 = "0qnv7i9824nb5h9psj0rwzjyprwgfiwh5s5raa9avbqazy5hv5pi";
+    };
+
+    doCheck = false;
+
+    meta = with stdenv.lib; {
+    };
+  };
+
   sympy = buildPythonPackage rec {
     name = "sympy-0.7.3";
 
@@ -6189,7 +6239,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
 
     # 4 failing tests
-    doCheck = false; 
+    doCheck = false;
 
     buildInputs = [ nose modules.curses ];
 
@@ -6567,7 +6617,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       url = "https://github.com/agrover/targetcli-fb/archive/v${version}.tar.gz";
       sha256 = "1zcm0agdpf866020b43fl8zyyyzz6r74mn1sz4xpaa0pinpwjk42";
     };
-    
+
     propagatedBuildInputs = [
       configshell_fb
       rtslib_fb
@@ -6578,6 +6628,24 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       homepage = "https://github.com/agrover/targetcli-fb";
       platforms = stdenv.lib.platforms.linux;
     };
+  };
+
+  tarsnapper = buildPythonPackage rec {
+    name = "tarsnapper-0.2.1";
+
+    src = fetchgit {
+      url = https://github.com/miracle2k/tarsnapper.git;
+      rev = "620439bca68892f2ffaba1079a34b18496cc6596";
+    };
+
+    propagatedBuildInputs = [ argparse pyyaml ];
+
+    patches = [ ../development/python-modules/tarsnapper-path.patch ];
+
+    preConfigure = ''
+      substituteInPlace src/tarsnapper/script.py \
+        --replace '@NIXTARSNAPPATH@' '${pkgs.tarsnap}/bin/tarsnap'
+    '';
   };
 
   taskcoach = buildPythonPackage rec {
@@ -7023,7 +7091,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   webtest = buildPythonPackage rec {
     version = "2.0.11";
     name = "webtest-${version}";
-  
+
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/W/WebTest/WebTest-${version}.zip";
       md5 = "e51da21da8815cef07f543d8688effea";
@@ -7677,6 +7745,9 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
     propagatedBuildInputs = [ zope_interface zope_exceptions zope_testing six ] ++ optional (!python.is_py3k or false) subunit;
 
+    # a test is failing
+    doCheck = false;
+
     meta = {
       description = "A flexible test runner with layer support";
       homepage = http://pypi.python.org/pypi/zope.testrunner;
@@ -7793,12 +7864,12 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   libarchive = buildPythonPackage rec {
-    version = "3.0.4-5";
+    version = "3.1.2-1";
     name = "libarchive-${version}";
 
     src = fetchurl {
       url = "http://python-libarchive.googlecode.com/files/python-libarchive-${version}.tar.gz";
-      sha256 = "141yx9ym8gvybn67mw0lmgafzsd79rmd9l77lk0k6m2fzclqx1j5";
+      sha256 = "0j4ibc4mvq64ljya9max8832jafi04jciff9ia9qy0xhhlwkcx8x";
     };
 
     propagatedBuildInputs = [ pkgs.libarchive ];
