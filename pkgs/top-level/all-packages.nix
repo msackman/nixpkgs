@@ -6277,6 +6277,7 @@ let
   rabbitmq_server = callPackage ../servers/amqp/rabbitmq-server { };
 
   tsp_rabbitmq_server = callPackage ../servers/amqp/tsp-rabbitmq-server { };
+  tsp_rabbitmq_server_lxc = callPackage ../servers/amqp/tsp-rabbitmq-server-lxc { };
 
   radius = callPackage ../servers/radius { };
 
