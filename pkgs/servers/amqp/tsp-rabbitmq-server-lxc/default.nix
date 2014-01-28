@@ -3,14 +3,16 @@
 buildLXCRootFS {
   name = "rabbitmq-server-lxc";
   pkgs = [ tsp_rabbitmq_server ];
-  lxcFun = defaults:
-    [{"network.type"  = "veth";}
-     {"network.link"  = "br0" ;}
-     {"network.name"  = "eth0";}
-     {"network.flags" = "up"  ;}] ++ (
-     builtins.filter (attrs:
-       "network." != lib.substring 0 8 (builtins.head (builtins.attrNames attrs))
-     ) defaults
-    );
-  exec = "${tsp_rabbitmq_server}/sbin/rabbitmq-server";
+  lxcFun = libraryPath: ''
+    let lxcConfigLib = (import ${libraryPath}) lib; in
+    {configFun = lxcConfigLib.addNetwork {
+      type = "veth";
+      link = "br0";
+      name = "eth0";
+      flags = "up";
+      ipv4 = "192.168.99.99";
+      "ipv4.gateway" = "192.168.99.1";};
+     execFun = "${tsp_rabbitmq_server}/sbin/rabbitmq-server";
+    }
+    '';
 }
