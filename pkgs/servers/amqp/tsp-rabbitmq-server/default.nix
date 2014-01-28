@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   patchPackage = ./package.mk.patch.in;
 
   buildInputs =
-    [ erlang python coreutils libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip gnupatch makeWrapper ];
+    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip ];
 
   postUnpack =
     ''
