@@ -12,5 +12,5 @@ buildLXCRootFS {
        "network." != lib.substring 0 8 (builtins.head (builtins.attrNames attrs))
      ) defaults
     );
-  exec = ${tsp_rabbitmq_server}/sbin/rabbitmq-server
+  exec = "${tsp_rabbitmq_server}/sbin/rabbitmq-server";
 }
