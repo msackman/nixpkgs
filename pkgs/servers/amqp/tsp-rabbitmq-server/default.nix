@@ -24,7 +24,7 @@ stdenv.mkDerivation rec {
   patchPackage = ./package.mk.patch.in;
 
   buildInputs =
-    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip ];
+    [ erlang python libxml2 libxslt xmlto docbook_xml_dtd_45 docbook_xsl zip unzip makeWrapper gnupatch ];
 
   postUnpack =
     ''
@@ -64,8 +64,8 @@ stdenv.mkDerivation rec {
   postInstall =
     ''
       echo 'PATH=${erlang}/bin:${PATH:+:}$PATH' >> $out/sbin/rabbitmq-env
-      for f in $out/sbin/*; do
-        wrapProgram $f --suffix PATH : ${coreutils}/bin
+      for f in rabbitmq-server rabbitmqctl rabbitmq-plugins; do
+        wrapProgram $out/sbin/$f --suffix PATH : ${coreutils}/bin
       done
     ''; # */
 
