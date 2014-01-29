@@ -55,16 +55,6 @@ let
            "sys_nice" "sys_resource" "sys_time" "sys_tty_config" "mknod"
            "audit_write" "audit_control" "mac_override mac_admin"]))
       ] emptyConfig;
-
-
-    writeConfig = file: config:
-      toFile file
-      (joinStrings "\n" "" (
-        map (attrs: fold (
-          name: acc: "lxc."+name+ " = "+(toString (getAttr name attrs))
-          ) "" (attrNames attrs)) config
-      ));
-
   };
 
   loadConfig = expr:
@@ -86,13 +76,23 @@ let
               worklist1 = t ++ e1.lxcPkgs;
               acc1 = acc ++ [e1];
             in f worklist1 seen1 acc1;}.f;
+
+  configToString = config:
+    joinStrings "\n" "" (
+      map (attrs: "lxc.${attrs.name} = ${toString attrs.value}") config);
+
 in {
   buildLXCconf = pkg: lxcDir:
     let
       sets = collectLXCPkgs [pkg] [] [];
       configFuns = map (p: p.conf) sets;
+      config = sequence configFuns lxcConfLib.configDefaults;
+      config1 = sequence [
+          (lxcConfLib.setPath "rootfs" (lxcDir + "/rootfs"))
+          (lxcConfLib.setPath "mount" (lxcDir + "/fstab"))
+        ] config;
     in
-      sequence configFuns lxcConfLib.configDefaults;
+      configToString config1;
 
   buildLXCfstab = pkg: lxcDir:
     "";
