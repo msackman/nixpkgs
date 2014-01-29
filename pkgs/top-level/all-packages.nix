@@ -273,10 +273,8 @@ let
     inherit less buildEnv;
   };
 
-  buildLXCRootFS = import ../build-support/build-lxc-rootfs {
-    inherit stdenv;
-    inherit lib;
-    inherit lxc;
+  buildLXC = import ../build-support/build-lxc {
+    inherit stdenv lib lxc nix coreutils gnused;
   };
 
   dotnetenv = import ../build-support/dotnetenv {
