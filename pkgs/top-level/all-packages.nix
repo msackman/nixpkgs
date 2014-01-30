@@ -1623,6 +1623,8 @@ let
 
   briss = callPackage ../tools/graphics/briss { };
 
+  bully = callPackage ../tools/networking/bully { };
+
   pdnsd = callPackage ../tools/networking/pdnsd { };
 
   pg_top = callPackage ../tools/misc/pg_top { };
@@ -2069,8 +2071,6 @@ let
 
   tkabber = callPackage ../applications/networking/instant-messengers/tkabber { };
 
-  tkabber_plugins = callPackage ../applications/networking/instant-messengers/tkabber-plugins { };
-
   qfsm = callPackage ../applications/science/electronics/qfsm { };
 
   tkgate = callPackage ../applications/science/electronics/tkgate/1.x.nix {
@@ -2243,6 +2243,10 @@ let
   };
 
   zdelta = callPackage ../tools/compression/zdelta { };
+
+  zfstools = callPackage ../tools/filesystems/zfstools {
+    zfs = linuxPackages.zfs;
+  };
 
   zile = callPackage ../applications/editors/zile { };
 
@@ -3125,6 +3129,8 @@ let
     compat = true;
   };
   lua5 = lua5_1;
+
+  lua5_sockets = callPackage ../development/interpreters/lua-5/sockets.nix {};
 
   luarocks = callPackage ../development/tools/misc/luarocks {
      lua = lua5;
@@ -5063,6 +5069,8 @@ let
   libyamlcpp = callPackage ../development/libraries/libyaml-cpp { };
   libyamlcpp03 = callPackage ../development/libraries/libyaml-cpp/0.3.x.nix { };
 
+  libyubikey = callPackage ../development/libraries/libyubikey {};
+
   libzip = callPackage ../development/libraries/libzip { };
 
   libzrtpcpp = callPackage ../development/libraries/libzrtpcpp { };
@@ -6098,7 +6106,9 @@ let
 
   dico = callPackage ../servers/dico { };
 
-  dict = callPackage ../servers/dict { };
+  dict = callPackage ../servers/dict {
+      libmaa = callPackage ../servers/dict/libmaa.nix {};
+  };
 
   dictdDBs = recurseIntoAttrs (import ../servers/dict/dictd-db.nix {
     inherit builderDefs;
@@ -6595,11 +6605,6 @@ let
   };
 
   grsecurityOverrider = args: {
-    # Install gcc plugins. These are needed for compiling dependant packages.
-    postInstall = ''
-      ${args.postInstall or ""}
-      cp "tools/gcc/"*.so $out/lib/modules/$version/build/tools/gcc/
-    '';
     # Apparently as of gcc 4.6, gcc-plugin headers (which are needed by PaX plugins)
     # include libgmp headers, so we need these extra tweaks
     buildInputs = args.buildInputs ++ [ gmp ];
@@ -6615,11 +6620,13 @@ let
   # config options you need (e.g. by overriding extraConfig). See list of options here:
   # https://en.wikibooks.org/wiki/Grsecurity/Appendix/Grsecurity_and_PaX_Configuration_Options
   linux_3_2_grsecurity = lowPrio (lib.overrideDerivation (linux_3_2.override (args: {
-    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_2_53 kernelPatches.grsec_path ];
+    modDirVersion = "${linux_3_2.version}-grsec";
+    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_2_54 kernelPatches.grsec_path ];
   })) (args: grsecurityOverrider args));
 
   linux_3_12_grsecurity = lowPrio (lib.overrideDerivation (linux_3_12.override (args: {
-    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_12_2 kernelPatches.grsec_path ];
+    modDirVersion = "${linux_3_12.version}-grsec";
+    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_12_8 kernelPatches.grsec_path ];
   })) (args: grsecurityOverrider args));
 
   linux_3_2_apparmor = lowPrio (linux_3_2.override {
@@ -7554,6 +7561,8 @@ let
     inherit (xlibs) libX11;
   };
 
+  docker = callPackage ../applications/virtualization/docker { };
+
   doodle = callPackage ../applications/search/doodle { };
 
   dunst = callPackage ../applications/misc/dunst { };
@@ -7746,6 +7755,7 @@ let
   evopedia = callPackage ../applications/misc/evopedia { };
 
   keepassx = callPackage ../applications/misc/keepassx { };
+  keepassx2 = callPackage ../applications/misc/keepassx/2.0.nix { };
 
   inherit (gnome3) evince;
   evolution_data_server = gnome3.evolution_data_server;
@@ -8749,6 +8759,8 @@ let
   stumpwm = lispPackages.stumpwm;
 
   sublime = callPackage ../applications/editors/sublime { };
+  
+  sublime3 = lowPrio (callPackage ../applications/editors/sublime3 { });
 
   subversion = callPackage ../applications/version-management/subversion/default.nix {
     bdbSupport = true;
@@ -9153,6 +9165,8 @@ let
   yate = callPackage ../applications/misc/yate { };
 
   qgis = callPackage ../applications/misc/qgis {};
+
+  ykpers = callPackage ../applications/misc/ykpers {};
 
   yoshimi = callPackage ../applications/audio/yoshimi {
     fltk = fltk13;
