@@ -7,8 +7,11 @@ let
   hasPath = path:
     fold (e: acc: if acc then acc else e == path) false;
   sequence = list: init: foldl (acc: f: f acc) init list;
+  listDelete = toDelete: filter (e: e != toDelete);
 
   lxcConfLib = rec {
+    inherit sequence;
+
     setPath = name: value: config:
       assert ! (hasPath name config);
       appendPath name value config;
@@ -22,13 +25,17 @@ let
     replacePath = name: fun:
       map (e: if e.name == name then fun e else e);
 
+    addMountEntry = entry:
+      appendPath "mount.entry" entry;
+
     emptyConfig = [];
 
     addNetwork = network:
+      # 'type' must come first. Yes, lxc.conf is retarded.
       sequence (fold (name: acc:
         [(removePath "network.${name}")
          (appendPath "network.${name}" (getAttr name network))] ++ acc
-      ) [] (attrNames network));
+      ) [] (["type"] ++ (listDelete "type" (attrNames network))));
 
     configDefaults = sequence [
       (setPath "tty" 1)
@@ -61,55 +68,44 @@ let
     (if isFunction expr then expr else (import (expr + "/lxc"))) lxcConfLib;
 
   collectLXCPkgs = rec {
-    f = worklist: seen: acc:
+    g = worklist: f worklist [] [] [];
+    f = worklist: seen: paths: sets:
       if length worklist == 0 then
-        acc
+        { inherit sets paths; }
       else
         let
           e = head worklist;
           t = tail worklist;
         in if elem e seen then
-            f t seen acc
+            f t seen paths sets
           else let
               seen1 = [e] ++ seen;
               e1 = loadConfig e;
-              worklist1 = t ++ e1.lxcPkgs;
-              acc1 = acc ++ [e1];
-            in f worklist1 seen1 acc1;}.f;
+              worklist1 = t ++ (if e1 ? lxcPkgs then e1.lxcPkgs else []);
+              sets1 = sets ++ [e1];
+              paths1 = if isFunction e then paths else paths ++ [e];
+            in f worklist1 seen1 paths1 sets1;}.g;
 
   configToString = config:
     joinStrings "\n" "" (
       map (attrs: "lxc.${attrs.name} = ${toString attrs.value}") config);
 
 in {
-  buildLXCconf = pkg: lxcDir:
+  buildLXCconf = pkgs: lxcDir:
     let
-      sets = collectLXCPkgs [pkg] [] [];
+      sets = (collectLXCPkgs pkgs).sets;
       configFuns = map (p: p.conf) sets;
       config = sequence configFuns lxcConfLib.configDefaults;
-      config1 = sequence [
-          (lxcConfLib.setPath "rootfs" (lxcDir + "/rootfs"))
-          (lxcConfLib.setPath "mount" (lxcDir + "/fstab"))
-        ] config;
     in
-      configToString config1;
+      configToString config;
 
-  buildLXCfstab = pkg: lxcDir:
-    "";
+  collectLXCpaths = pkgs:
+    joinStrings " " "" (map toString (collectLXCPkgs pkgs).paths);
 
-  exec = pkg:
-    toPath (loadConfig pkg).exec;
+  exec = pkgs:
+    let
+      sets = (collectLXCPkgs pkgs).sets;
+      execSets = filter (set: set ? exec) sets;
+    in
+      toPath (head execSets).exec;
 }
-
-#      {mount = "@lxcDir@/lib/fstab";}
-      #  WARNING: procfs is a known attack vector and should probably be disabled
-      #           if your userspace allows it. eg. see http://blog.zx2c4.com/749
-#      {"mount.entry" =
-#         "proc @lxcDir@/rootfs/proc proc nosuid,nodev,noexec 0 0";}
-      # WARNING: sysfs is a known attack vector and should probably be disabled
-      # if your userspace allows it. eg. see http://bit.ly/T9CkqJ
-#      {"mount.entry" =
-#         "sysfs @lxcDir@/rootfs/sys sysfs nosuid,nodev,noexec 0 0";}
-
-#      {rootfs = "@lxcDir@/rootfs";}
-#    ];

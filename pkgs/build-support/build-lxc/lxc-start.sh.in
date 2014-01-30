@@ -1,0 +1,9 @@
+#! @shell@ -e
+
+lxcDir=$1
+name=$2
+shift 2
+
+[ -f $lxcDir/lxc.config ]
+
+@lxc-start@ -n $name -f $lxcDir/lxc.config -- $@

@@ -22,6 +22,7 @@
 
     library = ./library.nix;
     createSh = ./lxc-create.sh.in;
+    startSh = ./lxc-start.sh.in;
   in
 
     stdenv.mkDerivation {
@@ -50,15 +51,10 @@
             -e "s|@sed@|${gnused}|g" \
             ${createSh} > $out/bin/lxc-create-${name}.sh
         chmod +x $out/bin/lxc-create-${name}.sh
+
+        sed -e "s|@shell@|${stdenv.shell}|g" \
+            -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
+            ${startSh} > $out/bin/lxc-start-${name}.sh
+        chmod +x $out/bin/lxc-start-${name}.sh
       '';
     }
-
-#
-#        sed -e "s|@shell@|${stdenv.shell}|g" \
-#            -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
-#            -e "s|@exec@|${exec}|g" \
-#            ${startSh} > $out/bin/lxc-start-${name}.sh
-#        chmod +x $out/bin/lxc-start-${name}.sh
-#
-#        sed -e "s|@name@|${name}|g" \
-#            ${moduleNix} > $out/lxc/module.nix
