@@ -1,7 +1,7 @@
 let
   lib = import <nixpkgs/lib>;
 
-  inherit (builtins) toFile getAttr attrNames isFunction length head tail filter elem toPath;
+  inherit (builtins) toFile getAttr attrNames isFunction length head tail filter elem toPath concatLists;
   inherit (lib) fold foldl id;
   joinStrings = sep: fold (e: acc: e + sep + acc);
   hasPath = path:
@@ -64,27 +64,29 @@ let
       ] emptyConfig;
   };
 
-  loadConfig = expr:
-    (if isFunction expr then expr else (import (expr + "/lxc"))) lxcConfLib;
+  loadConfig = dir: expr:
+    (if isFunction expr then expr else (import (expr + "/lxc"))) lxcConfLib (toString dir);
 
-  collectLXCPkgs = rec {
-    g = worklist: f worklist [] [] [];
-    f = worklist: seen: paths: sets:
-      if length worklist == 0 then
-        { inherit sets paths; }
-      else
-        let
-          e = head worklist;
-          t = tail worklist;
-        in if elem e seen then
-            f t seen paths sets
-          else let
-              seen1 = [e] ++ seen;
-              e1 = loadConfig e;
-              worklist1 = t ++ (if e1 ? lxcPkgs then e1.lxcPkgs else []);
-              sets1 = sets ++ [e1];
-              paths1 = if isFunction e then paths else paths ++ [e];
-            in f worklist1 seen1 paths1 sets1;}.g;
+  collectLXCPkgs = let
+    g = dir: worklist:
+      let
+        f = worklist: seen: sets:
+          if length worklist == 0 then
+            sets
+          else
+            let
+              e = head worklist;
+              t = tail worklist;
+            in if elem e seen then
+                f t seen sets
+              else let
+                  seen1 = [e] ++ seen;
+                  e1 = loadConfig dir e;
+                  worklist1 = t ++ (if e1 ? lxcPkgs then e1.lxcPkgs else []);
+                  sets1 = sets ++ [e1];
+                in f worklist1 seen1 sets1;
+      in f worklist [] [];
+    in g;
 
   configToString = config:
     joinStrings "\n" "" (
@@ -93,18 +95,22 @@ let
 in {
   buildLXCconf = pkgs: lxcDir:
     let
-      sets = (collectLXCPkgs pkgs).sets;
+      sets = collectLXCPkgs lxcDir pkgs;
       configFuns = map (p: p.conf) sets;
       config = sequence configFuns lxcConfLib.configDefaults;
     in
       configToString config;
 
-  collectLXCpaths = pkgs:
-    joinStrings " " "" (map toString (collectLXCPkgs pkgs).paths);
-
-  exec = pkgs:
+  onCreate = pkgs: lxcDir:
     let
-      sets = (collectLXCPkgs pkgs).sets;
+      sets = collectLXCPkgs lxcDir pkgs;
+      onCreateSets = filter (set: set ? onCreate) sets;
+    in
+      joinStrings " " "" (concatLists (map (set: set.onCreate) onCreateSets));
+
+  exec = pkgs: lxcDir:
+    let
+      sets = collectLXCPkgs lxcDir pkgs;
       execSets = filter (set: set ? exec) sets;
     in
       toPath (head execSets).exec;
