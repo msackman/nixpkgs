@@ -9,7 +9,7 @@ let
   mounts1 = builtins.filter (mount: mount != " ") mounts;
   conf = lxcConfLib.sequence ((
       map (mount: lxcConfLib.addMountEntry (mount + " " + dir + "/rootfs" + mount + " none ro,bind 0 0")) mounts1
-    ) ++ [pkgConfig.conf]);
+    ) ++ (if pkgConfig ? conf then [pkgConfig.conf] else []));
   onCreate = [(path + "/lxc/onCreate.sh")] ++ (if pkgConfig ? onCreate then pkgConfig.onCreate else []);
 in
   pkgConfig // {inherit conf onCreate;}

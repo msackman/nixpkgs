@@ -96,7 +96,7 @@ in {
   buildLXCconf = pkgs: lxcDir:
     let
       sets = collectLXCPkgs lxcDir pkgs;
-      configFuns = map (p: p.conf) sets;
+      configFuns = map (p: if p ? conf then p.conf else id) sets;
       config = sequence configFuns lxcConfLib.configDefaults;
     in
       configToString config;
