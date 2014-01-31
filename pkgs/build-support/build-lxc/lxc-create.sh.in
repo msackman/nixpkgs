@@ -13,11 +13,7 @@ for d in proc sys dev tmp sbin; do
     mkdir -p $createInDir/rootfs/$d
 done
 
-expr=$(printf '(lxcConfLib: dir: {conf = lxcConfLib.sequence [
-  (lxcConfLib.setPath "rootfs" "%s/rootfs")
-  (lxcConfLib.addMountEntry "proc %s/rootfs/proc proc nosuid,nodev,noexec 0 0")
-  (lxcConfLib.addMountEntry "sysfs %s/rootfs/sys sysfs nosuid,nodev,noexec 0 0")
-];})' $createInDir $createInDir $createInDir)
+expr=$(printf '(lxcConfLib: dir: {conf = (lxcConfLib.setPath "rootfs" "%s/rootfs");})' $createInDir)
 
 conf=$(printf '%s ['"$@"' '"$expr"' "%s"] %s' '(import @library@).buildLXCconf' '@out@' $createInDir \
   | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
