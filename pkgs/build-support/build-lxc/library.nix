@@ -25,8 +25,17 @@ let
     replacePath = name: fun:
       map (e: if e.name == name then fun e else e);
 
+    ensurePath = name: value: config:
+      if elem {inherit name value;} config then
+        config
+      else
+        appendPath name value config;
+
     addMountEntry = entry:
       appendPath "mount.entry" entry;
+
+    ensureMountEntry = entry:
+      ensurePath "mount.entry" entry;
 
     emptyConfig = [];
 

@@ -8,7 +8,7 @@ let
   # And then we filter it out.
   mounts1 = builtins.filter (mount: mount != " ") mounts;
   conf = lxcConfLib.sequence ((
-      map (mount: lxcConfLib.addMountEntry (mount + " " + dir + "/rootfs" + mount + " none ro,bind 0 0")) mounts1
+      map (mount: lxcConfLib.ensureMountEntry (mount + " " + dir + "/rootfs" + mount + " none ro,bind 0 0")) mounts1
     ) ++ (if pkgConfig ? conf then [pkgConfig.conf] else []));
   onCreate = [(path + "/lxc/onCreate.sh")] ++ (if pkgConfig ? onCreate then pkgConfig.onCreate else []);
 in
