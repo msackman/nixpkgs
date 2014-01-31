@@ -42,7 +42,6 @@ let
       (setPath "console" "none")
       (setPath "pts" 1024)
       (setPath "pivotdir" "lxc_putold")
-      (setPath "autodev" 1)
       (setPath "network.type" "empty")
       (appendPath "cgroup.devices.deny" "a")          # no implicit access to devices
       (appendPath "cgroup.devices.allow" "c 1:3 rwm"   ) # /dev/null and zero
@@ -106,7 +105,7 @@ in {
       sets = collectLXCPkgs lxcDir pkgs;
       onCreateSets = filter (set: set ? onCreate) sets;
     in
-      joinStrings " " "" (concatLists (map (set: set.onCreate) onCreateSets));
+      joinStrings " " "" (concatLists (map (set: (map toString set.onCreate)) onCreateSets));
 
   exec = pkgs: lxcDir:
     let

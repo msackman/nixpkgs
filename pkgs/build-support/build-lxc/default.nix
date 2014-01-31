@@ -1,9 +1,6 @@
 {stdenv, lib, lxc, nix, coreutils, gnused}:
   {name, pkgs ? [], pkg ? null, lxcConf ? ""}:
 
-  assert pkgs == [] -> pkg != null;
-  assert pkg == null -> pkgs != [];
-
   let
 
     interleave = xs: ys:
@@ -15,7 +12,7 @@
              interleave (builtins.tail xs) (builtins.tail ys);
     joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
-    pkgs_ = if pkgs == [] then [pkg] else pkgs;
+    pkgs_ = if pkg == null then pkgs else [pkg];
     depFiles = map baseNameOf pkgs_;
     pkgsDeps = interleave depFiles pkgs_;
 
@@ -39,18 +36,22 @@
         mkdir -p $out/bin
         mkdir $out/lxc
 
+        touch pkgs
+        touch $out/lxc/storeMounts
         ${joinStrings "\n" "" (map (p: "printf \"%s\n\" \""+p+"\" >> pkgs") pkgs_)}
-        cat pkgs ${joinStrings " " "" depFiles} | sort | uniq | grep '^[^0-9]' > dependencies
+        if [ -s pkgs ]; then
+          cat pkgs ${joinStrings " " "" depFiles} | sort | uniq | grep '^[^0-9]' > dependencies
+
+          for dir in $(cat dependencies); do
+            if [ -d $dir ]; then
+              printf "%s\n" "$dir" >> $out/lxc/storeMounts
+            fi
+          done
+        fi
 
         ${lxcConfBuilder}
         sed -e "s|@path@|$out|g" ${lxcStoreMounts} > $out/lxc/default.nix
         sed -e "s|@path@|$out|g" ${onCreate} > $out/lxc/onCreate.sh
-
-        for dir in $(cat dependencies); do
-          if [ -d $dir ]; then
-            printf "%s\n" "$dir" >> $out/lxc/storeMounts
-          fi
-        done
 
         sed -e "s|@shell@|${stdenv.shell}|g" \
             -e "s|@out@|$out|g" \
