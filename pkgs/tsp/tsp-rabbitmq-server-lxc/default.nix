@@ -1,4 +1,4 @@
-{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC, tsp_bash, tsp_dev_proc_sys }:
+{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC, bash, coreutils }:
 
 let
   wrapped = stdenv.mkDerivation rec {
@@ -11,10 +11,12 @@ let
       done
     '';
   };
+  tsp_bash = (import ../tsp-bash) { inherit stdenv buildLXC bash coreutils; };
+  tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
 in
   buildLXC {
     name = "rabbitmq-server-lxc";
-    pkgs = [ wrapped tsp_bash tsp_dev_proc_sys ];
+    pkgs = [ wrapped bash ];
     lxcConf = ''lxcConfLib: dir:
       {conf = lxcConfLib.addNetwork {
         type           = "veth";

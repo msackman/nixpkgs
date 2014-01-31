@@ -1,11 +1,13 @@
-{ stdenv, buildLXC, bash }:
+{ stdenv, buildLXC, bash, coreutils }:
 let
   createIn = ./on-create.sh.in;
   create = stdenv.mkDerivation rec {
     name = "${bash.name}-oncreate";
     buildCommand = ''
       mkdir -p $out/bin
-      sed -e "s|@bash@|${bash}|g" ${createIn} > $out/bin/on-create.sh
+      sed -e "s|@bash@|${bash}|g" \
+          -e "s|@coreutils@|${coreutils}|g" \
+          ${createIn} > $out/bin/on-create.sh
     '';
   };
 in

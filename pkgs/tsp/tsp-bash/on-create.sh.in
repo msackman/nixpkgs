@@ -1,4 +1,4 @@
 dir=$1
 
-mkdir -p $dir/rootfs/bin
-ln -s @bash@/bin/bash $dir/rootfs/bin/sh
+@coreutils@/bin/mkdir -p $dir/rootfs/bin
+@coreutils@/bin/ln -s @bash@/bin/bash $dir/rootfs/bin/sh

@@ -1,16 +1,17 @@
-{ stdenv, buildLXC }:
+{ stdenv, buildLXC, coreutils }:
 let
-  createIn = ./on-create.sh;
+  createIn = ./on-create.sh.in;
   create = stdenv.mkDerivation rec {
     name = "tsp-dev-proc-sys-oncreate";
     buildCommand = ''
       mkdir -p $out/bin
-      cp ${createIn} $out/bin/on-create.sh
+      sed -e "s|@coreutils@|${coreutils}|g" \
+          ${createIn} > $out/bin/on-create.sh
     '';
   };
 in
   buildLXC {
-    name = "tsp-dev-proc-sys";
+    name = "tsp-dev-proc-sys-lxc";
     lxcConf = ''lxcConfLib: dir:
       {conf = lxcConfLib.sequence [
         (lxcConfLib.addMountEntry ("proc "+dir+"/rootfs/proc proc nosuid,nodev,noexec 0 0"))

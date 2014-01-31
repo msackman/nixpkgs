@@ -1,0 +1,4 @@
+dir=$1
+@coreutils@/bin/mkdir -p $dir/rootfs/dev
+@coreutils@/bin/mkdir -p $dir/rootfs/proc
+@coreutils@/bin/mkdir -p $dir/rootfs/sys
