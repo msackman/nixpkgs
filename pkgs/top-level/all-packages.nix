@@ -6287,6 +6287,7 @@ let
   tsp_rabbitmq_server = callPackage ../tsp/tsp-rabbitmq-server { };
   tsp_rabbitmq_server_lxc = callPackage ../tsp/tsp-rabbitmq-server-lxc { };
   tsp_bash = callPackage ../tsp/tsp-bash { };
+  tsp_dev_proc_sys = callPackage ../tsp/tsp-dev-proc-sys { };
 
   radius = callPackage ../servers/radius { };
 
