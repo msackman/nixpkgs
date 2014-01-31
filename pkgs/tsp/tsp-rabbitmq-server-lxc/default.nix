@@ -1,4 +1,4 @@
-{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC }:
+{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC, tsp_bash }:
 
 let
   wrapped = stdenv.mkDerivation rec {
@@ -14,7 +14,7 @@ let
 in
   buildLXC {
     name = "rabbitmq-server-lxc";
-    pkgs = [ wrapped ];
+    pkgs = [ wrapped tsp_bash ];
     lxcConf = ''lxcConfLib: dir:
       {conf = lxcConfLib.addNetwork {
         type           = "veth";
@@ -24,6 +24,7 @@ in
         ipv4           = "10.0.0.10";
         "ipv4.gateway" = "10.0.0.1";};
        exec = "${wrapped}/sbin/rabbitmq-server";
+       lxcPkgs = [ "${tsp_bash}" ];
       }
       '';
   }
