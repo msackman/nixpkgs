@@ -3,7 +3,6 @@
 
   assert pkgs == [] -> pkg != null;
   assert pkg == null -> pkgs != [];
-  assert builtins.isString lxcConf;
 
   let
 
@@ -23,6 +22,14 @@
     library = ./library.nix;
     createSh = ./lxc-create.sh.in;
     startSh = ./lxc-start.sh.in;
+
+    lxcConfBuilder = if builtins.isString lxcConf then
+        ''printf '%s' '${lxcConf}' > $out/lxc/pkg.nix''
+      else
+        ''cp ${lxcConf} $out/lxc/pkg.nix'';
+
+    lxcStoreMounts = ./store-mounts.nix.in;
+    onCreate = ./on-create.sh.in;
   in
 
     stdenv.mkDerivation {
@@ -35,7 +42,9 @@
         ${joinStrings "\n" "" (map (p: "printf \"%s\n\" \""+p+"\" >> pkgs") pkgs_)}
         cat pkgs ${joinStrings " " "" depFiles} | sort | uniq | grep '^[^0-9]' > dependencies
 
-        printf "%s" '${lxcConf}' > $out/lxc/default.nix
+        ${lxcConfBuilder}
+        sed -e "s|@path@|$out|g" ${lxcStoreMounts} > $out/lxc/default.nix
+        sed -e "s|@path@|$out|g" ${onCreate} > $out/lxc/onCreate.sh
 
         for dir in $(cat dependencies); do
           if [ -d $dir ]; then
@@ -53,6 +62,7 @@
         chmod +x $out/bin/lxc-create-${name}.sh
 
         sed -e "s|@shell@|${stdenv.shell}|g" \
+            -e "s|@coreutils@|${coreutils}|g" \
             -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
             ${startSh} > $out/bin/lxc-start-${name}.sh
         chmod +x $out/bin/lxc-start-${name}.sh

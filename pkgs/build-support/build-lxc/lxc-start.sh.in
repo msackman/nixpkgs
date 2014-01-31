@@ -1,9 +1,13 @@
 #! @shell@ -e
 
-dir=$1
+userDir=$1
+dir=$(@coreutils@/bin/dirname $userDir)
+base=$(@coreutils@/bin/basename $userDir)
+lxcDir=$dir/$base
+
 name=$2
 shift 2
 
-[ -f $dir/lxc.conf ]
+[ -f $lxcDir/lxc.conf ]
 
-@lxc-start@ -n $name -f $dir/lxc.conf -- $@
+@lxc-start@ -n $name -f $lxcDir/lxc.conf -- $@

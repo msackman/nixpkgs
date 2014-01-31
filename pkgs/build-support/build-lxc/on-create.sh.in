@@ -1,0 +1,5 @@
+dir=$1
+
+for d in $(cat @path@/lxc/storeMounts); do
+    mkdir -p $dir/rootfs/$d
+done

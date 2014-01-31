@@ -1,9 +1,9 @@
 #! @shell@ -e
 
-createInDir=$1
+userDir=$1
 shift
-dir=$(@coreutils@/bin/dirname $createInDir)
-base=$(@coreutils@/bin/basename $createInDir)
+dir=$(@coreutils@/bin/dirname $userDir)
+base=$(@coreutils@/bin/basename $userDir)
 createInDir=$dir/$base
 
 mkdir $createInDir
@@ -13,30 +13,23 @@ for d in proc sys dev tmp sbin; do
     mkdir -p $createInDir/rootfs/$d
 done
 
-expr=$(printf '(lxcConfLib: {conf = lxcConfLib.sequence [
+expr=$(printf '(lxcConfLib: dir: {conf = lxcConfLib.sequence [
   (lxcConfLib.setPath "rootfs" "%s/rootfs")
-  (lxcConfLib.setPath "mount" "%s/fstab")
   (lxcConfLib.addMountEntry "proc %s/rootfs/proc proc nosuid,nodev,noexec 0 0")
   (lxcConfLib.addMountEntry "sysfs %s/rootfs/sys sysfs nosuid,nodev,noexec 0 0")
-];})' $createInDir $createInDir $createInDir $createInDir)
+];})' $createInDir $createInDir $createInDir)
 
-conf=$(printf '%s ['"$@"' '"$expr"' %s] %s' '(import @library@).buildLXCconf' '@out@' $createInDir \
+conf=$(printf '%s ['"$@"' '"$expr"' "%s"] %s' '(import @library@).buildLXCconf' '@out@' $createInDir \
   | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
 printf "$conf" > $createInDir/lxc.conf
 
-paths=$(printf '%s ['"$@"' %s]' '(import @library@).collectLXCpaths' '@out@' \
-  | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
+paths=$(printf '%s ['"$@"' %s] "%s"' '(import @library@).onCreate' '@out@' $createInDir \
+        | @nix@/bin/nix-instantiate --show-trace --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
 for p in $paths; do
-    cat $p/lxc/storeMounts >> $createInDir/mounts.tmp
-done
-cat $createInDir/mounts.tmp | sort | uniq > $createInDir/mounts
-rm $createInDir/mounts.tmp
-for d in $(cat $createInDir/mounts); do
-    mkdir -p $createInDir/rootfs/$d
-    printf "%s %s/rootfs%s none ro,bind 0 0\n" $d $createInDir $d >> $createInDir/fstab
+  @shell@ -e -- $p $createInDir
 done
 
-init=$(printf '%s ['"$@"' %s]' '(import @library@).exec' '@out@' \
+init=$(printf '%s ['"$@"' %s] "%s"' '(import @library@).exec' '@out@' $createInDir \
   | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
 
 @coreutils@/bin/ln -s $init $createInDir/rootfs/sbin/init
