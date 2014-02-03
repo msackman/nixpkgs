@@ -1,5 +1,8 @@
 let
   lib = import <nixpkgs/lib>;
+  nixpkgs = (import <nixpkgs>) {};
+  stdenv = nixpkgs.stdenv;
+  coreutils = nixpkgs.coreutils;
 
   inherit (builtins) toFile getAttr attrNames isFunction length head tail filter elem toPath concatLists;
   inherit (lib) fold foldl id;
@@ -100,7 +103,7 @@ let
     joinStrings "\n" "" (
       map (attrs: "lxc.${attrs.name} = ${toString attrs.value}") config);
 
-in {
+in rec {
   buildLXCconf = pkgs: lxcDir:
     let
       sets = collectLXCPkgs lxcDir pkgs;
@@ -122,4 +125,29 @@ in {
       execSets = filter (set: set ? exec) sets;
     in
       toPath (head execSets).exec;
+
+  # I'd quite like to use this because we'd get down to one
+  # derivation, so we'd be able to use nix-build from outside and drop
+  # --eval-only. However, user issues stop this from working out
+  # nicely - the nix build daemon can't create dirs it lxcDir as it's
+  # outside the store. So maybe come back to this later.
+  buildLXC = name: pkgs: lxcDir:
+    let
+      config = buildLXCconf pkgs lxcDir;
+      paths = onCreate pkgs lxcDir;
+      init = exec pkgs lxcDir;
+    in stdenv.mkDerivation rec {
+      inherit name;
+      buildInputs = [ coreutils ];
+      buildCommand = ''
+        mkdir -p $out
+        printf "${config}" > $out/lxc.conf
+        echo $(cat $out/lxc.conf)
+        for p in ${paths}; do
+          $shell -e -- $p ${lxcDir}
+        done
+        mkdir -p ${lxcDir}/sbin
+        ln -s ${init} ${lxcDir}/sbin/init
+      '';
+    };
 }
