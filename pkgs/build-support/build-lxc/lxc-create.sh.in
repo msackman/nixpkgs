@@ -9,7 +9,7 @@ createInDir=$dir/$base
 mkdir $createInDir
 mkdir -p $createInDir/rootfs
 
-for d in proc sys dev tmp sbin; do
+for d in tmp sbin; do
     mkdir -p $createInDir/rootfs/$d
 done
 
