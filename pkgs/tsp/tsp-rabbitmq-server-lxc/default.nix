@@ -19,7 +19,7 @@ let
     '';
   };
 in
-  buildLXC {
+  {ip, gw} : buildLXC {
     name = "rabbitmq-server-lxc";
     pkgs = [ wrapped bash ];
     lxcConf = ''lxcConfLib: dir:
@@ -28,8 +28,8 @@ in
         link           = "br0";
         name           = "eth0";
         flags          = "up";
-        ipv4           = "10.0.0.10";
-        "ipv4.gateway" = "10.0.0.1";};
+        ipv4           = "${ip}";
+        "ipv4.gateway" = "${gw}";};
        exec = "${wrapped}/sbin/rabbitmq-server";
        lxcPkgs = [ "${tsp_bash}" "${tsp_dev_proc_sys}" "${tsp_home user uid group gid}" ];
       }
