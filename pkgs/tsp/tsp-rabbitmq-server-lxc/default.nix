@@ -8,6 +8,7 @@ let
   tsp_bash = (import ../tsp-bash) { inherit stdenv buildLXC bash coreutils; };
   tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
   tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash tsp_bash; };
+  tsp_network = (import ../tsp-network) { inherit buildLXC; };
   wrapped = stdenv.mkDerivation rec {
     name = "${tsp_rabbitmq_server.name}-wrapped";
     buildInputs = [ makeWrapper ];
@@ -19,19 +20,13 @@ let
     '';
   };
 in
-  {ip, gw} : buildLXC {
+  {ip, gw, hostname} : buildLXC {
     name = "rabbitmq-server-lxc";
     pkgs = [ wrapped bash ];
     lxcConf = ''lxcConfLib: dir:
-      {conf = lxcConfLib.addNetwork {
-        type           = "veth";
-        link           = "br0";
-        name           = "eth0";
-        flags          = "up";
-        ipv4           = "${ip}";
-        "ipv4.gateway" = "${gw}";};
-       exec = "${wrapped}/sbin/rabbitmq-server";
-       lxcPkgs = [ "${tsp_bash}" "${tsp_dev_proc_sys}" "${tsp_home user uid group gid}" ];
+      {exec = "${wrapped}/sbin/rabbitmq-server";
+       lxcPkgs = [ "${tsp_bash}" "${tsp_dev_proc_sys}" "${tsp_home user uid group gid}"
+                   "${tsp_network {inherit gw ip hostname;}}" ];
       }
       '';
   }
