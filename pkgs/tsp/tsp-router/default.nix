@@ -1,4 +1,4 @@
-{ stdenv, fetchurl, fetchgit, fetchhg, erlang, lib, tsp_rebar, coreutils }:
+{ stdenv, fetchurl, fetchgit, fetchhg, erlang, lib, rebar, coreutils }:
 
 let
   repos = rec {
@@ -59,14 +59,14 @@ let
       path = stdenv.mkDerivation rec {
         inherit (desc) name;
         src = desc.fetcher desc;
-        buildInputs = [ erlang tsp_rebar coreutils ] ++ (map (e: e.path) deps);
+        buildInputs = [ erlang rebar coreutils ] ++ (map (e: e.path) deps);
         buildPhase = ''
           export DEPSPATH=$(pwd)/deps
           mkdir $DEPSPATH
           mkdir -p priv/tmp
           ${setupDeps deps}
           rebar check-deps
-          rebar compile
+          rebar compile skip_deps=true
         '';
         installPhase = ''
           ensureDir $out
