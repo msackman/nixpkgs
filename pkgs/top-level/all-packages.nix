@@ -726,6 +726,8 @@ let
 
   cpio = callPackage ../tools/archivers/cpio { };
 
+  criu = callPackage ../os-specific/linux/criu { };
+
   cromfs = callPackage ../tools/archivers/cromfs { };
 
   cron = callPackage ../tools/system/cron { };
