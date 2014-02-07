@@ -75,6 +75,9 @@ let
               cp -a "$d" "$out/$d"
             fi
           done
+          mkdir $out/deps
+          export DEPSPATH=$out/deps
+          ${setupDeps deps}
         '';
       };
     in
