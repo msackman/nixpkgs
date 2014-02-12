@@ -1,6 +1,45 @@
-{stdenv, lib, lxc, nix, coreutils, gnused}:
-  {name, pkgs ? [], pkg ? null, lxcConf ? ""}:
-
+{stdenv, lib, lxc, coreutils, gnused}:
+  let
+    inherit (builtins) getAttr isAttrs hasAttr filter concatLists;
+    inherit (lib) id foldl;
+    lxcLib = { };
+    isLxcPkg  = thing: isAttrs thing && hasAttr "isLxc" thing && thing.isLxc;
+    runPkg = pkg: configuration:
+        ({ name, lxcConf ? id, storeMounts ? [], onCreate ? [], options ? [], configuration ? {}}:
+           { inherit name lxcConf storeMounts onCreate options configuration; })
+        (pkg.fun { inherit configuration lxcLib; });
+    lxcPkgs = filter isLxcPkg;
+    sequence = list: init: foldl (acc: f: f acc) init list;
+    reachFixedPoint = pkg: f: init: ## we have a problem here - not necessarily the right thing to do to change configuration
+      let g = old:
+        let result = f old (runPkg pkg { configuration = old; inherit lxcLib; }); in
+        if result.equal then old else g result.new;
+      in g init;
+    storeMountDependentFixedPoint = pkg: fun: init:
+      let result = reachFixedPoint pkg (old: pkgSet:
+        let
+          storeMounts = pkgSet.storeMounts;
+          result = fun old.result storeMounts;
+          new = { inherit storeMounts result; };
+        in
+          { equal = new == old; inherit new; }
+        ) init;
+      in result.result;
+    collectOptions = pkg:
+      storeMountDependentFixedPoint pkg (oldOptions: storeMounts:
+        let
+          pkgs = lxcPkgs storeMounts;
+          localOptions = runPkg pkg { }
+          sequence pkg.options oldOptions;
+        in
+          fold collectOptions localOptions pkgs;
+      );
+  in fun:
+  assert builtins.isFunction fun;
+    {
+      inherit fun;
+      isLxc = true;
+    }
   let
 
     interleave = xs: ys:
@@ -30,7 +69,7 @@
   in
 
     stdenv.mkDerivation {
-      name = "${name}-lxc";
+      name = "build-lxc-${name}";
       exportReferencesGraph = pkgsDeps;
       buildCommand = ''
         mkdir -p $out/bin

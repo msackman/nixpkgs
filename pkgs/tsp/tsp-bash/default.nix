@@ -1,20 +1,31 @@
 { stdenv, buildLXC, bash, coreutils }:
-let
-  createIn = ./on-create.sh.in;
-  create = stdenv.mkDerivation rec {
-    name = "${bash.name}-oncreate";
-    buildCommand = ''
-      mkdir -p $out/bin
-      sed -e "s|@bash@|${bash}|g" \
-          -e "s|@coreutils@|${coreutils}|g" \
-          ${createIn} > $out/bin/on-create.sh
-    '';
-  };
-in
-  buildLXC {
-    name = "${bash.name}-lxc";
-    pkgs = [ bash ];
-    lxcConf = ''lxcConfLib: dir:
-      {onCreate = ["${create}/bin/on-create.sh"];}
+
+buildLXC ({ configuration, lxcLib }:
+  let
+    createIn = ./on-create.sh.in;
+    create = stdenv.mkDerivation rec {
+      name = "${bash.name}-oncreate";
+      buildCommand = ''
+        mkdir -p $out/bin
+        sed -e "s|@bash@|${bash}|g" \
+            -e "s|@coreutils@|${coreutils}|g" \
+            ${createIn} > $out/bin/on-create.sh
       '';
-  }
+    };
+  in
+    {
+      name = "${bash.name}-lxc";
+      storeMounts = [ bash ];
+      lxcConf =
+        if configuration."bash.start" then
+          lxcLib.setInit "${bash}/bin/bash"
+        else
+          lxcfLib.id;
+       onCreate = [ "${create}/bin/on-create.sh" ];
+       options = [
+         (lxcLib.declareOption {
+           name = "bash.start";
+           optional = true;
+           default = false;
+          })];
+    })

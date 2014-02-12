@@ -39,8 +39,8 @@ let
       {
         name = "tsp-demo-router";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-router";
-        sha256 = "0h735ibsxxrbdflr9yp0b9x6kwlvmilb1bwpwn9kd4z2m4sb1v79";
-        tag = "dc6ef989ac75";
+        sha256 = "0641m4x5qm1g5p0s73s369872amdnl6agf9vqxdaxsxxjhwa7bj6";
+        tag = "6561c82ad2e8";
         fetcher = hg;
         deps = [ procket msgpack pkt tunctl ];
       };

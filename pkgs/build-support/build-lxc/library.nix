@@ -7,10 +7,9 @@ let
   hasPath = path:
     fold (e: acc: if acc then acc else e == path) false;
   sequence = list: init: foldl (acc: f: f acc) init list;
-  listDelete = toDelete: filter (e: e != toDelete);
 
   lxcConfLib = rec {
-    inherit sequence;
+    inherit sequence, lib;
 
     setPath = name: value: config:
       assert ! (hasPath name config);
@@ -39,12 +38,6 @@ let
 
     emptyConfig = [];
 
-    addNetwork = network:
-      # 'type' must come first. Yes, lxc.conf is retarded.
-      sequence (fold (name: acc:
-        [(removePath "network.${name}")
-         (appendPath "network.${name}" (getAttr name network))] ++ acc
-      ) [] (["type"] ++ (listDelete "type" (attrNames network))));
 
     configDefaults = sequence [
       (setPath "tty" 1)
