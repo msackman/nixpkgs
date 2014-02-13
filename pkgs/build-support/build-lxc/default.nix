@@ -10,6 +10,23 @@
         (pkg.fun { inherit configuration lxcLib; });
     lxcPkgs = filter isLxcPkg;
     sequence = list: init: foldl (acc: f: f acc) init list;
+
+    ## We need to finalise configuration and
+    ## storeMounts. Configuration depends on storeMounts and
+    ## storeMounts depends on configuration (though progress is
+    ## guaranteed). Both onCreate and lxcConf depend on on storeMounts
+    ## and configuration. Also lxcConf is also a list of functions and
+    ## we can't do equality on functions. However, once storeMounts
+    ## and configuration has stopped changing, we should then just be
+    ## able to run through lxcConf, so lxcConf shouldn't come into the
+    ## fixed point calculation (neither should onCreate).
+
+    ## 1. Establish fixed point on configuration and storeMounts.
+    ## 2. Collect options
+    ## 3. Add to configuration default values from options. If this alters configuration, goto (1).
+    ## 4. Verify options
+    ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
+
     reachFixedPoint = pkg: f: init: ## we have a problem here - not necessarily the right thing to do to change configuration
       let g = old:
         let result = f old (runPkg pkg { configuration = old; inherit lxcLib; }); in
