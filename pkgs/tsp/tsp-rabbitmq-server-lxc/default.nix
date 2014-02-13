@@ -7,7 +7,7 @@ buildLXC ({ configuration, lxcLib }:
     tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash tsp_bash; };
     tsp_network = (import ../tsp-network) { inherit buildLXC; };
     wrapped = stdenv.mkDerivation rec {
-      name = "${tsp_rabbitmq_server.name}-wrapped";
+      name = "${tsp_rabbitmq_server.name}-lxc-wrapper";
       buildInputs = [ makeWrapper ];
       buildCommand = ''
         mkdir -p $out/sbin
@@ -39,4 +39,4 @@ buildLXC ({ configuration, lxcLib }:
         "home.group" = "rabbit";
         "home.gid"   = 1000;
       };
-     })
+    })

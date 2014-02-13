@@ -1,4 +1,4 @@
-{ stdenv, buildLXC, coreutils, bash, tsp_bash }:
+{ stdenv, buildLXC, coreutils, bash }:
 
 buildLXC ({ configuration, lxcLib }:
   let
@@ -19,7 +19,7 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "tsp-home-lxc";
-      storeMounts = [ tsp_bash ];
+      storeMounts = [ bash ];
       onCreate = [ "${create}/bin/on-create.sh" ];
       options = [
         (lxcLib.declareOption {
