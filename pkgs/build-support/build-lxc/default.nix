@@ -1,9 +1,9 @@
 {stdenv, lib, lxc, coreutils, gnused}:
   let
-    inherit (builtins) getAttr isAttrs hasAttr filter concatLists;
-    inherit (lib) id foldl;
+    inherit (builtins) getAttr isAttrs hasAttr attrNames filter concatLists listToAttrs elem length;
+    inherit (lib) id foldl fold;
     lxcLib = { };
-    isLxcPkg  = thing: isAttrs thing && hasAttr "isLxc" thing && thing.isLxc;
+    isLxcPkg = thing: isAttrs thing && hasAttr "isLxc" thing && thing.isLxc;
     runPkg = pkg: configuration:
         ({ name, lxcConf ? id, storeMounts ? [], onCreate ? [], options ? [], configuration ? {}}:
            { inherit name lxcConf storeMounts onCreate options configuration; })
@@ -27,38 +27,39 @@
     ## 4. Verify options
     ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
 
-    reachFixedPoint = pkg: f: init: ## we have a problem here - not necessarily the right thing to do to change configuration
-      let g = old:
-        let result = f old (runPkg pkg { configuration = old; inherit lxcLib; }); in
-        if result.equal then old else g result.new;
-      in g init;
-    storeMountDependentFixedPoint = pkg: fun: init:
-      let result = reachFixedPoint pkg (old: pkgSet:
-        let
-          storeMounts = pkgSet.storeMounts;
-          result = fun old.result storeMounts;
-          new = { inherit storeMounts result; };
-        in
-          { equal = new == old; inherit new; }
-        ) init;
-      in result.result;
-    collectOptions = pkg:
-      storeMountDependentFixedPoint pkg (oldOptions: storeMounts:
-        let
-          pkgs = lxcPkgs storeMounts;
-          localOptions = runPkg pkg { }
-          sequence pkg.options oldOptions;
-        in
-          fold collectOptions localOptions pkgs;
-      );
-  in fun:
-  assert builtins.isFunction fun;
-    {
-      inherit fun;
-      isLxc = true;
-    }
-  let
+    lazyStoreMountConfigEq = a: b:
+      a.configuration == b.configuration &&
+      (length a.storeMounts) == (length b.storeMounts) &&
+      a.storeMounts == b.storeMounts;
 
+    storeMountsAndConfig = pkg: result@{ configuration, storeMounts }:
+      let
+        pkgSet = runPkg pkg configuration;
+        configuration1 = configuration // pkgSet.configuration;
+        storeMounts1 = fold (sm: acc: if elem sm acc then acc else [ sm ] ++ acc)
+                         storeMounts pkgSet.storeMounts;
+        localResult = { configuration = configuration1; storeMounts = storeMounts1; };
+        lxcPkgsStoreMounts = lxcPkgs pkgSet.storeMounts;
+        childrenResult = fold storeMountsAndConfig localResult lxcPkgsStoreMounts;
+      in
+        if (lazyStoreMountConfigEq result localResult) &&
+           (lazyStoreMountConfigEq localResult childrenResult) then
+          localResult
+        else
+          storeMountsAndConfig pkg childrenResult;
+
+  in fun:
+    assert builtins.isFunction fun;
+    let
+      pkg = {
+        inherit fun;
+        isLxc = true;
+      };
+      mountsAndConfig = storeMountsAndConfig pkg { configuration = {}; storeMounts = []; };
+    in
+      pkg // mountsAndConfig
+
+/*
     interleave = xs: ys:
       if xs == []
       then ys
@@ -125,3 +126,4 @@
         chmod +x $out/bin/lxc-start-${name}.sh
       '';
     }
+*/

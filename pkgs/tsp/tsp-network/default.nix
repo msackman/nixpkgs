@@ -6,7 +6,7 @@ buildLXC ({ configuration, lxcLib }:
     lxcConf =
       let
         inherit (lib) fold;
-        inherit (builtins) getAttr attrNames hasAttr listToAttrs;
+        inherit (builtins) getAttr attrNames hasAttr listToAttrs filter;
         inherit (lxcLib) sequence removePath appendPath setPath;
         baseNetwork = {
           network.type  = "veth";
@@ -19,9 +19,9 @@ buildLXC ({ configuration, lxcLib }:
                     [{inherit name; value = getAttr name configuration;}]
                   else
                     []
-                 )) [] [ "network.ipv4" "network.gateway" ]
-        network = acc // (listToAttrs networkConfiguration)
-        hostname = if options ? "network.hostname" then
+                 )) [] [ "network.ipv4" "network.gateway" ];
+        network = baseNetwork // (listToAttrs networkConfiguration);
+        hostname = if configuration ? "network.hostname" then
                      [setPath "utsname" (configuration."network.hostname")]
                    else
                      [];

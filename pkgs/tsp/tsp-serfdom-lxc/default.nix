@@ -1,10 +1,10 @@
-{ stdenv, serfdom, buildLXC, bash, coreutils, gnused }:
+{ stdenv, serfdom, buildLXC, bash, coreutils, gnused, lib }:
 
 buildLXC ({ configuration, lxcLib }:
   let
-    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
+    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils lib; };
     tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
-    tsp_network = (import ../tsp-network) { inherit buildLXC; };
+    tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
     init = builtins.toFile "init" ''
       #! ${stdenv.shell}
       ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -tag x=y -node=${configuration."network.hostname"}

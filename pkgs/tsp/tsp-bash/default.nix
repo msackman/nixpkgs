@@ -20,7 +20,7 @@ buildLXC ({ configuration, lxcLib }:
         if configuration."bash.start" then
           lxcLib.setInit "${bash}/bin/bash"
         else
-          lxcfLib.id;
+          lxcLib.id;
        onCreate = [ "${create}/bin/on-create.sh" ];
        options = [
          (lxcLib.declareOption {

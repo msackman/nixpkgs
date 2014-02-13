@@ -1,11 +1,11 @@
-{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC, bash, coreutils }:
+{ stdenv, makeWrapper, tsp_rabbitmq_server, buildLXC, bash, coreutils, lib }:
 
 buildLXC ({ configuration, lxcLib }:
   let
     tsp_bash = (import ../tsp-bash) { inherit stdenv buildLXC bash coreutils; };
-    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
-    tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash tsp_bash; };
-    tsp_network = (import ../tsp-network) { inherit buildLXC; };
+    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils lib; };
+    tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
+    tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_rabbitmq_server.name}-lxc-wrapper";
       buildInputs = [ makeWrapper ];
@@ -19,12 +19,13 @@ buildLXC ({ configuration, lxcLib }:
       '';
     };
   in
+    builtins.trace [configuration "here"]
     {
       name = "rabbitmq-server-lxc";
       storeMounts = [ tsp_bash tsp_dev_proc_sys tsp_home tsp_network tsp_rabbitmq_server wrapped ];
       lxcConf =
         if configuration."rabbitmq-server.start" then
-          lxcLib.setInit "${wrapped}/sbin/rabbitmq-server";
+          lxcLib.setInit "${wrapped}/sbin/rabbitmq-server"
         else
           lxcLib.id;
       options = [

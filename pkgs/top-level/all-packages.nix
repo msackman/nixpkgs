@@ -274,7 +274,7 @@ let
   };
 
   buildLXC = import ../build-support/build-lxc {
-    inherit stdenv lib lxc nix coreutils gnused;
+    inherit stdenv lib lxc coreutils gnused;
   };
 
   dotnetenv = import ../build-support/dotnetenv {

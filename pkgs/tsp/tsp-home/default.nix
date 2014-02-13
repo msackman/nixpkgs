@@ -8,10 +8,10 @@ buildLXC ({ configuration, lxcLib }:
       buildCommand = ''
         mkdir -p $out/bin
         sed -e "s|@coreutils@|${coreutils}|g" \
-            -e "s|@user@|${configuration.\"home.user\"}|g" \
-            -e "s|@uid@|${configuration.\"home.uid\"}|g" \
-            -e "s|@group@|${configuration.\"home.group\"}|g" \
-            -e "s|@gid@|${configuration.\"home.gid\"}|g" \
+            -e "s|@user@|${configuration."home.user"}|g" \
+            -e "s|@uid@|${configuration."home.uid"}|g" \
+            -e "s|@group@|${configuration."home.group"}|g" \
+            -e "s|@gid@|${configuration."home.gid"}|g" \
             -e "s|@shell@|${bash}/bin/sh|g" \
             ${createIn} > $out/bin/on-create.sh
       '';

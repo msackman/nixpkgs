@@ -17,8 +17,8 @@ buildLXC ({ configuration, lxcLib }:
       lxcConf =
         let
           defaults = {
-            proc  = lxcLib.addMountEntry ("proc "+dir+"/rootfs/proc proc nosuid,nodev,noexec 0 0");
-            sysfs = lxcLib.addMountEntry ("sysfs "+dir+"/rootfs/sys sysfs nosuid,nodev,noexec 0 0");
+            proc  = lxcLib.addMountEntry (dir: "proc "+dir+"/rootfs/proc proc nosuid,nodev,noexec 0 0");
+            sysfs = lxcLib.addMountEntry (dir: "sysfs "+dir+"/rootfs/sys sysfs nosuid,nodev,noexec 0 0");
             dev   = lxcLib.setPath "autodev" 1;
           };
         in
