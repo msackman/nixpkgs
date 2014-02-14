@@ -19,7 +19,6 @@ buildLXC ({ configuration, lxcLib }:
       '';
     };
   in
-    builtins.trace [configuration "here"]
     {
       name = "rabbitmq-server-lxc";
       storeMounts = [ tsp_bash tsp_dev_proc_sys tsp_home tsp_network tsp_rabbitmq_server wrapped ];
@@ -30,7 +29,7 @@ buildLXC ({ configuration, lxcLib }:
           lxcLib.id;
       options = [
         (lxcLib.declareOption {
-          name = "rabbitmq-server.start";
+          name = "rabbitmq_server.start";
           optional = true;
           default = false;
          })];

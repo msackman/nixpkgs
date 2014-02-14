@@ -1,8 +1,14 @@
 {stdenv, lib, lxc, coreutils, gnused}:
   let
     inherit (builtins) getAttr isAttrs hasAttr attrNames filter concatLists listToAttrs elem length;
-    inherit (lib) id foldl fold;
-    lxcLib = { };
+    inherit (lib) id foldl fold sort;
+    lxcLib = rec {
+      declareOption = option@{ name, optional, ... }: options:
+        assert ! hasAttr name options;
+        options // listToAttrs [{ inherit name; value =
+          ((if option ? default then { default = option.default; } else {}) //
+            { inherit optional; });}];
+    };
     isLxcPkg = thing: isAttrs thing && hasAttr "isLxc" thing && thing.isLxc;
     runPkg = pkg: configuration:
         ({ name, lxcConf ? id, storeMounts ? [], onCreate ? [], options ? [], configuration ? {}}:
@@ -29,14 +35,13 @@
 
     lazyStoreMountConfigEq = a: b:
       a.configuration == b.configuration &&
-      (length a.storeMounts) == (length b.storeMounts) &&
-      a.storeMounts == b.storeMounts;
+      (attrNames a.storeMounts) == (attrNames b.storeMounts);
 
     storeMountsAndConfig = pkg: result@{ configuration, storeMounts }:
       let
         pkgSet = runPkg pkg configuration;
         configuration1 = configuration // pkgSet.configuration;
-        storeMounts1 = fold (sm: acc: if elem sm acc then acc else [ sm ] ++ acc)
+        storeMounts1 = fold (sm: acc: acc // (listToAttrs [{name = sm.name; value = sm;}]))
                          storeMounts pkgSet.storeMounts;
         localResult = { configuration = configuration1; storeMounts = storeMounts1; };
         lxcPkgsStoreMounts = lxcPkgs pkgSet.storeMounts;
@@ -48,16 +53,65 @@
         else
           storeMountsAndConfig pkg childrenResult;
 
+    collectOptions = configuration: pkg: options:
+      let
+        pkgSet = runPkg pkg configuration;
+        localOptions = sequence pkgSet.options options;
+        lxcPkgsStoreMounts = lxcPkgs pkgSet.storeMounts;
+      in
+        fold (collectOptions configuration) localOptions lxcPkgsStoreMounts;
+
+    extendConfig = options: configuration:
+      fold (optName: config:
+        let opt = getAttr optName options; in
+          if opt ? "default" && ! (hasAttr optName config) then
+            config // (listToAttrs [{ name = optName; value = opt.default; }])
+          else
+            config) configuration (attrNames options);
+
+    storeMountsConfigsOptions = pkg: configuration: storeMounts: options:
+      let
+        mountsAndConfig = storeMountsAndConfig pkg { inherit configuration storeMounts; };
+        collectedOptions = collectOptions mountsAndConfig.configuration pkg options;
+        extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
+      in
+        if extendedConfig == mountsAndConfig.configuration then
+          mountsAndConfig // { options = collectedOptions; }
+        else
+          storeMountsConfigsOptions pkg extendedConfig mountsAndConfig.storeMounts options;
+
+    validateRequiredOptions = { options, configuration, ... }:
+      fold (optName: acc:
+        let opt = getAttr optName options; in
+          if (! (opt ? optional)) || ! opt.optional then
+            if ! hasAttr optName configuration then
+              throw "Unable to find required configuration ${optName}."
+            else
+              acc
+          else
+            acc) true (attrNames options);
+
+    validateUsedOptionsDeclared = { options, configuration, ... }:
+      fold (confName: acc:
+        if (! hasAttr confName options) then
+          throw "Configuration ${confName} used but not declared in any package reached."
+        else
+          acc
+      ) true (attrNames configuration);
+
   in fun:
     assert builtins.isFunction fun;
     let
       pkg = {
-        inherit fun;
+        inherit fun name validated;
         isLxc = true;
       };
-      mountsAndConfig = storeMountsAndConfig pkg { configuration = {}; storeMounts = []; };
+      mountsConfigOptions = storeMountsConfigsOptions pkg {} {} {};
+      validated = (validateRequiredOptions mountsConfigOptions) &&
+                  (validateUsedOptionsDeclared mountsConfigOptions);
+      name = (runPkg pkg mountsConfigOptions.configuration).name;
     in
-      pkg // mountsAndConfig
+      pkg // mountsConfigOptions
 
 /*
     interleave = xs: ys:
