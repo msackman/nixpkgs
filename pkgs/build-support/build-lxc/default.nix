@@ -15,7 +15,9 @@
            { inherit name lxcConf storeMounts onCreate options configuration; })
         (pkg.fun { inherit configuration lxcLib; });
     lxcPkgs = filter isLxcPkg;
+    nonLxcPkgs = filter (e: ! (isLxcPkg e));
     sequence = list: init: foldl (acc: f: f acc) init list;
+    joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
     ## We need to finalise configuration and
     ## storeMounts. Configuration depends on storeMounts and
@@ -99,12 +101,26 @@
           acc
       ) true (attrNames configuration);
 
+    storeMountsFile = name: storeMounts:
+      let
+        pkgs = nonLxcPkgs (fold (smName: acc: [(getAttr smName storeMounts)] ++ acc)
+                          [] (attrNames storeMounts));
+      in
+        stdenv.mkDerivation {
+          name = "${name}-storeMounts";
+          exportReferencesGraph = concatLists (map (e: [e.name e]) pkgs);
+          buildCommand = joinStrings "\n" ""
+            ((map (pkg: "cat ${pkg.name} >> deps") pkgs) ++
+            ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
+        };
+
   in fun:
     assert builtins.isFunction fun;
     let
       pkg = {
         inherit fun name validated;
         isLxc = true;
+        mounts = storeMountsFile name mountsConfigOptions.storeMounts;
       };
       mountsConfigOptions = storeMountsConfigsOptions pkg {} {} {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
