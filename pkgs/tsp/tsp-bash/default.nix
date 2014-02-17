@@ -6,10 +6,10 @@ buildLXC ({ configuration, lxcLib }:
     create = stdenv.mkDerivation rec {
       name = "${bash.name}-oncreate";
       buildCommand = ''
-        mkdir -p $out/bin
         sed -e "s|@bash@|${bash}|g" \
             -e "s|@coreutils@|${coreutils}|g" \
-            ${createIn} > $out/bin/on-create.sh
+            ${createIn} > $out
+        chmod +x $out
       '';
     };
   in
@@ -21,7 +21,7 @@ buildLXC ({ configuration, lxcLib }:
           lxcLib.setInit "${bash}/bin/bash"
         else
           lxcLib.id;
-       onCreate = [ "${create}/bin/on-create.sh" ];
+       onCreate = [ create ];
        options = [
          (lxcLib.declareOption {
            name = "bash.start";

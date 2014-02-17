@@ -274,7 +274,7 @@ let
   };
 
   buildLXC = import ../build-support/build-lxc {
-    inherit stdenv lib lxc coreutils gnused;
+    inherit stdenv lib lxc coreutils;
   };
 
   dotnetenv = import ../build-support/dotnetenv {
@@ -6318,7 +6318,7 @@ let
   tsp_rabbitmq_server = callPackage ../tsp/tsp-rabbitmq-server { };
   tsp_rabbitmq_server_lxc = callPackage ../tsp/tsp-rabbitmq-server-lxc { };
   tsp_router = callPackage ../tsp/tsp-router { };
-  tsp_serf_lxc = callPackage ../tsp/tsp-serf-lxc { };
+  tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
 
   radius = callPackage ../servers/radius { };
 

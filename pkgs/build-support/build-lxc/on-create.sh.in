@@ -1,7 +1,0 @@
-dir=$1
-
-if [ -s @path@/lxc/storeMounts ]; then
-  for d in $(cat @path@/lxc/storeMounts); do
-    mkdir -p $dir/rootfs/$d
-  done
-fi
