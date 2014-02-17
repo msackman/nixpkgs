@@ -1,30 +1,36 @@
 { stdenv, fetchurl, python, pygtk, vte, gettext, intltool, makeWrapper }:
 
 stdenv.mkDerivation rec {
-  name = "gnome-terminator-0.96";
+  name = "gnome-terminator-${version}";
+  version = "0.97";
   
   src = fetchurl {
-    url = "https://launchpad.net/terminator/trunk/0.96/+download/terminator_0.96.tar.gz";
-    sha256 = "d708c783c36233fcafbd0139a91462478ae40f5cf696ef4acfcaf5891a843201";
+    url = "https://launchpad.net/terminator/trunk/${version}/+download/terminator-${version}.tar.gz";
+    sha256 = "1xykpx10g2zssx0ss6351ca6vmmma7zwxxhjz0fg28ps4dq88cci";
   };
   
-  buildInputs =
-    [ python pygtk vte gettext intltool makeWrapper
-    ];
-
-  phases = "unpackPhase installPhase";
+  buildInputs = [ python pygtk vte gettext intltool makeWrapper ];
 
   installPhase = ''
-    python setup.py --without-icon-cache install --prefix=$out
-    for i in $(cd $out/bin && ls); do
-        wrapProgram $out/bin/$i \
+    python setup.py --without-icon-cache install --prefix="$out"
+
+    for file in "$out"/bin/*; do
+        wrapProgram "$file" \
             --prefix PYTHONPATH : "$(toPythonPath $out):$PYTHONPATH"
     done
   '';
 
-  meta = {
-    description = "Gnome terminal emulator with support for tiling and tabs";
-    homepage = http://www.tenshu.net/p/terminator.html;
-    license = "GPLv2";
+  meta = with stdenv.lib; {
+    description = "Terminal emulator with support for tiling and tabs";
+    longDescription = ''
+      The goal of this project is to produce a useful tool for arranging
+      terminals. It is inspired by programs such as gnome-multi-term,
+      quadkonsole, etc. in that the main focus is arranging terminals in grids
+      (tabs is the most common default method, which Terminator also supports).
+    '';
+    homepage = http://gnometerminator.blogspot.no/p/introduction.html;
+    license = licenses.gpl2;
+    maintainers = [ maintainers.bjornfor ];
+    platforms = platforms.linux;
   };
 }

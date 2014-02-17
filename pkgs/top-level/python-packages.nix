@@ -417,6 +417,19 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   });
 
 
+  async = buildPythonPackage rec {
+    name = "async-0.6.1";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    buildInputs = [ pkgs.zlib ];
+    doCheck = false;
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/a/async/${name}.tar.gz";
+      sha256 = "1lfmjm8apy9qpnpbq8g641fd01qxh9jlya5g2d6z60vf8p04rla1";
+    };
+  };
+
   argparse = buildPythonPackage (rec {
     name = "argparse-1.2.1";
 
@@ -447,6 +460,23 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       '';
     };
   });
+
+  bcdoc = buildPythonPackage rec {
+    name = "bcdoc-0.12.1";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/b/bcdoc/bcdoc-0.12.1.tar.gz";
+      md5 = "7c8617347c294ea4d36ec73fb5b2c26e";
+    };
+
+    buildInputs = [ pythonPackages.docutils pythonPackages.six ];
+
+    meta = {
+      homepage = https://github.com/botocore/bcdoc;
+      license = "Apache License 2.0";
+      description = "ReST document generation tools for botocore";
+    };
+  };
 
   beautifulsoup = buildPythonPackage (rec {
     name = "beautifulsoup-3.2.1";
@@ -691,12 +721,12 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   botocore = buildPythonPackage rec {
-    version = "0.13.1";
+    version = "0.33.0";
     name = "botocore-${version}";
 
     src = fetchurl {
       url = "https://pypi.python.org/packages/source/b/botocore/${name}.tar.gz";
-      sha256 = "192kxgw76b22zmk5mxjkij5rskibb9jfaggvpznzy3ggsgja7yy8";
+      md5 = "6743c73a2e148abaa9c487a6e2ee53a3";
     };
 
     propagatedBuildInputs =
@@ -794,6 +824,17 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       maintainers = [ stdenv.lib.maintainers.garbas ];
     };
   };
+
+  bunch = buildPythonPackage (rec {
+    name = "bunch-1.0.1";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/b/bunch/${name}.tar.gz";
+      sha256 = "1akalx2pd1fjlvrq69plvcx783ppslvikqdm93z2sdybq07pmish";
+    };
+    doCheck = false;
+  });
 
 
   carrot = buildPythonPackage rec {
@@ -1555,6 +1596,33 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     buildInputs = [ fudge nose ];
   };
 
+  fedora_cert = buildPythonPackage (rec {
+    name = "fedora-cert-0.5.9.2";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://fedorahosted.org/releases/f/e/fedora-packager/fedora-packager-0.5.9.2.tar.bz2";
+      sha256 = "105swvzshgn3g6bjwk67xd8pslnhpxwa63mdsw6cl4c7cjp2blx9";
+    };
+    installCommand = "make install";
+    propagatedBuildInputs = [ python_fedora ];
+    postInstall = "mv $out/bin/fedpkg $out/bin/fedora-cert-fedpkg";
+    doCheck = false;
+  });
+
+  fedpkg = buildPythonPackage (rec {
+    name = "fedpkg-1.14";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://fedorahosted.org/releases/f/e/fedpkg/fedpkg-1.14.tar.bz2";
+      sha256 = "0rj60525f2sv34g5llafnkmpvbwrfbmfajxjc14ldwzymp8clc02";
+    };
+
+    patches = [ ../development/python-modules/fedpkg-buildfix.diff ];
+    propagatedBuildInputs = [ rpkg offtrac urlgrabber fedora_cert ];
+  });
+
   fudge = buildPythonPackage rec {
     name = "fudge-0.9.4";
     src = fetchurl {
@@ -1582,6 +1650,31 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   };
 
+  gitdb = buildPythonPackage rec {
+    name = "gitdb-0.5.4";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+    doCheck = false;
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/g/gitdb/${name}.tar.gz";
+      sha256 = "10rpmmlln59aq44cd5vkb77hslak5pa1rbmigg6ski5f1nn2spfy";
+    };
+
+    propagatedBuildInputs = [ smmap async ];
+  };
+
+  GitPython = buildPythonPackage rec {
+    name = "GitPython-0.3.2";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/G/GitPython/GitPython-0.3.2.RC1.tar.gz";
+      sha256 = "1q4lc2ps12l517mmrxc8iq6gxyhj6d77bnk1p7mxf38d99l8crzx";
+    };
+
+    buildInputs = [ nose ];
+    propagatedBuildInputs = [ gitdb ];
+  };
 
   googlecl = buildPythonPackage rec {
     version = "0.9.14";
@@ -1618,6 +1711,22 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       platforms = platforms.unix;
     };
   };
+
+  koji = buildPythonPackage (rec {
+    name = "koji-1.8";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://fedorahosted.org/released/koji/koji-1.8.0.tar.bz2";
+      sha256 = "10dph209h4jgajb5jmbjhqy4z4hd22i7s2d93vm3ikdf01i8iwf1";
+    };
+
+    buildPhase = ":";
+    installCommand = "make install DESTDIR=$out/ && cp -R $out/nix/store/*/* $out/ && rm -rf $out/nix";
+    doCheck = false;
+    propagatedBuildInputs = [ pythonPackages.pycurl ];
+
+  });
 
   logilab_astng = buildPythonPackage rec {
     name = "logilab-astng-0.24.1";
@@ -3191,11 +3300,11 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   jmespath = buildPythonPackage rec {
-    name = "jmespath-0.0.2";
+    name = "jmespath-0.2.1";
 
     src = fetchurl {
-      url = "https://github.com/boto/jmespath/archive/0.0.2.tar.gz";
-      sha256 = "0wr1gq3gdyn3n21pvj62csdm095512zxd10gkg5ai1vvxh0mbn3r";
+      url = "https://pypi.python.org/packages/source/j/jmespath/jmespath-0.2.1.tar.gz";
+      md5 = "7800775aa12c6303f9ad597b6a8fa03c";
     };
 
     propagatedBuildInputs = [ ply ];
@@ -3226,6 +3335,16 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     buildInputs =
       [ pkgs.unzip fs gdata python_keyczar mock pyasn1 pycrypto pytest ];
   };
+
+  kitchen = buildPythonPackage (rec {
+    name = "kitchen-1.1.1";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/k/kitchen/kitchen-1.1.1.tar.gz";
+      sha256 = "0ki840hjk1q19w6icv0dj2jxb00966nwy9b1jib0dgdspj00yrr5";
+    };
+  });
 
   pylast = buildPythonPackage rec {
     name = "pylast-${version}";
@@ -4229,6 +4348,17 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   });
 
+  offtrac = buildPythonPackage rec {
+    name = "offtrac-0.1.0";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/o/offtrac/${name}.tar.gz";
+      sha256 = "06vd010pa1z7lyfj1na30iqzffr4kzj2k2sba09spik7drlvvl56";
+    };
+    doCheck = false;
+  };
+
   # optfunc = buildPythonPackage ( rec {
   #   name = "optfunc-git";
   #
@@ -4291,6 +4421,23 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
       maintainers = [ ];
     };
+  });
+
+  osc = buildPythonPackage (rec {
+    name = "osc-0.133+git";
+
+    src = fetchgit {
+      url = git://gitorious.org/opensuse/osc.git;
+      rev = "6cd541967ee2fca0b89e81470f18b97a3ffc23ce";
+      sha256 = "a39ce0e321e40e9758bf7b9128d316c71b35b80eabc84f13df492083bb6f1cc6";
+    };
+
+    buildPhase = "python setup.py build";
+    doCheck = false;
+    postInstall = "ln -s $out/bin/osc-wrapper.py $out/bin/osc";
+
+    propagatedBuildInputs = [ pythonPackages.m2crypto ];
+
   });
 
   pandas = buildPythonPackage rec {
@@ -5171,6 +5318,18 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   });
 
+  python_fedora = buildPythonPackage (rec {
+    name = "python-fedora-0.3.32.3";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://fedorahosted.org/releases/p/y/python-fedora/python-fedora-0.3.32.3.tar.gz";
+      sha256 = "0qwmbid4pkdj6z9gwa43fzs97fr6ci2h2vj1hyk0gp0vqim4kv4l";
+    };
+    propagatedBuildInputs = [ kitchen requests bunch ];
+    doCheck = false;
+  });
+
   python_keyczar = buildPythonPackage rec {
     name = "python-keyczar-0.71c";
 
@@ -5388,6 +5547,21 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   };
 
+  pysphere = buildPythonPackage rec {
+    name = "pysphere-0.1.8";
+
+    src = fetchurl {
+      url = "http://pysphere.googlecode.com/files/${name}.zip";
+      md5 = "c57cba33626ac4b1e3d1974923d59232";
+    };
+
+    buildInputs = [ pkgs.unzip ];
+    meta = {
+      homepage    = "https://code.google.com/p/pysphere/";
+      license     = "BSD";
+      description = "Python API for interaction with the VMWare vSphere";
+    };
+  };
 
   pysqlite = buildPythonPackage (rec {
     name = "pysqlite-2.6.3";
@@ -5749,12 +5923,12 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   robotframework = buildPythonPackage rec {
-    version = "2.8.1";
+    version = "2.8.4";
     name = "robotframework-${version}";
 
     src = fetchurl {
-      url = "https://robotframework.googlecode.com/files/${name}.tar.gz";
-      sha256 = "04zwjri1j5py3fpbhy1xlc18bhbmdm2gbd58fwa2jnhmrha5dgnw";
+      url = "https://pypi.python.org/packages/source/r/robotframework/${name}.tar.gz";
+      sha256 = "0rxk135c1051cwv45219ib3faqvi5rl50l98ncb83c7qxy92jg2n";
     };
 
     # error: invalid command 'test'
@@ -5771,12 +5945,12 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   robotframework-selenium2library = buildPythonPackage rec {
-    version = "1.4.0";
+    version = "1.5.0";
     name = "robotframework-selenium2library-${version}";
 
     src = fetchurl {
       url = "https://pypi.python.org/packages/source/r/robotframework-selenium2library/${name}.tar.gz";
-      sha256 = "1rgzjxrciy74lp9mvdqxiixkma569mc0l0kizpi7lg1zkbr2k1q2";
+      sha256 = "0hjmar9766jqfpbckac8zncyal546vm059wnkbn33f68djdcnwz1";
     };
 
     # error: invalid command 'test'
@@ -5816,22 +5990,15 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   robotframework-ride = buildPythonPackage rec {
-    version = "1.2.2";
+    version = "1.2.3";
     name = "robotframework-ride-${version}";
 
     src = fetchurl {
       url = "https://robotframework-ride.googlecode.com/files/${name}.tar.gz";
-      sha256 = "1yfvl0hdjjkwk90w3f3i23dxxk3yiyv4pbvnp4l7yd6cmxsia8f3";
+      sha256 = "1lf5f4x80f7d983bmkx12sxcizzii21kghs8kf63a1mj022a5x5j";
     };
 
     propagatedBuildInputs = [ pygments wxPython modules.sqlite3 ];
-
-    # Stop copying (read-only) permission bits from the nix store into $HOME,
-    # because that leads to this:
-    #   IOError: [Errno 13] Permission denied: '/home/bfo/.robotframework/ride/settings.cfg'
-    postPatch = ''
-      sed -i "s|shutil\.copy(|shutil.copyfile(|" src/robotide/preferences/settings.py
-    '';
 
     # ride_postinstall.py checks that needed deps are installed and creates a
     # desktop shortcut. We don't really need it and it clutters up bin/ so
@@ -5923,6 +6090,41 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     meta = {
       description = "A Python re-implementation of the Rails routes system for mapping URLs to application actions";
       homepage = http://routes.groovie.org/;
+    };
+  };
+
+  rpkg = buildPythonPackage (rec {
+    name = "rpkg-1.14";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://fedorahosted.org/releases/r/p/rpkg/rpkg-1.14.tar.gz";
+      sha256 = "0d053hdjz87aym1sfm6c4cxmzmy5g0gkrmrczly86skj957r77a7";
+    };
+
+    patches = [ ../development/python-modules/rpkg-buildfix.diff ];
+
+    # buildPhase = "python setup.py build";
+    # doCheck = false;
+    propagatedBuildInputs = [ pycurl koji GitPython pkgs.git
+                              pkgs.rpm pkgs.pyopenssl ];
+
+  });
+
+  rsa = buildPythonPackage rec {
+    name = "rsa-3.1.2";
+
+    src = fetchurl {
+      url = "https://bitbucket.org/sybren/python-rsa/get/version-3.1.2.tar.bz2";
+      sha256 = "0ag2q4gaapi74x47q74xhcjzs4b7r2bb6zrj2an4sz5d3yd06cgf";
+    };
+
+    buildInputs = [ pythonPackages.pyasn1 ];
+
+    meta = {
+      homepage = http://stuvel.eu/rsa;
+      license = "Apache License 2.0";
+      description = "A pure-Python RSA implementation";
     };
   };
 
@@ -6791,6 +6993,15 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   #   };
   # };
 
+  smmap = buildPythonPackage rec {
+    name = "smmap-0.8.2";
+    meta.maintainers = [ stdenv.lib.maintainers.mornfall ];
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/s/smmap/${name}.tar.gz";
+      sha256 = "0vrdgr6npmajrv658fv8bij7zgm5jmz2yxkbv8kmbv25q1f9b8ny";
+    };
+  };
 
   trac = buildPythonPackage {
     name = "trac-1.0.1";
@@ -6986,6 +7197,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     meta = {
       description = "A full-featured console (xterm et al.) user interface library";
       homepage = http://excess.org/urwid;
+      repositories.git = git://github.com/wardi/urwid.git;
       license = pkgs.lib.licenses.lgpl21;
       maintainers = [ stdenv.lib.maintainers.garbas ];
     };
