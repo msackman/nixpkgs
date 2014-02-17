@@ -13,19 +13,20 @@ for d in tmp sbin; do
     mkdir -p $createInDir/rootfs/$d
 done
 
-expr=$(printf '(lxcConfLib: dir: {conf = (lxcConfLib.setPath "rootfs" "%s/rootfs");})' $createInDir)
+printf \
+'lxc.include = @lxcConfigBase@
+lxc.rootfs = %s
+lxc.mount = %s' \
+       $createInDir/rootfs $createInDir/fstab \
+       > $createInDir/lxc.conf
 
-conf=$(printf '%s ['"$@"' '"$expr"' %s] %s' '(import @library@).buildLXCconf' '@out@' $createInDir \
-  | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
-printf "$conf" > $createInDir/lxc.conf
-
-paths=$(printf '%s ['"$@"' %s] "%s"' '(import @library@).onCreate' '@out@' $createInDir \
-        | @nix@/bin/nix-instantiate --show-trace --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
-for p in $paths; do
-  @shell@ -e -- $p $createInDir
+for f in $(cat @storeMounts@); do
+    printf '%s %s/rootfs%s none ro,bind 0 0\n' $f $createInDir $f >> $createInDir/fstab
+    mkdir -p $createInDir/rootfs$f
 done
 
-init=$(printf '%s ['"$@"' %s] "%s"' '(import @library@).exec' '@out@' $createInDir \
-  | @nix@/bin/nix-instantiate --eval-only - | @sed@/bin/sed "s/^\([\"']\)\(.*\)\1\$/\2/g")
+for f in @onCreate@; do
+    $f $createInDir $createInDir/lxc.conf $createInDir/fstab
+done
 
-@coreutils@/bin/ln -s $init $createInDir/rootfs/sbin/init
+@coreutils@/bin/ln -s @init@ $createInDir/rootfs/sbin/init
