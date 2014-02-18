@@ -6318,6 +6318,7 @@ let
   tsp_rabbitmq_server = callPackage ../tsp/tsp-rabbitmq-server { };
   tsp_rabbitmq_server_lxc = callPackage ../tsp/tsp-rabbitmq-server-lxc { };
   tsp_router = callPackage ../tsp/tsp-router { };
+  tsp_router_lxc = callPackage ../tsp/tsp-router-lxc { };
   tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
 
   radius = callPackage ../servers/radius { };

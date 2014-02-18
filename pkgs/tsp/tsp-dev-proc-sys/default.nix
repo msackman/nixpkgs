@@ -1,4 +1,4 @@
-{ stdenv, buildLXC, coreutils, lib }:
+{ stdenv, buildLXC, coreutils }:
 
 buildLXC ({ configuration, lxcLib }:
   let

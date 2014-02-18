@@ -3,7 +3,7 @@
 buildLXC ({ configuration, lxcLib }:
   let
     tsp_bash = (import ../tsp-bash) { inherit stdenv buildLXC bash coreutils; };
-    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils lib; };
+    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
     tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
     tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
     wrapped = stdenv.mkDerivation rec {
