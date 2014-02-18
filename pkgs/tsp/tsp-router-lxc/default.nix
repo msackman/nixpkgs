@@ -1,4 +1,4 @@
-{ stdenv, tsp_router, erlang, bridge_utils, nettools, buildLXC, bash, coreutils, lib, netcat }:
+{ stdenv, tsp_router, erlang, bridge_utils, nettools, buildLXC, bash, coreutils, lib }:
 
 buildLXC ({ configuration, lxcLib }:
   let
@@ -23,7 +23,7 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "${tsp_router.name}-lxc";
-      storeMounts = [ tsp_bash tsp_router tsp_dev_proc_sys tsp_home tsp_network wrapped netcat ];
+      storeMounts = [ tsp_bash tsp_router tsp_dev_proc_sys tsp_home tsp_network wrapped ];
       lxcConf = lxcLib.sequence [
         (if configuration."router.start" then
            lxcLib.setInit "${wrapped}/sbin/router-start"
