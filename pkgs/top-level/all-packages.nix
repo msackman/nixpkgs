@@ -6320,6 +6320,7 @@ let
   tsp_router = callPackage ../tsp/tsp-router { };
   tsp_router_lxc = callPackage ../tsp/tsp-router-lxc { };
   tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
+  tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
 
   radius = callPackage ../servers/radius { };
 

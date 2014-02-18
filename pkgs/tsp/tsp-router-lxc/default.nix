@@ -6,6 +6,17 @@ buildLXC ({ configuration, lxcLib }:
     tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
     tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
     tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
+    mknodtuntap = stdenv.mkDerivation rec {
+      name = "${tsp_router.name}-mknodtuntap";
+      buildCommand = ''
+        printf 'mkdir -p $LXC_ROOTFS_MOUNT/dev/net
+        if [ ! -e "$LXC_ROOTFS_MOUNT/dev/net/tun" ]; then
+          ${coreutils}/bin/mknod $LXC_ROOTFS_MOUNT/dev/net/tun c 10 200
+        fi
+        ' > $out
+        chmod +x $out
+      '';
+    };
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_router.name}-lxc-wrapper";
       buildCommand = ''
@@ -36,6 +47,7 @@ buildLXC ({ configuration, lxcLib }:
              rejoined = lib.concatStringsSep " " remains;
            in
              old // { value = rejoined; }))
+        (lxcLib.appendPath "hook.autodev" mknodtuntap)
       ];
       options = [
         (lxcLib.declareOption {
