@@ -1,8 +1,8 @@
-{ stdenv, serfdom, buildLXC, bash, coreutils, gnused, lib }:
+{ stdenv, serfdom, buildLXC, bash, coreutils, lib }:
 
 buildLXC ({ configuration, lxcLib }:
   let
-    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils lib; };
+    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
     tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
     tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
     wrapped = stdenv.mkDerivation rec {
@@ -10,7 +10,7 @@ buildLXC ({ configuration, lxcLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-      ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -tag x=y -node=${configuration."network.hostname"}' > $out/sbin/serfdom-start
+      ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -node=${configuration."serfdom.identity"}' > $out/sbin/serfdom-start
         chmod +x $out/sbin/serfdom-start
       '';
     };
@@ -35,6 +35,10 @@ buildLXC ({ configuration, lxcLib }:
          })
         (lxcLib.declareOption {
           name = "serfdom.rpcIP";
+          optional = false;
+         })
+        (lxcLib.declareOption {
+          name = "serfdom.identity";
           optional = false;
          })];
       configuration = {

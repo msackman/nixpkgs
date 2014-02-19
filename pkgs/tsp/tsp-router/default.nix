@@ -35,14 +35,23 @@ let
         fetcher = git;
         deps = [ procket ];
       };
+    mochiweb =
+      {
+        name = "mochiweb";
+        url = "git://github.com/mochi/mochiweb.git";
+        rev = "1d7338345360cb4de426fed69b6b2d005f2ac9f8";
+        sha256 = "1l97dscn9wqr5v9z06vgavf7gv3svmvhw1p13vz5aslvc3kajjd0";
+        fetcher = git;
+        deps = [ ];
+      };
     router =
       {
         name = "tsp-demo-router";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-router";
-        sha256 = "0jwj5wf2036s732sf4qhvzp01hm9qmgm4shjh57r8ahsz8zxcdc0";
-        tag = "1519c804a3d4";
+        sha256 = "1dxydgk0fbszjcfkha5yiqb5rj6dadzq8fgbjadpj8qvy99hy99k";
+        tag = "fc66c492a035";
         fetcher = hg;
-        deps = [ procket msgpack pkt tunctl ];
+        deps = [ procket msgpack pkt tunctl mochiweb ];
       };
   };
   git = desc: fetchgit { inherit (desc) url rev sha256; };

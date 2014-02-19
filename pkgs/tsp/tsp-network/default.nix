@@ -14,35 +14,33 @@ buildLXC ({ configuration, lxcLib }:
           name  = "eth0";
           flags = "up";
         };
-        networkConfiguration = fold (name: acc:
-          acc ++ (if hasAttr "network.${name}" configuration then
-                    [{inherit name; value = getAttr "network.${name}" configuration;}]
+        networkConfiguration = network: fold (name: acc:
+          acc ++ (if hasAttr name network then
+                    [{inherit name; value = getAttr name network;}]
                   else
                     []
-                 )) [] [ "ipv4" "gateway" ];
-        network = baseNetwork // (listToAttrs networkConfiguration);
+                 )) [] ((attrNames baseNetwork) ++ [ "ipv4" "ipv4.gateway" ]);
+        nic = network: baseNetwork // (listToAttrs (networkConfiguration network));
         hostname = if configuration ? "network.hostname" then
                      [(setPath "utsname" configuration."network.hostname")]
                    else
                      [];
         listDelete = toDelete: filter (e: e != toDelete);
-        addNetwork =
-          # 'type' must come first. Yes, lxc.conf is retarded.
+        addNetwork = network: acc:
+          let fullNetwork = nic network; in
+          # 'type' must come first as it symbolises the start of a new network section.
           fold (name: acc:
-            [(removePath "network.${name}")
-             (appendPath "network.${name}" (getAttr name network))] ++ acc)
-            hostname (["type"] ++ (listDelete "type" (attrNames network)));
+            [(appendPath "network.${name}" (getAttr name fullNetwork))] ++ acc)
+            acc (["type"] ++ (listDelete "type" (attrNames fullNetwork)));
+        networks = fold addNetwork hostname configuration."network.networks";
       in
-        sequence addNetwork;
+        sequence networks;
     options = [
       (lxcLib.declareOption {
-        name = "network.ipv4";
+        name = "network.networks";
         optional = true;
-       })
-      (lxcLib.declareOption {
-        name = "network.gateway";
-        optional = true;
-       })
+        default = [];
+      })
       (lxcLib.declareOption {
         name = "network.hostname";
         optional = true;
