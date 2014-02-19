@@ -27,7 +27,7 @@ buildLXC ({ configuration, lxcLib }:
         brctl addbr ${configuration."router.internal_bridge"}
         brctl addif ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.nic"}
         ifconfig ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.ip"} netmask ${configuration."router.internal_bridge.netmask"} up
-        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router -s tsp' > $out/sbin/router-start
+        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" -s tsp' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
@@ -75,6 +75,10 @@ buildLXC ({ configuration, lxcLib }:
         (lxcLib.declareOption {
           name = "router.internal_bridge.nic";
           optional = false;
+         })
+        (lxcLib.declareOption {
+          name = "router.erlang.cookie";
+          optional = true;
          })
         (lxcLib.declareOption {
           name = "router.serfdom";
