@@ -22,7 +22,11 @@ lxc.mount = %s' \
 
 for f in $(cat @storeMounts@); do
     printf '%s %s/rootfs%s none ro,bind 0 0\n' $f $createInDir $f >> $createInDir/fstab
-    mkdir -p $createInDir/rootfs$f
+    if [ -d "$f" ]; then
+      mkdir -p $createInDir/rootfs$f
+    else
+      touch $createInDir/rootfs$f
+    fi
 done
 
 for f in @onCreate@; do
