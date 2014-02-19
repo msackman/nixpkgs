@@ -20,7 +20,7 @@ buildLXC ({ configuration, lxcLib }:
     };
   in
     {
-      name = "tsp-home-lxc";
+      name = "tsp-hosts-lxc";
       storeMounts = [ hosts ];
       onCreate = [ create ];
       options = [
