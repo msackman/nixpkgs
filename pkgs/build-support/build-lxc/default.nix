@@ -1,7 +1,7 @@
 {stdenv, lib, lxc, coreutils}:
   let
-    inherit (builtins) getAttr isAttrs isFunction isString hasAttr attrNames filter concatLists listToAttrs elem length head;
-    inherit (lib) id foldl fold sort;
+    inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head;
+    inherit (lib) id foldl fold sort substring;
     lxcLib = rec {
       inherit sequence id;
 
@@ -34,6 +34,10 @@
         assert isString path;
         setPath "extra.init" path;
 
+      setDaemon = bool: config:
+        assert isBool bool;
+        appendPath "extra.daemon" bool (removePath "extra.daemon" config);
+
       emptyConfig = [];
 
       defaults = sequence [
@@ -59,6 +63,7 @@
             ["setpcap" "sys_module" "sys_rawio" "sys_pacct" "sys_admin"
              "sys_nice" "sys_resource" "sys_time" "sys_tty_config" "mknod"
              "audit_write" "audit_control" "mac_override mac_admin"]))
+        (appendPath "extra.daemon" true)
         ] emptyConfig;
 
       hasPath = path: fold (e: acc: if acc then acc else e == path) false;
@@ -185,16 +190,17 @@
         allLxcConfFuns = map (pkg: (runPkg pkg configuration).lxcConf) allLxcPkgs;
         completeConfig = sequence allLxcConfFuns lxcLib.defaults;
         init = (head (filter (e: e.name == "extra.init") completeConfig)).value;
-        config = filter (e: e.name != "extra.init") completeConfig;
+        daemon = (head (filter (e: e.name == "extra.daemon") completeConfig)).value;
+        config = filter (e: (substring 0 6 e.name) != "extra.") completeConfig;
       in
         {lxcConfig =
           stdenv.mkDerivation {
             name = "${name}-lxcConfBase";
             buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
           };
-         inherit init;};
+         inherit init daemon;};
 
-    createStartScripts = pkg: allLxcPkgs: configuration: init:
+    createStartScripts = pkg: allLxcPkgs: configuration: {init, daemon,...}:
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: (runPkg pkg configuration).onCreate) allLxcPkgs);
@@ -217,6 +223,7 @@
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
+                -e "s|@daemon@|${if daemon then "-d" else ""}|g" \
                 ${startFile} > $out/bin/lxc-start-${name}
             chmod +x $out/bin/lxc-start-${name}
           '';
@@ -245,6 +252,6 @@
                       else
                         throw "Unable to validate configuration.";
       scripts = createStartScripts
-                  pkg allLxcPkgs mountsConfigOptions.configuration lxcConfigInit.init;
+                  pkg allLxcPkgs mountsConfigOptions.configuration lxcConfigInit;
     in
       pkg

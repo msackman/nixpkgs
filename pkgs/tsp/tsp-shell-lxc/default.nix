@@ -10,6 +10,7 @@ buildLXC ({ configuration, lxcLib }:
     {
       name = "shell-lxc";
       storeMounts = [ tsp_bash tsp_dev_proc_sys tsp_network tsp_home erlang nettools coreutils iproute netcat host ];
+      lxcConf = lxcLib.setDaemon false;
       configuration = {
         "home.user"  = "shell";
         "home.uid"   = 1000;
