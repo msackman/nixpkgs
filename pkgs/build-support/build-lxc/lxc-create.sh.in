@@ -16,8 +16,9 @@ done
 printf \
 'lxc.include = @lxcConfigBase@
 lxc.rootfs = %s
-lxc.mount = %s' \
-       $createInDir/rootfs $createInDir/fstab \
+lxc.mount = %s
+lxc.console = %s' \
+       $createInDir/rootfs $createInDir/fstab $createInDir/console \
        > $createInDir/lxc.conf
 
 for f in $(cat @storeMounts@); do

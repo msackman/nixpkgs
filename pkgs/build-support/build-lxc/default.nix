@@ -42,7 +42,6 @@
 
       defaults = sequence [
         (setPath "tty" 1)
-        (setPath "console" "none")
         (setPath "pts" 1024)
         (setPath "pivotdir" "lxc_putold")
         (setPath "network.type" "empty")
