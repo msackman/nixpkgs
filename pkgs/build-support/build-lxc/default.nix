@@ -137,7 +137,17 @@
         extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
       in
         if extendedConfig == mountsAndConfig.configuration then
-          mountsAndConfig // { options = collectedOptions; }
+          # Although we have now extended the config, there's the
+          # possibility that we have values in the storeMounts attrset
+          # that have closure captured an older config. Therefore at
+          # this point, with the config fully done, we go back and
+          # regenerate the storeMounts completely.
+          let
+            mountsAndConfig = storeMountsAndConfig pkg
+                                { configuration = extendedConfig;
+                                  storeMounts = {}; };
+          in
+            mountsAndConfig // { options = collectedOptions; }
         else
           storeMountsConfigsOptions pkg extendedConfig mountsAndConfig.storeMounts options;
 
