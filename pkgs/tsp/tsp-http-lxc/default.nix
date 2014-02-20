@@ -14,7 +14,7 @@ buildLXC ({ configuration, lxcLib }:
         export HOME=/home/${configuration."home.user"}
         export PATH=${graphviz}/bin:$PATH
         cd ${tsp_http}
-        ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration."http.router.hostname"} -sname http ${if configuration ? "http.erlang.cookie" then "-setcookie ${configuration."http.erlang.cookie"}" else ""} -s tsp_http' > $out/sbin/http-start
+        ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration."http.router.hostname"} -sname http ${if configuration ? "http.erlang.cookie" then "-setcookie ${configuration."http.erlang.cookie"}" else ""} -s tsp_http -noinput' > $out/sbin/http-start
         chmod +x $out/sbin/http-start
       '';
     };
