@@ -29,7 +29,7 @@ buildLXC ({ configuration, lxcLib }:
         ifconfig ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.ip"} netmask ${configuration."router.internal_bridge.netmask"} up
         export LOG_DIR=/var/log/${wrapped.name}
         mkdir -p $LOG_DIR
-        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name ${configuration."router.identity"} -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
+        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp tap_name \\"tsp%%d\\" -tsp eth_dev undefined -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };

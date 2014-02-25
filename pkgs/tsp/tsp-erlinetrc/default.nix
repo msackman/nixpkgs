@@ -11,8 +11,8 @@ let
       {
         name = "tsp-demo-erlinetrc";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-erlinetrc";
-        sha256 = "171iyj08ilbvp4xfscaa5wv8g0zcmj0sj68qj9kalrs70j96k3pi";
-        tag = "e218da301979";
+        sha256 = "0cbz6nbhpzk3ig2gdivs1yhblfsk0nlqfb8wlq03xfh6p60kggjn";
+        tag = "43dcf6fd3473";
         fetcher = hg;
         deps = [ router ];
       };
