@@ -6351,6 +6351,8 @@ let
   tsp_router_lxc = callPackage ../tsp/tsp-router-lxc { };
   tsp_http = callPackage ../tsp/tsp-http { };
   tsp_http_lxc = callPackage ../tsp/tsp-http-lxc { };
+  tsp_erlinetrc = callPackage ../tsp/tsp-erlinetrc { };
+  tsp_erlinetrc_lxc = callPackage ../tsp/tsp-erlinetrc-lxc { };
   tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };

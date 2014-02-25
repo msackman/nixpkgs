@@ -23,11 +23,13 @@ buildLXC ({ configuration, lxcLib }:
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
         export HOME=/home/${configuration."home.user"}
-        export PATH=${bridge_utils}/bin:${bridge_utils}/sbin:${nettools}/bin:${nettools}/sbin:$PATH
+        export PATH=${bridge_utils}/bin:${bridge_utils}/sbin:${nettools}/bin:${nettools}/sbin:${coreutils}/bin:$PATH
         brctl addbr ${configuration."router.internal_bridge"}
         brctl addif ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.nic"}
         ifconfig ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.ip"} netmask ${configuration."router.internal_bridge.netmask"} up
-        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name ${configuration."router.identity"} -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -s tsp -noinput' > $out/sbin/router-start
+        export LOG_DIR=/var/log/${wrapped.name}
+        mkdir -p $LOG_DIR
+        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name ${configuration."router.identity"} -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
