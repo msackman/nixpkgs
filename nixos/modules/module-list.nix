@@ -87,7 +87,6 @@
   ./services/databases/mongodb.nix
   ./services/databases/redis.nix
   ./services/databases/mysql.nix
-  ./services/databases/mysql55.nix
   ./services/databases/openldap.nix
   ./services/databases/postgresql.nix
   ./services/databases/virtuoso.nix
@@ -125,6 +124,7 @@
   ./services/misc/gpsd.nix
   ./services/misc/nix-daemon.nix
   ./services/misc/nix-gc.nix
+  ./services/misc/nix-ssh-serve.nix
   ./services/misc/nixos-manual.nix
   ./services/misc/rogue.nix
   ./services/misc/svnserve.nix

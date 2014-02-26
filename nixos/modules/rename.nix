@@ -56,7 +56,7 @@ let
             inherit visible;
           });
         }
-        { config = setTo (mkIf (fromOf options).isDefined (define (mkMerge (fromOf options).definitions)));
+        { config = setTo (mkMerge (if (fromOf options).isDefined then [ (define (mkMerge (fromOf options).definitions)) ] else []));
         }
       ];
 
@@ -123,6 +123,8 @@ in zipModules ([]
 ++ obsolete [ "services" "mesa" "driSupport32Bit" ] [ "hardware" "opengl" "driSupport32Bit" ]
 ++ obsolete [ "services" "mesa" "s3tcSupport" ] [ "hardware" "opengl" "s3tcSupport" ]
 ++ obsolete [ "services" "mesa" "videoDrivers" ] [ "hardware" "opengl" "videoDrivers" ]
+
+++ obsolete [ "services" "mysql55" ] [ "services" "mysql" ]
 
 # Options that are obsolete and have no replacement.
 ++ obsolete' [ "boot" "loader" "grub" "bootDevice" ]

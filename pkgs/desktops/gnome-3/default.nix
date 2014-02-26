@@ -20,6 +20,10 @@ rec {
 
   dconf = callPackage ./core/dconf { };
 
+  empathy = callPackage ./core/empathy { };
+
+  epiphany = callPackage ./core/epiphany { };
+
   evince = callPackage ./core/evince { }; # ToDo: dbus would prevent compilation, enable tests
 
   evolution_data_server = callPackage ./core/evolution-data-server { };
@@ -40,11 +44,15 @@ rec {
 
   gnome_icon_theme = callPackage ./core/gnome-icon-theme { };
 
+  gnome_icon_theme_symbolic = callPackage ./core/gnome-icon-theme-symbolic { };
+
   gnome-menus = callPackage ./core/gnome-menus { };
 
   gnome_keyring = callPackage ./core/gnome-keyring { };
 
   libgnome_keyring = callPackage ./core/libgnome-keyring { };
+
+  folks = callPackage ./core/folks { };
 
   gnome_online_accounts = callPackage ./core/gnome-online-accounts { };
 
@@ -88,6 +96,8 @@ rec {
 
   vte = callPackage ./core/vte { };
 
+  vino = callPackage ./core/vino { };
+
   yelp = callPackage ./core/yelp { };
 
   yelp_xsl = callPackage ./core/yelp-xsl { };
@@ -117,6 +127,6 @@ rec {
 
   gitg = callPackage ./misc/gitg { };
 
-  libgit2-glib = callPackage ./misc/libgit2-glib { automake = pkgs.automake111x; };
+  libgit2-glib = callPackage ./misc/libgit2-glib { };
 
 }
