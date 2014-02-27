@@ -428,6 +428,8 @@ let
 
   aescrypt = callPackage ../tools/misc/aescrypt { };
 
+  cb0cat = callPackage ../tools/security/cb0cat { };
+
   ahcpd = callPackage ../tools/networking/ahcpd { };
 
   aircrackng = callPackage ../tools/networking/aircrack-ng { };
@@ -1229,6 +1231,8 @@ let
   jscoverage = callPackage ../development/tools/misc/jscoverage { };
 
   jwhois = callPackage ../tools/networking/jwhois { };
+ 
+  kazam = callPackage ../applications/video/kazam { };
 
   kexectools = callPackage ../os-specific/linux/kexectools { };
 
@@ -2364,8 +2368,8 @@ let
 
   cmucl_binary = callPackage ../development/compilers/cmucl/binary.nix { };
 
-  cython = callPackage ../development/interpreters/cython/2 { };
-  cython3 = callPackage ../development/interpreters/cython/3 { };
+  cython = pythonPackages.cython;
+  cython3 = python3Packages.cython;
 
   dylan = callPackage ../development/compilers/gwydion-dylan {
     dylan = callPackage ../development/compilers/gwydion-dylan/binary.nix {  };
@@ -3313,6 +3317,8 @@ let
 
   scheme48 = callPackage ../development/interpreters/scheme48 { };
 
+  spark = callPackage ../applications/networking/cluster/spark { };
+
   spidermonkey = callPackage ../development/interpreters/spidermonkey { };
   spidermonkey_1_8_0rc1 = callPackage ../development/interpreters/spidermonkey/1.8.0-rc1.nix { };
   spidermonkey_185 = callPackage ../development/interpreters/spidermonkey/185-1.0.0.nix { };
@@ -3739,6 +3745,8 @@ let
   seleniumRCBin = callPackage ../development/tools/selenium/remote-control {
     jre = jdk;
   };
+
+  selenium-server-standalone = callPackage ../development/tools/selenium/server { };
 
   scons = callPackage ../development/tools/build-managers/scons { };
 
@@ -6177,6 +6185,8 @@ let
 
   couchdb = callPackage ../servers/http/couchdb {
     spidermonkey = spidermonkey_185;
+    python = python27;
+    sphinx = python27Packages.sphinx;
   };
 
   dico = callPackage ../servers/dico { };
@@ -6842,6 +6852,8 @@ let
     e1000e = callPackage ../os-specific/linux/e1000e {};
 
     frandom = callPackage ../os-specific/linux/frandom { };
+
+    ktap = callPackage ../os-specific/linux/ktap { };
 
     lttngModules = callPackage ../os-specific/linux/lttng-modules { };
 
