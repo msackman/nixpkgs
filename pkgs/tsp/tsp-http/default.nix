@@ -14,8 +14,8 @@ let
       {
         name = "tsp-demo-http";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-http";
-        sha256 = "0w7cc84b59xl68vy62hldg8bqzd01gc1ihzkxpqvy36grh0m6ngv";
-        tag = "985a71eff919";
+        sha256 = "0jq5vv37w1w1r1y63jnjy86ll4s3xvsnlwx4b0hln6b41igqsv27";
+        tag = "d3e39f782dfd";
         fetcher = hg;
         deps = [ mochiweb ];
       };
