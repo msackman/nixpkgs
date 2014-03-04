@@ -40,7 +40,7 @@ lxcDesc:
 
       ###### implementation
       config = mkIf cfg.enable {
-        environment.systemPackages = [pkgs.lxc pkgs.bash];
+        environment.systemPackages = [pkgs.lxc];
         systemd.services = builtins.listToAttrs [{
           inherit name;
           value = {
