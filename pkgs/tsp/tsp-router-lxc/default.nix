@@ -1,4 +1,4 @@
-{ stdenv, tsp_router, erlang, buildLXC, bash, coreutils, lib }:
+{ stdenv, tsp_router, erlang, bridge_utils, nettools, buildLXC, bash, coreutils, lib }:
 
 buildLXC ({ configuration, lxcLib }:
   let
@@ -23,9 +23,13 @@ buildLXC ({ configuration, lxcLib }:
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
         export HOME=/home/${configuration."home.user"}
+        export PATH=${bridge_utils}/bin:${bridge_utils}/sbin:${nettools}/bin:${nettools}/sbin:${coreutils}/bin:$PATH
+        brctl addbr ${configuration."router.internal_bridge"}
+        brctl addif ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.nic"}
+        ifconfig ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.ip"} netmask ${configuration."router.internal_bridge.netmask"} up
         export LOG_DIR=/var/log/${wrapped.name}
-        ${coreutils}/bin/mkdir -p $LOG_DIR
-        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp tap_name undefined -tsp eth_dev \\"${configuration."router.internal_nic"}\\" -tsp bridge undefined -tsp procket_progname \\"${tsp_router}/deps/procket/priv/procket\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
+        mkdir -p $LOG_DIR
+        ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp tap_name \\"tsp%%d\\" -tsp eth_dev undefined -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
@@ -38,15 +42,14 @@ buildLXC ({ configuration, lxcLib }:
            lxcLib.setInit "${wrapped}/sbin/router-start"
          else
            lxcLib.id)
-#        (lxcLib.replacePath "cap.drop" (old:
-#           let
-#             dropped = lib.splitString " " old.value;
-#             remains = builtins.filter (e: e != "sys_admin") dropped;
-#             rejoined = lib.concatStringsSep " " remains;
-#           in
-#             old // { value = rejoined; }))
-#        (lxcLib.removePath "cap.drop")
-#        (lxcLib.appendPath "hook.autodev" mknodtuntap)
+        (lxcLib.replacePath "cap.drop" (old:
+           let
+             dropped = lib.splitString " " old.value;
+             remains = builtins.filter (e: e != "sys_admin") dropped;
+             rejoined = lib.concatStringsSep " " remains;
+           in
+             old // { value = rejoined; }))
+        (lxcLib.appendPath "hook.autodev" mknodtuntap)
       ];
       options = [
         (lxcLib.declareOption {
@@ -59,7 +62,20 @@ buildLXC ({ configuration, lxcLib }:
           optional = false;
          })
         (lxcLib.declareOption {
-          name = "router.internal_nic";
+          name = "router.internal_bridge";
+          optional = true;
+          default = "br0";
+         })
+        (lxcLib.declareOption {
+          name = "router.internal_bridge.ip";
+          optional = false;
+         })
+        (lxcLib.declareOption {
+          name = "router.internal_bridge.netmask";
+          optional = true;
+         })
+        (lxcLib.declareOption {
+          name = "router.internal_bridge.nic";
           optional = false;
          })
         (lxcLib.declareOption {
