@@ -14,7 +14,7 @@ buildLXC ({ configuration, lxcLib }:
         export HOME=/home/${configuration."home.user"}
         export LOG_DIR=/var/log/${wrapped.name}
         ${coreutils}/bin/mkdir -p $LOG_DIR
-        ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration."erlinetrc.router.hostname"} -tsp_erlinetrc name \\"${configuration."erlinetrc.name"}\\" -tsp_erlinetrc output_path \\"${configuration."erlinetrc.output_path"}\\" -sname erlinetrc ${if configuration ? "erlinetrc.erlang.cookie" then "-setcookie ${configuration."erlinetrc.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/erlinetrc-start
+        exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration."erlinetrc.router.hostname"} -tsp_erlinetrc name \\"${configuration."erlinetrc.name"}\\" -tsp_erlinetrc output_path \\"${configuration."erlinetrc.output_path"}\\" -sname erlinetrc ${if configuration ? "erlinetrc.erlang.cookie" then "-setcookie ${configuration."erlinetrc.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/erlinetrc-start
         chmod +x $out/sbin/erlinetrc-start
       '';
     };

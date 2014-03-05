@@ -6382,6 +6382,9 @@ let
   tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };
+  tsp = { container = buildLXC;
+          module = import ../build-support/build-lxc/module.nix;
+        };
 
   radius = callPackage ../servers/radius { };
 

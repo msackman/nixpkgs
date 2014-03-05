@@ -10,4 +10,4 @@ shift 2
 
 [ -f $lxcDir/lxc.conf ]
 
-@lxc-start@ -n $name -f $lxcDir/lxc.conf -L $lxcDir/console -o $lxcDir/console @daemon@ -- $@
+@lxc-start@ -n $name -f $lxcDir/lxc.conf -L $lxcDir/console -o $lxcDir/console -p $lxcDir/pid @daemon@ -- $@

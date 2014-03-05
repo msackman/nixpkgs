@@ -15,7 +15,7 @@ buildLXC ({ configuration, lxcLib }:
         export PATH=${graphviz}/bin:${coreutils}/bin:$PATH
         export LOG_DIR=/var/log/${wrapped.name}
         mkdir -p $LOG_DIR
-        ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration."http.router.hostname"} -tsp_http docroot \\"${tsp_http}/priv/www\\" -sname http ${if configuration ? "http.erlang.cookie" then "-setcookie ${configuration."http.erlang.cookie"}" else ""} -s tsp_http -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/http-start
+        exec ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration."http.router.hostname"} -tsp_http docroot \\"${tsp_http}/priv/www\\" -sname http ${if configuration ? "http.erlang.cookie" then "-setcookie ${configuration."http.erlang.cookie"}" else ""} -s tsp_http -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/http-start
         chmod +x $out/sbin/http-start
       '';
     };

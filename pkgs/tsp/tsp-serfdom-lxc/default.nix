@@ -12,7 +12,7 @@ buildLXC ({ configuration, lxcLib }:
         printf '#! ${stdenv.shell}
         export LOG_DIR=/var/log/${wrapped.name}
         ${coreutils}/bin/mkdir -p $LOG_DIR
-        ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -node=${configuration."serfdom.identity"} > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/serfdom-start
+        exec ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -node=${configuration."serfdom.identity"} > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/serfdom-start
         chmod +x $out/sbin/serfdom-start
       '';
     };

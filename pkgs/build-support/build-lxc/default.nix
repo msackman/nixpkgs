@@ -62,6 +62,7 @@
             ["setpcap" "sys_module" "sys_rawio" "sys_pacct" "sys_admin"
              "sys_nice" "sys_resource" "sys_time" "sys_tty_config" "mknod"
              "audit_write" "audit_control" "mac_override mac_admin"]))
+        (appendPath "haltsignal" "SIGTERM")
         (appendPath "extra.daemon" true)
         ] emptyConfig;
 
