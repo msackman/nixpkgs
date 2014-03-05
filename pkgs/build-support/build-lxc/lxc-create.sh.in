@@ -1,16 +1,14 @@
 #! @shell@ -e
 
-userDir=$1
-shift
-dir=$(@coreutils@/bin/dirname $userDir)
-base=$(@coreutils@/bin/basename $userDir)
-createInDir=$dir/$base
+dir=/var/lib/lxc/@name@
 
-mkdir $createInDir
-mkdir -p $createInDir/rootfs
+mkdir -p /var/lib/lxc
+
+mkdir $dir
+mkdir -p $dir/rootfs
 
 for d in tmp sbin; do
-    mkdir -p $createInDir/rootfs/$d
+    mkdir -p $dir/rootfs/$d
 done
 
 printf \
@@ -18,20 +16,20 @@ printf \
 lxc.rootfs = %s
 lxc.mount = %s
 lxc.console = %s' \
-       $createInDir/rootfs $createInDir/fstab $createInDir/console \
-       > $createInDir/lxc.conf
+       $dir/rootfs $dir/fstab $dir/console \
+       > $dir/config
 
 for f in $(cat @storeMounts@); do
-    printf '%s %s/rootfs%s none ro,bind 0 0\n' $f $createInDir $f >> $createInDir/fstab
+    printf '%s %s/rootfs%s none ro,bind 0 0\n' $f $dir $f >> $dir/fstab
     if [ -d "$f" ]; then
-      mkdir -p $createInDir/rootfs$f
+      mkdir -p $dir/rootfs$f
     else
-      touch $createInDir/rootfs$f
+      touch $dir/rootfs$f
     fi
 done
 
 for f in @onCreate@; do
-    $f $createInDir $createInDir/lxc.conf $createInDir/fstab
+    $f $dir $dir/config $dir/fstab
 done
 
-@coreutils@/bin/ln -s @init@ $createInDir/rootfs/sbin/init
+@coreutils@/bin/ln -s @init@ $dir/rootfs/sbin/init

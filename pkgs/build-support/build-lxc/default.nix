@@ -150,7 +150,7 @@
           let
             mountsAndConfig = storeMountsAndConfig pkg
                                 { configuration = extendedConfig;
-                                  storeMounts = {}; };
+                                  storeMounts = { inherit lxc; }; };
           in
             mountsAndConfig // { options = collectedOptions; }
         else
@@ -216,13 +216,14 @@
                 -e "s|@lxcConfigBase@|${pkg.lxcConfig}|g" \
                 -e "s|@storeMounts@|${pkg.mounts}|g" \
                 -e "s|@onCreate@|${joinStrings " " "" allOnCreate}|g" \
+                -e "s|@name@|${name}|g" \
                 -e "s|@init@|${init}|g" \
                 ${createFile} > $out/bin/lxc-create-${name}
             chmod +x $out/bin/lxc-create-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
-                -e "s|@coreutils@|${coreutils}|g" \
-                -e "s|@lxc-start@|${lxc}/bin/lxc-start|g" \
+                -e "s|@name@|${name}|g" \
+                -e "s|@lxc-execute@|${lxc}/bin/lxc-execute|g" \
                 -e "s|@daemon@|${if daemon then "-d" else ""}|g" \
                 ${startFile} > $out/bin/lxc-start-${name}
             chmod +x $out/bin/lxc-start-${name}
@@ -239,7 +240,7 @@
         isLxc = true;
       };
       allLxcPkgs = [pkg] ++ (lxcPkgs (attrValues mountsConfigOptions.storeMounts));
-      mountsConfigOptions = storeMountsConfigsOptions pkg {} {} {};
+      mountsConfigOptions = storeMountsConfigsOptions pkg {} { inherit lxc; } {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
                   (validateUsedOptionsDeclared mountsConfigOptions);
       name = (runPkg pkg mountsConfigOptions.configuration).name;

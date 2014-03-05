@@ -24,20 +24,6 @@ attrsOrPath:
                 Whether to run the ${name} container.
               '';
             };
-            containerPath = mkOption {
-              type = types.path;
-              default = "/var/lxc/${name}";
-              description = ''
-                Path to the container.
-              '';
-            };
-            containerName = mkOption {
-              type = types.str;
-              default = "${name}";
-              description = ''
-                The name to run the contain as.
-              '';
-            };
           };
         }];
       };
@@ -52,18 +38,17 @@ attrsOrPath:
             wantedBy = [ "multi-user.target" ];
             after = [ "network.target" ];
             preStart = ''
-              if [ ! -d "${cfg.containerPath}" ]; then
-                mkdir -p $(dirname "${cfg.containerPath}")
-                ${createScript} ${cfg.containerPath}
+              if [ ! -f "/var/lib/lxc/${name}/config" ]; then
+                ${createScript}
               fi
             '';
             serviceConfig = {
-              ExecStart = "${startScript} ${cfg.containerPath} ${cfg.containerName}";
-              ExecStop = "${pkgs.lxc}/bin/lxc-stop -k -n ${cfg.containerName}";
-              Type = "forking";
+              ExecStart = "${startScript}";
+              ExecStop = "${pkgs.lxc}/bin/lxc-stop -n ${name}";
+              Type = "simple";
               Restart = "always";
             };
-            unitConfig.RequiresMountsFor = "${cfg.containerPath}";
+            unitConfig.RequiresMountsFor = "/var/lib/lxc/${name}";
           };
         }];
       };
