@@ -1,11 +1,7 @@
-attrsOrPath:
+lxcDesc:
   { config, pkgs, ... }:
     with pkgs.lib;
     let
-      lxcDesc = if builtins.isAttrs attrsOrPath then
-                  attrsOrPath
-                else
-                  (import attrsOrPath) { inherit pkgs; };
       name = lxcDesc.name;
       cfg = builtins.getAttr name config.services.lxc;
       createScript = lxcDesc.scripts + "/bin/lxc-create-${name}";

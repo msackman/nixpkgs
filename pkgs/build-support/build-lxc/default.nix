@@ -227,7 +227,7 @@
     assert builtins.isFunction fun;
     let
       pkg = {
-        inherit fun name validated mounts scripts;
+        inherit fun name validated mounts scripts module;
         inherit (mountsConfigOptions) configuration;
         inherit (lxcConfigInit) lxcConfig;
         isLxc = true;
@@ -247,5 +247,6 @@
                         throw "Unable to validate configuration.";
       scripts = createStartScripts
                   pkg allLxcPkgs mountsConfigOptions.configuration lxcConfigInit;
+      module = (import ./module.nix) pkg;
     in
       pkg

@@ -4,4 +4,4 @@ dir=/var/lib/lxc/@name@
 
 [ -f $dir/config ]
 
-exec @lxc-execute@ -n @name@ -o $lxcDir/console /sbin/init -- $@
+exec @lxc-execute@ -n @name@ -o $dir/console /sbin/init -- $@
