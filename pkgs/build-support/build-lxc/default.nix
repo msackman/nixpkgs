@@ -34,10 +34,6 @@
         assert isString path;
         setPath "extra.init" path;
 
-      setDaemon = bool: config:
-        assert isBool bool;
-        appendPath "extra.daemon" bool (removePath "extra.daemon" config);
-
       emptyConfig = [];
 
       defaults = sequence [
@@ -63,7 +59,6 @@
              "sys_nice" "sys_resource" "sys_time" "sys_tty_config" "mknod"
              "audit_write" "audit_control" "mac_override mac_admin"]))
         (appendPath "haltsignal" "SIGTERM")
-        (appendPath "extra.daemon" true)
         ] emptyConfig;
 
       hasPath = path: fold (e: acc: if acc then acc else e == path) false;
@@ -190,7 +185,6 @@
         allLxcConfFuns = map (pkg: (runPkg pkg configuration).lxcConf) allLxcPkgs;
         completeConfig = sequence allLxcConfFuns lxcLib.defaults;
         init = (head (filter (e: e.name == "extra.init") completeConfig)).value;
-        daemon = (head (filter (e: e.name == "extra.daemon") completeConfig)).value;
         config = filter (e: (substring 0 6 e.name) != "extra.") completeConfig;
       in
         {lxcConfig =
@@ -198,9 +192,9 @@
             name = "${name}-lxcConfBase";
             buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
           };
-         inherit init daemon;};
+         inherit init; };
 
-    createStartScripts = pkg: allLxcPkgs: configuration: {init, daemon,...}:
+    createStartScripts = pkg: allLxcPkgs: configuration: {init, ...}:
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: (runPkg pkg configuration).onCreate) allLxcPkgs);
@@ -224,7 +218,6 @@
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@lxc-execute@|${lxc}/bin/lxc-execute|g" \
-                -e "s|@daemon@|${if daemon then "-d" else ""}|g" \
                 ${startFile} > $out/bin/lxc-start-${name}
             chmod +x $out/bin/lxc-start-${name}
           '';
