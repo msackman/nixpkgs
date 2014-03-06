@@ -21,7 +21,11 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "rabbitmq-server-lxc";
-      storeMounts = [ tsp_bash tsp_dev_proc_sys tsp_network tsp_home tsp_rabbitmq_server wrapped ];
+      storeMounts = { bash         = tsp_bash;
+                      dev_proc_sys = tsp_dev_proc_sys;
+                      network      = tsp_network;
+                      home         = tsp_home;
+                      inherit wrapped; };
       lxcConf =
         if configuration."rabbitmq_server.start" then
           lxcLib.setInit "${wrapped}/sbin/rabbitmq-server"

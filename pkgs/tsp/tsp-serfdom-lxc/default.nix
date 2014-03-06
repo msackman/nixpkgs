@@ -19,7 +19,10 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "serfdom-lxc";
-      storeMounts = [ serfdom tsp_dev_proc_sys tsp_home tsp_network wrapped ];
+      storeMounts = { dev_proc_sys = tsp_dev_proc_sys;
+                      home         = tsp_home;
+                      network      = tsp_network;
+                      inherit wrapped; };
       lxcConf =
         if configuration."serfdom.start" then
           lxcLib.setInit "${wrapped}/sbin/serfdom-start"

@@ -19,7 +19,7 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "tsp-home-lxc";
-      storeMounts = [ bash ];
+      storeMounts = { inherit bash; };
       onCreate = [ create ];
       options = [
         (lxcLib.declareOption {

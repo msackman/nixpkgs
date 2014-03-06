@@ -9,7 +9,11 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "shell-lxc";
-      storeMounts = [ tsp_bash tsp_dev_proc_sys tsp_network tsp_home erlang nettools coreutils iproute netcat host ];
+      storeMounts = { bash         = tsp_bash;
+                      network      = tsp_network;
+                      home         = tsp_home;
+                      dev_proc_sys = tsp_dev_proc_sys;
+                      inherit erlang nettools coreutils iproute netcat host; };
       configuration = {
         "home.user"  = "shell";
         "home.uid"   = 1000;

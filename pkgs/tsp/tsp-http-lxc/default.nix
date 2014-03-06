@@ -22,7 +22,11 @@ buildLXC ({ configuration, lxcLib }:
   in
     {
       name = "${tsp_http.name}-lxc";
-      storeMounts = [ tsp_bash tsp_http tsp_dev_proc_sys tsp_home tsp_network wrapped ];
+      storeMounts = { bash         = tsp_bash;
+                      dev_proc_sys = tsp_dev_proc_sys;
+                      home         = tsp_home;
+                      network      = tsp_network;
+                      inherit wrapped; };
       lxcConf = lxcLib.sequence [
         (if configuration."http.start" then
            lxcLib.setInit "${wrapped}/sbin/http-start"

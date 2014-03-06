@@ -1,7 +1,7 @@
 {stdenv, lib, lxc, coreutils}:
   let
     inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head;
-    inherit (lib) id foldl fold sort substring;
+    inherit (lib) id foldl fold sort substring attrValues;
     lxcLib = rec {
       inherit sequence id;
 
@@ -69,14 +69,16 @@
     };
     isLxcPkg = thing: isAttrs thing && hasAttr "isLxc" thing && thing.isLxc;
     runPkg = pkg: configuration:
-        ({ name, lxcConf ? id, storeMounts ? [], onCreate ? [], options ? [], configuration ? {}}:
-           { inherit name lxcConf storeMounts onCreate options configuration; })
+        ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], options ? [], configuration ? {}}:
+           { inherit name lxcConf onCreate options configuration;
+             ## Slightly hacky: assume lxc is needed by everything. In
+             ## truth, this is true, but we might be better off not
+             ## quite inserting it EVERYWHERE!
+             storeMounts = { inherit lxc; } // storeMounts; })
         (pkg.fun { inherit configuration lxcLib; });
     lxcPkgs = filter isLxcPkg;
-    nonLxcPkgs = filter (e: ! (isLxcPkg e));
     sequence = list: init: foldl (acc: f: f acc) init list;
     joinStrings = sep: lib.fold (e: acc: e + sep + acc);
-    attrValues = set: fold (name: acc: [(getAttr name set)] ++ acc) [] (attrNames set);
 
     ## We need to finalise configuration and
     ## storeMounts. Configuration depends on storeMounts and
@@ -94,31 +96,52 @@
     ## 4. Verify options
     ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
 
-    lazyStoreMountConfigEq = a: b:
-      a.configuration == b.configuration &&
-      (attrNames a.storeMounts) == (attrNames b.storeMounts);
-
     storeMountsAndConfig = pkg: result@{ configuration, storeMounts }:
       let
-        pkgSet = runPkg pkg configuration;
-        configuration1 = configuration // pkgSet.configuration;
-        storeMounts1 = fold (sm: acc: acc // (listToAttrs [{name = sm.name; value = sm;}]))
-                         storeMounts pkgSet.storeMounts;
-        localResult = { configuration = configuration1; storeMounts = storeMounts1; };
-        lxcPkgsStoreMounts = lxcPkgs pkgSet.storeMounts;
-        childrenResult = fold storeMountsAndConfig localResult lxcPkgsStoreMounts;
+        configuration1 = collectConfiguration configuration pkg;
+        storeMounts1 = storeMounts // collectStoreMounts configuration pkg;
+        result1 = { configuration = configuration1;
+                    storeMounts   = storeMounts1; };
       in
-        if (lazyStoreMountConfigEq result localResult) &&
-           (lazyStoreMountConfigEq localResult childrenResult) then
-          localResult
+        if result == result1 then
+          result
         else
-          storeMountsAndConfig pkg childrenResult;
+          storeMountsAndConfig pkg result1;
+
+    collectConfiguration = configuration: pkg:
+      let
+        pkgSet = runPkg pkg configuration;
+        pkgStoreMounts = pkgSet.storeMounts;
+        configuration1 = configuration // pkgSet.configuration;
+      in
+        fold (name: configuration:
+               let pkg = getAttr name pkgStoreMounts; in
+               if isLxcPkg pkg then
+                 collectConfiguration configuration pkg
+               else
+                 configuration
+             ) configuration1 (attrNames pkgStoreMounts);
+
+    collectStoreMounts = configuration: pkg:
+      let
+        pkgSet = runPkg pkg configuration;
+        pkgStoreMounts = pkgSet.storeMounts;
+        storeMountsAttrList =
+          map (name:
+                let pkg = getAttr name pkgStoreMounts; in
+                if isLxcPkg pkg then
+                  { inherit name; value = collectStoreMounts configuration pkg; }
+                else
+                  { inherit name; value = {}; }
+              ) (attrNames pkgStoreMounts);
+      in
+        listToAttrs storeMountsAttrList;
 
     collectOptions = configuration: pkg: options:
       let
         pkgSet = runPkg pkg configuration;
         localOptions = sequence pkgSet.options options;
-        lxcPkgsStoreMounts = lxcPkgs pkgSet.storeMounts;
+        lxcPkgsStoreMounts = lxcPkgs (attrValues pkgSet.storeMounts);
       in
         fold (collectOptions configuration) localOptions lxcPkgsStoreMounts;
 
@@ -145,7 +168,7 @@
           let
             mountsAndConfig = storeMountsAndConfig pkg
                                 { configuration = extendedConfig;
-                                  storeMounts = { inherit lxc; }; };
+                                  storeMounts = {}; };
           in
             mountsAndConfig // { options = collectedOptions; }
         else
@@ -170,15 +193,29 @@
           acc
       ) true (attrNames configuration);
 
-    storeMountsFile = name: storeMounts:
-      let pkgs = nonLxcPkgs (attrValues storeMounts); in
-      stdenv.mkDerivation {
-        name = "${name}-storeMounts";
-        exportReferencesGraph = concatLists (map (e: [e.name e]) pkgs);
-        buildCommand = joinStrings "\n" ""
-          ((map (pkg: "cat ${pkg.name} >> deps") pkgs) ++
-          ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
-      };
+    storeMountsFile = name: configuration: pkg:
+      let
+        f = path: pkg: acc:
+          let
+            pkgSet = runPkg pkg configuration;
+            pkgStoreMounts = pkgSet.storeMounts;
+          in
+            fold (name: acc:
+                   let pkg = getAttr name pkgStoreMounts; in
+                   if isLxcPkg pkg then
+                     f (path + name + ".") pkg acc
+                   else
+                     [{name = path + name; value = pkg;}] ++ acc
+                 ) acc (attrNames pkgStoreMounts);
+        pkgs = f (name + ".") pkg [];
+      in
+        stdenv.mkDerivation {
+          name = "${name}-storeMounts";
+          exportReferencesGraph = concatLists (map (pkg: [pkg.name pkg.value]) pkgs);
+          buildCommand = joinStrings "\n" ""
+            ((map (pkg: "cat ${pkg.name} >> deps") pkgs) ++
+            ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
+        };
 
     lxcConfBaseInit = name: allLxcPkgs: configuration:
       let
@@ -223,6 +260,24 @@
           '';
         };
 
+    collectLxcPkgs = configuration: pkg:
+      let
+        f = pkg: acc:
+          let
+            pkgSet = runPkg pkg configuration;
+            pkgStoreMounts = pkgSet.storeMounts;
+            acc1 = [pkg] ++ acc;
+          in
+            fold (name: acc2:
+                   let pkg = getAttr name pkgStoreMounts; in
+                   if isLxcPkg pkg then
+                     f pkg acc2
+                   else
+                     acc2
+                 ) acc1 (attrNames pkgStoreMounts);
+      in
+        f pkg [];
+
   in fun:
     assert builtins.isFunction fun;
     let
@@ -232,13 +287,13 @@
         inherit (lxcConfigInit) lxcConfig;
         isLxc = true;
       };
-      allLxcPkgs = [pkg] ++ (lxcPkgs (attrValues mountsConfigOptions.storeMounts));
-      mountsConfigOptions = storeMountsConfigsOptions pkg {} { inherit lxc; } {};
+      allLxcPkgs = collectLxcPkgs mountsConfigOptions.configuration pkg;
+      mountsConfigOptions = storeMountsConfigsOptions pkg {} {} {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
                   (validateUsedOptionsDeclared mountsConfigOptions);
       name = (runPkg pkg mountsConfigOptions.configuration).name;
       mounts = if validated then
-                 storeMountsFile name mountsConfigOptions.storeMounts
+                 storeMountsFile name mountsConfigOptions.configuration pkg
                else
                  throw "Unable to validate configuration.";
       lxcConfigInit = if validated then
