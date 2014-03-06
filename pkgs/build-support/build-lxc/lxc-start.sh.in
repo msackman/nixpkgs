@@ -1,6 +1,7 @@
 #! @shell@ -e
 
-dir=/var/lib/lxc/@name@
+base=/var/lib/lxc
+dir=$base/@name@
 
 [ -f $dir/config ]
 

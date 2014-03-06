@@ -1,15 +1,13 @@
 #! @shell@ -e
 
-dir=/var/lib/lxc/@name@
+base=/var/lib/lxc
+dir=$base/@name@
 
-mkdir -p /var/lib/lxc
+mkdir -p $base # don't mind if this already exists
 
-mkdir $dir
-mkdir -p $dir/rootfs
-
-for d in tmp sbin; do
-    mkdir -p $dir/rootfs/$d
-done
+mkdir $dir     # do mind if this already exists
+mkdir -p $dir/rootfs/sbin
+mkdir -m 1777 $dir/rootfs/tmp
 
 printf \
 'lxc.include = @lxcConfigBase@
