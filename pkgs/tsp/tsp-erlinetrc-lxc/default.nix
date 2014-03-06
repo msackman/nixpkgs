@@ -32,32 +32,21 @@ buildLXC ({ configuration, lxcLib }:
          else
            lxcLib.id)
       ];
-      options = [
-        (lxcLib.declareOption {
-          name = "erlinetrc.start";
-          optional = true;
-          default = false;
-         })
-        (lxcLib.declareOption {
-          name = "erlinetrc.name";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "erlinetrc.router.hostname";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "erlinetrc.output_path";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "erlinetrc.erlang.cookie";
-          optional = true;
-         })];
+      options = {
+        start           = lxcLib.mkOption { optional = true; default = false; };
+        name            = lxcLib.mkOption { optional = false; };
+        router.hostname = lxcLib.mkOption { optional = false; };
+        output_path     = lxcLib.mkOption { optional = false; };
+        erlang.cookie   = lxcLib.mkOption { optional = true; };
+        network         = lxcLib.includeOptions tsp_network;
+        home            = lxcLib.includeOptions tsp_home;
+        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
+        bash            = lxcLib.includeOptions tsp_bash;
+      };
       configuration = {
-        "home.user"  = "erlinetrc";
-        "home.uid"   = 1000;
-        "home.group" = "erlinetrc";
-        "home.gid"   = 1000;
+        home.user  = "erlinetrc";
+        home.uid   = 1000;
+        home.group = "erlinetrc";
+        home.gid   = 1000;
       };
     })

@@ -33,24 +33,19 @@ buildLXC ({ configuration, lxcLib }:
          else
            lxcLib.id)
       ];
-      options = [
-        (lxcLib.declareOption {
-          name = "http.start";
-          optional = true;
-          default = false;
-         })
-        (lxcLib.declareOption {
-          name = "http.router.hostname";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "http.erlang.cookie";
-          optional = true;
-         })];
+      options = {
+        start           = lxcLib.mkOption { optional = true; default = false; };
+        router.hostname = lxcLib.mkOption { optional = false; };
+        erlang.cookie   = lxcLib.mkOption { optional = true; };
+        network         = lxcLib.includeOptions tsp_network;
+        home            = lxcLib.includeOptions tsp_home;
+        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
+        bash            = lxcLib.includeOptions tsp_bash;
+      };
       configuration = {
-        "home.user"  = "http";
-        "home.uid"   = 1000;
-        "home.group" = "http";
-        "home.gid"   = 1000;
+        home.user  = "http";
+        home.uid   = 1000;
+        home.group = "http";
+        home.gid   = 1000;
       };
     })

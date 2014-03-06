@@ -22,10 +22,7 @@ buildLXC ({ configuration, lxcLib }:
         else
           lxcLib.id;
        onCreate = [ create ];
-       options = [
-         (lxcLib.declareOption {
-           name = "bash.start";
-           optional = true;
-           default = false;
-          })];
+       options = {
+         start = lxcLib.mkOption { optional = true; default = false; };
+       };
     })

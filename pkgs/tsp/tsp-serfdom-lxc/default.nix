@@ -28,28 +28,19 @@ buildLXC ({ configuration, lxcLib }:
           lxcLib.setInit "${wrapped}/sbin/serfdom-start"
         else
           lxcLib.id;
-      options = [
-        (lxcLib.declareOption {
-          name = "serfdom.start";
-          optional = true;
-          default = false;
-         })
-        (lxcLib.declareOption {
-          name = "serfdom.routerIP";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "serfdom.rpcIP";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "serfdom.identity";
-          optional = false;
-         })];
+      options = {
+        start        = lxcLib.mkOption { optional = true; default = false; };
+        routerIP     = lxcLib.mkOption { optional = false; };
+        rpcIP        = lxcLib.mkOption { optional = false; };
+        identity     = lxcLib.mkOption { optional = false; };
+        network      = lxcLib.includeOptions tsp_network;
+        home         = lxcLib.includeOptions tsp_home;
+        dev_proc_sys = lxcLib.includeOptions tsp_dev_proc_sys;
+      };
       configuration = {
-        "home.user"  = "serfdom";
-        "home.uid"   = 1000;
-        "home.group" = "serfdom";
-        "home.gid"   = 1000;
+        home.user  = "serfdom";
+        home.uid   = 1000;
+        home.group = "serfdom";
+        home.gid   = 1000;
       };
     })

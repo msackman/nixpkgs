@@ -24,20 +24,9 @@ buildLXC ({ configuration, lxcLib }:
         else
           lxcLib.setPath "autodev" 1;
        onCreate = [ create ];
-       options = [
-         (lxcLib.declareOption {
-           name = "dev-proc-sys.dev.skip";
-           optional = true;
-           default = false;
-          })
-         (lxcLib.declareOption {
-           name = "dev-proc-sys.proc.skip";
-           optional = true;
-           default = false;
-          })
-         (lxcLib.declareOption {
-           name = "dev-proc-sys.sysfs.skip";
-           optional = true;
-           default = false;
-          })];
+       options      = {
+         dev.skip   = lxcLib.mkOption { optional = true; default = false; };
+         proc.skip  = lxcLib.mkOption { optional = true; default = false; };
+         sysfs.skip = lxcLib.mkOption { optional = true; default = false; };
+       };
     })

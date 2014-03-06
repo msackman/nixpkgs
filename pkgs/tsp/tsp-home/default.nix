@@ -21,21 +21,10 @@ buildLXC ({ configuration, lxcLib }:
       name = "tsp-home-lxc";
       storeMounts = { inherit bash; };
       onCreate = [ create ];
-      options = [
-        (lxcLib.declareOption {
-          name = "home.user";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "home.uid";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "home.group";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "home.gid";
-          optional = false;
-         })];
+      options = {
+        user  = lxcLib.mkOption { optional = false; };
+        uid   = lxcLib.mkOption { optional = false; };
+        group = lxcLib.mkOption { optional = false; };
+        gid   = lxcLib.mkOption { optional = false; };
+      };
     })

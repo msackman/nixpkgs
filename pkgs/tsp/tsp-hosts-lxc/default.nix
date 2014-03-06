@@ -23,9 +23,5 @@ buildLXC ({ configuration, lxcLib }:
       name = "tsp-hosts-lxc";
       storeMounts = { inherit hosts; };
       onCreate = [ create ];
-      options = [
-        (lxcLib.declareOption {
-          name = "hosts";
-          optional = false;
-         })];
+      options = lxcLib.mkOption { optional = false; };
     })

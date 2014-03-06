@@ -31,16 +31,13 @@ buildLXC ({ configuration, lxcLib }:
           lxcLib.setInit "${wrapped}/sbin/rabbitmq-server"
         else
           lxcLib.id;
-      options = [
-        (lxcLib.declareOption {
-          name = "rabbitmq_server.start";
-          optional = true;
-          default = false;
-         })];
+      options = {
+        start = lxcLib.mkOption { optional = true; default = false; };
+      };
       configuration = {
-        "home.user"  = "rabbit";
-        "home.uid"   = 1000;
-        "home.group" = "rabbit";
-        "home.gid"   = 1000;
+        home.user  = "rabbit";
+        home.uid   = 1000;
+        home.group = "rabbit";
+        home.gid   = 1000;
       };
     })

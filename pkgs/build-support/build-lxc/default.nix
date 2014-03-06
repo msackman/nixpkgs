@@ -1,7 +1,7 @@
 {stdenv, lib, lxc, coreutils}:
   let
     inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head;
-    inherit (lib) id foldl fold sort substring attrValues;
+    inherit (lib) id foldl fold sort substring attrValues recursiveUpdate;
     lxcLib = rec {
       inherit sequence id;
 
@@ -96,10 +96,10 @@
     ## 4. Verify options
     ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
 
-    storeMountsAndConfig = pkg: result@{ configuration, storeMounts }:
+    storeMountsAndConfig = pkg: result@{ configuration, ... }:
       let
         configuration1 = collectConfiguration configuration pkg;
-        storeMounts1 = storeMounts // collectStoreMounts configuration pkg;
+        storeMounts1 = collectStoreMounts configuration pkg;
         result1 = { configuration = configuration1;
                     storeMounts   = storeMounts1; };
       in
@@ -112,15 +112,18 @@
       let
         pkgSet = runPkg pkg configuration;
         pkgStoreMounts = pkgSet.storeMounts;
-        configuration1 = configuration // pkgSet.configuration;
+        configsAttrList =
+          fold (name: acc:
+                 let pkg = getAttr name pkgStoreMounts; in
+                 if isLxcPkg pkg then
+                   [{ inherit name;
+                      value = collectConfiguration configuration pkg;
+                    }] ++ acc
+                 else
+                   acc
+               ) [] (attrNames pkgStoreMounts);
       in
-        fold (name: configuration:
-               let pkg = getAttr name pkgStoreMounts; in
-               if isLxcPkg pkg then
-                 collectConfiguration configuration pkg
-               else
-                 configuration
-             ) configuration1 (attrNames pkgStoreMounts);
+        recursiveUpdate (listToAttrs configsAttrList) (pkgSet.configuration);
 
     collectStoreMounts = configuration: pkg:
       let

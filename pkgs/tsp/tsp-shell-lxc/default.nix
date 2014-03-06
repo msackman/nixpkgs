@@ -15,10 +15,10 @@ buildLXC ({ configuration, lxcLib }:
                       dev_proc_sys = tsp_dev_proc_sys;
                       inherit erlang nettools coreutils iproute netcat host; };
       configuration = {
-        "home.user"  = "shell";
-        "home.uid"   = 1000;
-        "home.group" = "shell";
-        "home.gid"   = 1000;
-        "bash.start" = true;
+        home.user  = "shell";
+        home.uid   = 1000;
+        home.group = "shell";
+        home.gid   = 1000;
+        bash.start = true;
       };
     })

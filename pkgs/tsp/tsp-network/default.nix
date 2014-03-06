@@ -35,14 +35,8 @@ buildLXC ({ configuration, lxcLib }:
         networks = fold addNetwork hostname configuration."network.networks";
       in
         sequence networks;
-    options = [
-      (lxcLib.declareOption {
-        name = "network.networks";
-        optional = true;
-        default = [];
-      })
-      (lxcLib.declareOption {
-        name = "network.hostname";
-        optional = true;
-       })];
+    options = {
+      hostname = lxcLib.mkOption { optional = true; };
+      networks = lxcLib.mkOption { optional = true; default = [] };
+    };
   })
