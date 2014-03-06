@@ -55,45 +55,26 @@ buildLXC ({ configuration, lxcLib }:
              old // { value = rejoined; }))
         (lxcLib.appendPath "hook.autodev" mknodtuntap)
       ];
-      options = [
-        (lxcLib.declareOption {
-          name = "router.start";
-          optional = true;
-          default = false;
-         })
-        (lxcLib.declareOption {
-          name = "router.identity";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "router.internal_bridge";
-          optional = true;
-          default = "br0";
-         })
-        (lxcLib.declareOption {
-          name = "router.internal_bridge.ip";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "router.internal_bridge.netmask";
-          optional = true;
-         })
-        (lxcLib.declareOption {
-          name = "router.internal_bridge.nic";
-          optional = false;
-         })
-        (lxcLib.declareOption {
-          name = "router.erlang.cookie";
-          optional = true;
-         })
-        (lxcLib.declareOption {
-          name = "router.serfdom";
-          optional = false;
-         })];
+      options = {
+        start           = lxcLib.mkOption { optional = true; default = false; };
+        identity        = lxcLib.mkOption { optional = false; };
+        internal_bridge = {
+          name           = lxcLib.mkOption { optional = true; default = "br0"; };
+          ip             = lxcLib.mkOption { optional = false; };
+          netmask        = lxcLib.mkOption { optional = false; };
+          nic            = lxcLib.mkOption { optional = false; };
+        };
+        erlang.cookie   = lxcLib.mkOption { optional = true; };
+        serfdom         = lxcLib.mkOption { optional = false; };
+        network         = lxcLib.includeOptions tsp_network;
+        home            = lxcLib.includeOptions tsp_home;
+        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
+        bash            = lxcLib.includeOptions tsp_bash;
+      };
       configuration = {
-        "home.user"  = "router";
-        "home.uid"   = 1000;
-        "home.group" = "router";
-        "home.gid"   = 1000;
+        home.user  = "router";
+        home.uid   = 1000;
+        home.group = "router";
+        home.gid   = 1000;
       };
     })

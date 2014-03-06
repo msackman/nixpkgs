@@ -137,13 +137,25 @@
       in
         listToAttrs storeMountsAttrList;
 
-    collectOptions = configuration: pkg: options:
+    collectOptions = configuration: pkg:
       let
         pkgSet = runPkg pkg configuration;
-        localOptions = sequence pkgSet.options options;
-        lxcPkgsStoreMounts = lxcPkgs (attrValues pkgSet.storeMounts);
+        pkgStoreMounts = pkgSet.storeMounts;
+        pkgOptions = pkgSet.options;
+        localOptions = sequence pkgOptions {};
+        childResultList =
+          fold (name: acc:
+                 let
+                   pkg = getAttr name pkgStoreMounts;
+                   options = collectOptions configuration pkg;
+                 in
+                   if isLxcPkg pkg then
+                     [{ inherit name; value = options; }] ++ acc
+                   else
+                     acc
+               ) [] (attrNames pkgStoreMounts)
       in
-        fold (collectOptions configuration) localOptions lxcPkgsStoreMounts;
+        localOptions // (listToAttrs childResultList);
 
     extendConfig = options: configuration:
       fold (optName: config:
