@@ -21,8 +21,8 @@ buildLXC ({ configuration, lxcLib }:
                     []
                  )) [] ((attrNames baseNetwork) ++ [ "ipv4" "ipv4.gateway" ]);
         nic = network: baseNetwork // (listToAttrs (networkConfiguration network));
-        hostname = if configuration ? "network.hostname" then
-                     [(setPath "utsname" configuration."network.hostname")]
+        hostname = if configuration ? hostname then
+                     [(setPath "utsname" configuration.hostname)]
                    else
                      [];
         listDelete = toDelete: filter (e: e != toDelete);
@@ -32,11 +32,11 @@ buildLXC ({ configuration, lxcLib }:
           fold (name: acc:
             [(appendPath "network.${name}" (getAttr name fullNetwork))] ++ acc)
             acc (["type"] ++ (listDelete "type" (attrNames fullNetwork)));
-        networks = fold addNetwork hostname configuration."network.networks";
+        networks = fold addNetwork hostname configuration.networks;
       in
         sequence networks;
     options = {
       hostname = lxcLib.mkOption { optional = true; };
-      networks = lxcLib.mkOption { optional = true; default = [] };
+      networks = lxcLib.mkOption { optional = true; default = []; };
     };
   })

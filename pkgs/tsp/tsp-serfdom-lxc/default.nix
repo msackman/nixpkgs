@@ -12,7 +12,7 @@ buildLXC ({ configuration, lxcLib }:
         printf '#! ${stdenv.shell}
         export LOG_DIR=/var/log/${wrapped.name}
         ${coreutils}/bin/mkdir -p $LOG_DIR
-        exec ${serfdom}/bin/serf agent -rpc-addr=${configuration."serfdom.rpcIP"}:7373 -tag router=${configuration."serfdom.routerIP"} -node=${configuration."serfdom.identity"} > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/serfdom-start
+        exec ${serfdom}/bin/serf agent -rpc-addr=${configuration.rpcIP}:7373 -tag router=${configuration.routerIP} -node=${configuration.identity} > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/serfdom-start
         chmod +x $out/sbin/serfdom-start
       '';
     };
@@ -24,7 +24,7 @@ buildLXC ({ configuration, lxcLib }:
                       network      = tsp_network;
                       inherit wrapped; };
       lxcConf =
-        if configuration."serfdom.start" then
+        if configuration.start then
           lxcLib.setInit "${wrapped}/sbin/serfdom-start"
         else
           lxcLib.id;
@@ -33,9 +33,6 @@ buildLXC ({ configuration, lxcLib }:
         routerIP     = lxcLib.mkOption { optional = false; };
         rpcIP        = lxcLib.mkOption { optional = false; };
         identity     = lxcLib.mkOption { optional = false; };
-        network      = lxcLib.includeOptions tsp_network;
-        home         = lxcLib.includeOptions tsp_home;
-        dev_proc_sys = lxcLib.includeOptions tsp_dev_proc_sys;
       };
       configuration = {
         home.user  = "serfdom";

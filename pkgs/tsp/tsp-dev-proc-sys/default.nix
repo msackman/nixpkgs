@@ -8,9 +8,9 @@ buildLXC ({ configuration, lxcLib }:
       name = "tsp-dev-proc-sys-oncreate";
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
-            -e "s|@dev@|${boolToStr (! configuration."dev-proc-sys.dev.skip")}|g" \
-            -e "s|@proc@|${boolToStr (! configuration."dev-proc-sys.proc.skip")}|g" \
-            -e "s|@sysfs@|${boolToStr (! configuration."dev-proc-sys.sysfs.skip")}|g" \
+            -e "s|@dev@|${boolToStr (! configuration.dev.skip)}|g" \
+            -e "s|@proc@|${boolToStr (! configuration.proc.skip)}|g" \
+            -e "s|@sysfs@|${boolToStr (! configuration.sysfs.skip)}|g" \
             ${createIn} > $out
         chmod +x $out
       '';
@@ -19,7 +19,7 @@ buildLXC ({ configuration, lxcLib }:
     {
       name = "tsp-dev-proc-sys-lxc";
       lxcConf =
-        if configuration."dev-proc-sys.dev.skip" then
+        if configuration.dev.skip then
           lxcLib.id
         else
           lxcLib.setPath "autodev" 1;

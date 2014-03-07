@@ -22,14 +22,14 @@ buildLXC ({ configuration, lxcLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        export HOME=/home/${configuration."home.user"}
+        export HOME=/home/${configuration.home.user}
         export PATH=${bridge_utils}/bin:${bridge_utils}/sbin:${nettools}/bin:${nettools}/sbin:${coreutils}/bin:$PATH
-        brctl addbr ${configuration."router.internal_bridge"}
-        brctl addif ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.nic"}
-        ifconfig ${configuration."router.internal_bridge"} ${configuration."router.internal_bridge.ip"} netmask ${configuration."router.internal_bridge.netmask"} up
+        brctl addbr ${configuration.internal_bridge.name}
+        brctl addif ${configuration.internal_bridge.name} ${configuration.internal_bridge.nic}
+        ifconfig ${configuration.internal_bridge.name} ${configuration.internal_bridge.ip} netmask ${configuration.internal_bridge.netmask} up
         export LOG_DIR=/var/log/${wrapped.name}
         mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration."router.identity"}\\" -tsp serf_addr \\"${configuration."router.serfdom"}\\" -tsp tap_name \\"tsp%%d\\" -tsp eth_dev undefined -tsp bridge \\"${configuration."router.internal_bridge"}\\" -sname router ${if configuration ? "router.erlang.cookie" then "-setcookie ${configuration."router.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
+        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration.identity}\\" -tsp serf_addr \\"${configuration.serfdom}\\" -tsp tap_name \\"tsp%%d\\" -tsp eth_dev undefined -tsp bridge \\"${configuration.internal_bridge.name}\\" -sname router ${if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then "-setcookie ${configuration.erlang.cookie}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
@@ -42,7 +42,7 @@ buildLXC ({ configuration, lxcLib }:
                       network      = tsp_network;
                       inherit wrapped; };
       lxcConf = lxcLib.sequence [
-        (if configuration."router.start" then
+        (if configuration.start then
            lxcLib.setInit "${wrapped}/sbin/router-start"
          else
            lxcLib.id)
@@ -66,10 +66,6 @@ buildLXC ({ configuration, lxcLib }:
         };
         erlang.cookie   = lxcLib.mkOption { optional = true; };
         serfdom         = lxcLib.mkOption { optional = false; };
-        network         = lxcLib.includeOptions tsp_network;
-        home            = lxcLib.includeOptions tsp_home;
-        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
-        bash            = lxcLib.includeOptions tsp_bash;
       };
       configuration = {
         home.user  = "router";

@@ -7,10 +7,10 @@ buildLXC ({ configuration, lxcLib }:
       name = "tsp-home-oncreate";
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
-            -e "s|@user@|${configuration."home.user"}|g" \
-            -e "s|@uid@|${toString configuration."home.uid"}|g" \
-            -e "s|@group@|${configuration."home.group"}|g" \
-            -e "s|@gid@|${toString configuration."home.gid"}|g" \
+            -e "s|@user@|${configuration.user}|g" \
+            -e "s|@uid@|${toString configuration.uid}|g" \
+            -e "s|@group@|${configuration.group}|g" \
+            -e "s|@gid@|${toString configuration.gid}|g" \
             -e "s|@shell@|${bash}/bin/sh|g" \
             ${createIn} > $out
         chmod +x $out

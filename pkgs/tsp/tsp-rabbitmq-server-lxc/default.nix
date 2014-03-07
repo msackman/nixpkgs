@@ -13,8 +13,8 @@ buildLXC ({ configuration, lxcLib }:
         mkdir -p $out/sbin
         for f in rabbitmq-server rabbitmqctl rabbitmq-plugins; do
           makeWrapper ${tsp_rabbitmq_server}/sbin/$f $out/sbin/$f \
-            --set HOME /home/${configuration."home.user"} \
-            --set ERL_INETRC /home/${configuration."home.user"}/.rabbitmq/3.2.2/etc/rabbitmq/erl_inetrc
+            --set HOME /home/${configuration.home.user} \
+            --set ERL_INETRC /home/${configuration.home.user}/.rabbitmq/3.2.2/etc/rabbitmq/erl_inetrc
         done
       '';
     };
@@ -27,7 +27,7 @@ buildLXC ({ configuration, lxcLib }:
                       home         = tsp_home;
                       inherit wrapped; };
       lxcConf =
-        if configuration."rabbitmq_server.start" then
+        if configuration.start then
           lxcLib.setInit "${wrapped}/sbin/rabbitmq-server"
         else
           lxcLib.id;

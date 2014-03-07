@@ -11,11 +11,11 @@ buildLXC ({ configuration, lxcLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        export HOME=/home/${configuration."home.user"}
+        export HOME=/home/${configuration.home.user}
         export PATH=${graphviz}/bin:${coreutils}/bin:$PATH
         export LOG_DIR=/var/log/${wrapped.name}
         mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration."http.router.hostname"} -tsp_http docroot \\"${tsp_http}/priv/www\\" -sname http ${if configuration ? "http.erlang.cookie" then "-setcookie ${configuration."http.erlang.cookie"}" else ""} -s tsp_http -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/http-start
+        exec ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration.router.hostname} -tsp_http docroot \\"${tsp_http}/priv/www\\" -sname http ${if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then "-setcookie ${configuration.erlang.cookie}" else ""} -s tsp_http -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/http-start
         chmod +x $out/sbin/http-start
       '';
     };
@@ -28,7 +28,7 @@ buildLXC ({ configuration, lxcLib }:
                       network      = tsp_network;
                       inherit wrapped; };
       lxcConf = lxcLib.sequence [
-        (if configuration."http.start" then
+        (if configuration.start then
            lxcLib.setInit "${wrapped}/sbin/http-start"
          else
            lxcLib.id)
@@ -37,10 +37,6 @@ buildLXC ({ configuration, lxcLib }:
         start           = lxcLib.mkOption { optional = true; default = false; };
         router.hostname = lxcLib.mkOption { optional = false; };
         erlang.cookie   = lxcLib.mkOption { optional = true; };
-        network         = lxcLib.includeOptions tsp_network;
-        home            = lxcLib.includeOptions tsp_home;
-        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
-        bash            = lxcLib.includeOptions tsp_bash;
       };
       configuration = {
         home.user  = "http";

@@ -11,10 +11,10 @@ buildLXC ({ configuration, lxcLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        export HOME=/home/${configuration."home.user"}
+        export HOME=/home/${configuration.home.user}
         export LOG_DIR=/var/log/${wrapped.name}
         ${coreutils}/bin/mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration."erlinetrc.router.hostname"} -tsp_erlinetrc name \\"${configuration."erlinetrc.name"}\\" -tsp_erlinetrc output_path \\"${configuration."erlinetrc.output_path"}\\" -sname erlinetrc ${if configuration ? "erlinetrc.erlang.cookie" then "-setcookie ${configuration."erlinetrc.erlang.cookie"}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/erlinetrc-start
+        exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration.router.hostname} -tsp_erlinetrc name \\"${configuration.name}\\" -tsp_erlinetrc output_path \\"${configuration.output_path}\\" -sname erlinetrc ${if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then "-setcookie ${configuration.erlang.cookie}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/erlinetrc-start
         chmod +x $out/sbin/erlinetrc-start
       '';
     };
@@ -27,7 +27,7 @@ buildLXC ({ configuration, lxcLib }:
                       network      = tsp_network;
                       inherit wrapped; };
       lxcConf = lxcLib.sequence [
-        (if configuration."erlinetrc.start" then
+        (if configuration.start then
            lxcLib.setInit "${wrapped}/sbin/erlinetrc-start"
          else
            lxcLib.id)
@@ -38,10 +38,6 @@ buildLXC ({ configuration, lxcLib }:
         router.hostname = lxcLib.mkOption { optional = false; };
         output_path     = lxcLib.mkOption { optional = false; };
         erlang.cookie   = lxcLib.mkOption { optional = true; };
-        network         = lxcLib.includeOptions tsp_network;
-        home            = lxcLib.includeOptions tsp_home;
-        dev_proc_sys    = lxcLib.includeOptions tsp_dev_proc_sys;
-        bash            = lxcLib.includeOptions tsp_bash;
       };
       configuration = {
         home.user  = "erlinetrc";

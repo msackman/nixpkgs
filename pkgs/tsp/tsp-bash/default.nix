@@ -17,7 +17,7 @@ buildLXC ({ configuration, lxcLib }:
       name = "${bash.name}-lxc";
       storeMounts = { inherit bash; };
       lxcConf =
-        if configuration."bash.start" then
+        if configuration.start then
           lxcLib.setInit "${bash}/bin/bash"
         else
           lxcLib.id;
