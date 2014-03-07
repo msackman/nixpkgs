@@ -124,16 +124,10 @@
         pkgStoreMounts = pkgSet.storeMounts;
         configsAttrList =
           fold (name: acc:
-                 let
-                   pkg = getAttr name pkgStoreMounts;
-                   pkgConfig = if hasAttr name configuration then
-                                 getAttr name configuration
-                               else
-                                 {};
-                 in
-                 if isLxcPkg pkg then
+                 let child = descendPkg pkgStoreMounts configuration name; in
+                 if isLxcPkg child.pkg then
                    [{ inherit name;
-                      value = collectConfiguration pkgConfig pkg;
+                      value = collectConfiguration child.configuration child.pkg;
                     }] ++ acc
                  else
                    acc
@@ -148,15 +142,9 @@
         pkgStoreMounts = pkgSet.storeMounts;
         storeMountsAttrList =
           map (name:
-                let
-                  pkg = getAttr name pkgStoreMounts;
-                  pkgConfig = if hasAttr name configuration then
-                                getAttr name configuration
-                              else
-                                {};
-                in
-                  if isLxcPkg pkg then
-                    { inherit name; value = collectStoreMounts pkgConfig pkg; }
+                let child = descendPkg pkgStoreMounts configuration name; in
+                  if isLxcPkg child.pkg then
+                    { inherit name; value = collectStoreMounts child.configuration child.pkg; }
                   else
                     { inherit name; value = {}; }
               ) (attrNames pkgStoreMounts);
@@ -168,18 +156,12 @@
         pkgSet = runPkg pkg configuration;
         pkgStoreMounts = pkgSet.storeMounts;
         childOptions = fold (name: acc:
-                              let
-                                pkg = getAttr name pkgStoreMounts;
-                                pkgConfig = if hasAttr name configuration then
-                                              getAttr name configuration
-                                            else
-                                              {};
-                              in
-                                if isLxcPkg pkg then
-                                  [{ inherit name;
-                                     value = collectOptions pkgConfig pkg; }] ++ acc
-                                else
-                                  acc
+                              let child = descendPkg pkgStoreMounts configuration name; in
+                              if isLxcPkg child.pkg then
+                                [{ inherit name;
+                                   value = collectOptions child.configuration child.pkg; }] ++ acc
+                              else
+                                acc
                             ) [] (attrNames pkgStoreMounts);
       in
         recursiveUpdate (listToAttrs childOptions) pkgSet.options;
@@ -271,14 +253,11 @@
             pkgStoreMounts = pkgSet.storeMounts;
           in
             fold (name: acc:
-                   let
-                     pkg = getAttr name pkgStoreMounts;
-                     pkgConfig = getAttr name configuration;
-                   in
-                   if isLxcPkg pkg then
-                     f (path + name + ".") pkg pkgConfig acc
+                   let child = descendPkg pkgStoreMounts configuration name; in
+                   if isLxcPkg child.pkg then
+                     f (path + name + ".") child.pkg child.configuration acc
                    else
-                     [{name = path + name; value = pkg;}] ++ acc
+                     [{name = path + name; value = child.pkg;}] ++ acc
                  ) acc (attrNames pkgStoreMounts);
         pkgs = f (name + ".") pkg configuration [];
       in
@@ -333,6 +312,14 @@
           '';
         };
 
+    descendPkg = storeMounts: configuration: name:
+      { pkg = getAttr name storeMounts;
+        configuration = if hasAttr name configuration then
+                          getAttr name configuration
+                        else
+                          {};
+      };
+
     collectLxcPkgs = configuration: pkg:
       let
         f = pkg: configuration: acc:
@@ -342,12 +329,9 @@
             acc1 = [pkgSet] ++ acc;
           in
             fold (name: acc2:
-                   let
-                     pkg = getAttr name pkgStoreMounts;
-                     pkgConfig = getAttr name configuration;
-                   in
-                     if isLxcPkg pkg then
-                       f pkg pkgConfig acc2
+                   let child = descendPkg pkgStoreMounts configuration name; in
+                     if isLxcPkg child.pkg then
+                       f child.pkg child.configuration acc2
                      else
                        acc2
                  ) acc1 (attrNames pkgStoreMounts);
