@@ -20,10 +20,6 @@
         assert (desc ? default) -> desc.optional;
         {_isOption = true;} // desc;
 
-      includeOptions = str:
-        assert isString str;
-        {_isOption = true; _include = str;};
-
       setPath = name: value: config:
         assert ! (hasPath name config);
         appendPath name value config;
@@ -91,7 +87,6 @@
              storeMounts = { inherit lxc; } // storeMounts; })
         (pkg.fun { inherit configuration lxcLib; });
     isOption = thing: isAttrs thing && thing ? "_isOption" && thing._isOption;
-    isOptionInclude = thing: isOption thing && thing ? "_include";
     sequence = list: init: foldl (acc: f: f acc) init list;
     joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
@@ -172,51 +167,22 @@
       let
         pkgSet = runPkg pkg configuration;
         pkgStoreMounts = pkgSet.storeMounts;
-        f = options: includedStoreMounts:
-          fold (name: acc@{ includedStoreMounts, optionUpdateAttrList }:
-                 let option = getAttr name options; in
-                 if isOptionInclude option then
-                   assert ! (elem option._include includedStoreMounts); # no double include
-                   assert hasAttr option._include pkgStoreMounts;
-                   let
-                     childPkg = getAttr option._include pkgStoreMounts;
-                     childPkgConfig = getAttr option._include configuration;
-                     childPkgOptions = collectOptions childPkgConfig childPkg;
-                   in
-                     assert isLxcPkg childPkg;
-                     { includedStoreMounts = [option._include] ++ includedStoreMounts;
-                       optionUpdateAttrList =
-                         [{inherit name; value = childPkgOptions;}] ++ optionUpdateAttrList; }
-                 else if isOption option then
-                   { inherit includedStoreMounts;
-                     optionUpdateAttrList = [{inherit name; value = option;}] ++ optionUpdateAttrList; }
-                 else
-                   assert isAttrs option;
-                   let result = f option includedStoreMounts; in
-                   { inherit (result) includedStoreMounts;
-                     optionUpdateAttrList =
-                       [{ inherit name; value = (listToAttrs result.optionUpdateAttrList); }] ++
-                       optionUpdateAttrList; }
-               ) { inherit includedStoreMounts; optionUpdateAttrList = []; } (attrNames options);
-        result = f pkgSet.options [];
-        remainingStoreMounts = removeAttrs pkgStoreMounts result.includedStoreMounts;
-        remainingOptions = fold (name: acc:
-                                  let
-                                    pkg = getAttr name remainingStoreMounts;
-                                    pkgConfig = if hasAttr name configuration then
-                                                  getAttr name configuration
-                                                else
-                                                  {};
-                                  in
-                                    if isLxcPkg pkg then
-                                      [{ inherit name;
-                                         value = collectOptions pkgConfig pkg; }] ++ acc
-                                    else
-                                      acc
-                                ) [] (attrNames remainingStoreMounts);
+        childOptions = fold (name: acc:
+                              let
+                                pkg = getAttr name pkgStoreMounts;
+                                pkgConfig = if hasAttr name configuration then
+                                              getAttr name configuration
+                                            else
+                                              {};
+                              in
+                                if isLxcPkg pkg then
+                                  [{ inherit name;
+                                     value = collectOptions pkgConfig pkg; }] ++ acc
+                                else
+                                  acc
+                            ) [] (attrNames pkgStoreMounts);
       in
-        recursiveUpdate (listToAttrs result.optionUpdateAttrList)
-                        (listToAttrs remainingOptions);
+        recursiveUpdate (listToAttrs childOptions) pkgSet.options;
 
     extendConfig = options: configuration:
       let
