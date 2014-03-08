@@ -16,7 +16,7 @@
             false;
 
       mkOption = desc:
-        assert desc ? "optional";
+        assert desc ? optional;
         assert (desc ? default) -> desc.optional;
         {_isOption = true;} // desc;
 
@@ -76,7 +76,7 @@
         joinStrings "\n" "" (
           map (attrs: "lxc.${attrs.name} = ${toString attrs.value}") config);
     };
-    isLxcPkg = thing: isAttrs thing && thing ? "_isLxc" && thing._isLxc;
+    isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
     runPkg = pkg: configuration:
         ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], options ? {}, configuration ? {}}:
@@ -86,7 +86,7 @@
              ## quite inserting it EVERYWHERE!
              storeMounts = { inherit lxc; } // storeMounts; })
         (pkg.fun { inherit configuration lxcLib; });
-    isOption = thing: isAttrs thing && thing ? "_isOption" && thing._isOption;
+    isOption = thing: isAttrs thing && thing ? _isOption && thing._isOption;
     sequence = list: init: foldl (acc: f: f acc) init list;
     joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
