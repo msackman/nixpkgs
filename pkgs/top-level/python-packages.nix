@@ -28,6 +28,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   wrapPython = pkgs.makeSetupHook
     { deps = pkgs.makeWrapper;
       substitutions.libPrefix = python.libPrefix;
+      substitutions.executable = "${python}/bin/${python.executable}";
     }
    ../development/python-modules/generic/wrap.sh;
 
@@ -1808,6 +1809,23 @@ pythonPackages = modules // import ./python-packages-generated.nix {
         stdenv.lib.maintainers.iElectric
       ];
       platforms = stdenv.lib.platforms.all;
+    };
+  };
+
+  pew = buildPythonPackage rec {
+    name = "pew-0.1.9";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/p/pew/${name}.tar.gz";
+      md5 = "90a82400074b50a9e73c3045ed9ac217";
+    };
+
+    propagatedBuildInputs = [ virtualenv virtualenv-clone ];
+
+    meta = with stdenv.lib; {
+      description = "Tools to manage multiple virtualenvs written in pure python, a virtualenvwrapper rewrite";
+      license = licenses.mit;
+      platforms = platforms.all;
     };
   };
 
@@ -3844,12 +3862,18 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
   mrbob = buildPythonPackage rec {
     name = "mrbob-${version}";
-    version = "0.1a9";
+    version = "0.1.1";
 
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/m/mr.bob/mr.bob-${version}.zip";
-      md5 = "2d27d9bd1fc6269a3ecfd1a1ae47cd8a";
+      md5 = "84a117c9a75b86842b0fa5f5c9c767f3";
     };
+
+    # some files in tests dir include unicode names
+    preBuild = ''
+      export LOCALE_ARCHIVE=${pkgs.glibcLocales}/lib/locale/locale-archive
+      export LC_ALL="en_US.UTF-8"
+    '';
 
     buildInputs = [ pkgs.unzip ];
 
@@ -4544,6 +4568,22 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   };
 
+  paypalrestsdk = buildPythonPackage rec {
+    name = "paypalrestsdk-0.7.0";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/p/paypalrestsdk/${name}.tar.gz";
+      sha256 = "117kfipzfahf9ysv414bh1mmm5cc9ck5zb6rhpslx1f8gk3frvd6";
+    };
+
+    propagatedBuildInputs = [ httplib2 ];
+
+    meta = {
+      homepage = https://developer.paypal.com/;
+      description = "Python APIs to create, process and manage payment";
+      license = "PayPal SDK License";
+    };
+  };
 
   pep8 = buildPythonPackage rec {
     name = "pep8-${version}";
@@ -4853,11 +4893,11 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   py = buildPythonPackage rec {
-    name = "py-1.4.19";
+    name = "py-1.4.20";
 
     src = fetchurl {
       url = "https://pypi.python.org/packages/source/p/py/${name}.tar.gz";
-      md5 = "d2e24b4363d834bf9192247f143435bc";
+      md5 = "5f1708be5482f3ff6711dfd6cafd45e0";
     };
   };
 
@@ -4940,7 +4980,7 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       sha256 = "0bnin777lc53nxd1hp3apq410jj5wx92n08h7h4izpl4f4sx00lz";
     };
 
-    buildInputs = [ pytz ];
+    propagatedBuildInputs = [ pytz ];
 
     meta = {
       homepage = http://babel.edgewall.org;
@@ -5674,11 +5714,11 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   pytz = buildPythonPackage rec {
-    name = "pytz-2012c";
+    name = "pytz-2013.9";
 
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/p/pytz/${name}.tar.bz2";
-      md5 = "660e0cee7f6c419ca2665db460f65131";
+      md5 = "ec7076947a46a8a3cb33cbf2983a562c";
     };
 
     meta = {
@@ -5825,6 +5865,21 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/r/requests/${name}.tar.gz";
       md5 = "22af2682233770e5468a986f451c51c0";
+    };
+
+    meta = {
+      description = "Requests is an Apache2 Licensed HTTP library, written in Python, for human beings..";
+      homepage = http://docs.python-requests.org/en/latest/;
+    };
+  };
+  
+  
+  requests2 = buildPythonPackage rec {
+    name = "requests-2.2.1";
+
+    src = fetchurl {
+      url = "http://pypi.python.org/packages/source/r/requests/${name}.tar.gz";
+      md5 = "ac27081135f58d1a43e4fb38258d6f4e";
     };
 
     meta = {
@@ -6585,6 +6640,23 @@ pythonPackages = modules // import ./python-packages-generated.nix {
     };
   };
 
+  sorl_thumbnail = buildPythonPackage rec {
+    name = "sorl-thumbnail-11.12";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/s/sorl-thumbnail/${name}.tar.gz";
+      sha256 = "050b9kzbx7jvs3qwfxxshhis090hk128maasy8pi5wss6nx5kyw4";
+    };
+
+    # Disabled due to an improper configuration error when tested against django. This looks like something broken in the test cases for sorl.
+    doCheck = false;
+
+    meta = {
+      homepage = http://sorl-thumbnail.readthedocs.org/en/latest/;
+      description = "Thumbnails for Django";
+      license = stdenv.lib.licenses.bsd3;
+    };
+  };
 
   supervisor = buildPythonPackage rec {
     name = "supervisor-3.0";
@@ -7001,16 +7073,18 @@ pythonPackages = modules // import ./python-packages-generated.nix {
 
 
   # TODO
-  # py.error.EACCES: [Permission denied]: mkdir('/homeless-shelter',)
-  # builder for `/nix/store/0czwg0n3pfkmpjphqv1jxfjlgkbziwsx-python-tox-1.4.3.drv' failed with exit code 1
-  # tox = buildPythonPackage rec {
-  #   name = "tox-1.4.3";
+  # Installs correctly but fails tests that involve simple things like:
+  # cmd.run("tox", "-h")
+  # also, buildPythonPackage needs to supply the tox.ini correctly for projects that use tox for their tests
   #
-  #   buildInputs = [ py virtualenv ];
+  # tox = buildPythonPackage rec {
+  #   name = "tox-1.7.0";
+  #
+  #   propagatedBuildInputs = [ py virtualenv ];
   #
   #   src = fetchurl {
-  #     url = "https://pypi.python.org/packages/source/t/tox/tox-1.4.3.tar.gz";
-  #     md5 = "3727d5b0600d92edf2229a7ce6a0f752";
+  #     url = "https://pypi.python.org/packages/source/t/tox/${name}.tar.gz";
+  #     md5 = "5314ceca2b179ad4a9c79f4d817b8a99";
   #   };
   # };
 
@@ -7230,10 +7304,10 @@ pythonPackages = modules // import ./python-packages-generated.nix {
   });
 
   virtualenv = buildPythonPackage rec {
-    name = "virtualenv-1.11";
+    name = "virtualenv-1.11.4";
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/v/virtualenv/${name}.tar.gz";
-      md5 = "d1a7cf95b539a861a8215827f387c4eb";
+      md5 = "9accc2d3f0ec1da479ce2c3d1fdff06e";
     };
 
     inherit recursivePthLoader;
@@ -7252,6 +7326,27 @@ pythonPackages = modules // import ./python-packages-generated.nix {
       homepage = http://www.virtualenv.org;
       license = licenses.mit;
       maintainers = [ maintainers.goibhniu ];
+    };
+  };
+
+  virtualenv-clone = buildPythonPackage rec {
+    name = "virtualenv-clone-0.2.4";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/v/virtualenv-clone/${name}.tar.gz";
+      md5 = "71168b975eaaa91e65559bcc79290b3b";
+    };
+
+    buildInputs = [pytest];
+    propagatedBuildInputs = [virtualenv];
+
+    # needs tox to run the tests
+    doCheck = false;
+
+    meta = with stdenv.lib; {
+      description = "Script to clone virtualenvs";
+      license = licenses.mit;
+      platforms = platforms.all;
     };
   };
 
