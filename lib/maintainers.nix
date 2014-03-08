@@ -59,6 +59,7 @@
   rob = "Rob Vermaas <rob.vermaas@gmail.com>";
   roconnor = "Russell O'Connor <roconnor@theorem.ca>";
   roelof = "Roelof Wobben <rwobben@hotmail.com>";
+  romildo = "José Romildo Malaquias <malaquias@gmail.com>";
   rszibele = "Richard Szibele <richard_szibele@hotmail.com>";
   sander = "Sander van der Burg <s.vanderburg@tudelft.nl>";
   shlevy = "Shea Levy <shea@shealevy.com>";
@@ -69,6 +70,7 @@
   the-kenny = "Moritz Ulrich <moritz@tarn-vedra.de>";
   thoughtpolice = "Austin Seipp <aseipp@pobox.com>";
   tomberek = "Thomas Bereknyei <tomberek@gmail.com>";
+  ttuegel = "Thomas Tuegel <ttuegel@gmail.com>";
   urkud = "Yury G. Kudryashov <urkud+nix@ya.ru>";
   vcunat = "Vladimír Čunát <vcunat@gmail.com>";
   viric = "Lluís Batlle i Rossell <viric@viric.name>";
