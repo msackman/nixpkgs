@@ -3,8 +3,8 @@ dir=$1; lxcConf=$2; fstab=$3;
 @coreutils@/bin/mkdir -p $dir/rootfs/etc
 #       user pw uid gid name home shell
 printf "root:x:0:0:root:/root:/bin/sh\n%s:x:%s:%s:%s:/home/%s:%s\n" \
-       "@user@" "@uid@" "@gid@" "@user@" "@user@" "@shell@" > $dir/rootfs/etc/passwd
+       "@user@" "@uid@" "@gid@" "@user@" "@user@" "@shell@" >> $dir/rootfs/etc/passwd
 #       group pw gid user-list
 printf "root::0:\n%s::%s:\n" \
-       "@group@" "@gid@" > $dir/rootfs/etc/group
+       "@group@" "@gid@" >> $dir/rootfs/etc/group
 @coreutils@/bin/chown @uid@:@gid@ $dir/rootfs/home/@user@
