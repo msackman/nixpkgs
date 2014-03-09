@@ -78,7 +78,7 @@
     };
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
-    runPkg = pkg: configuration:
+    runPkg = { pkg, configuration, ...}:
         ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], options ? {}, configuration ? {}}:
            { inherit name lxcConf onCreate options configuration;
              ## Slightly hacky: assume lxc is needed by everything. In
@@ -99,9 +99,9 @@
                           {};
       };
 
-    descend = descenderFun: pkgFun: { configuration, pkg, ...}: acc:
+    descend = descenderFun: pkgFun: pkgConf@{ configuration, ...}: acc:
       let
-        pkgSet = runPkg pkg configuration;
+        pkgSet = runPkg pkgConf;
         pkgStoreMounts = pkgSet.storeMounts;
         childResult = fold (name: acc:
                              descenderFun (descendPkg pkgStoreMounts configuration name) acc
@@ -124,6 +124,26 @@
     ## 3. Add to configuration default values from options. If this alters configuration, goto (1).
     ## 4. Verify options
     ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
+
+    storeMountsConfigsOptions = pkg: configuration: options:
+      let
+        mountsAndConfig = storeMountsAndConfig pkg { inherit configuration; };
+        collectedOptions = collectOptions { inherit pkg; inherit (mountsAndConfig) configuration; };
+        extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
+      in
+        if extendedConfig == mountsAndConfig.configuration then
+          # Although we have now extended the config, there's the
+          # possibility that we have values in the storeMounts attrset
+          # that have closure captured an older config. Therefore at
+          # this point, with the config fully done, we go back and
+          # regenerate the storeMounts completely.
+          let
+            mountsAndConfig = storeMountsAndConfig pkg
+                                { configuration = extendedConfig; };
+          in
+            (mountsAndConfig // { options = collectedOptions; })
+        else
+          storeMountsConfigsOptions pkg extendedConfig options;
 
     storeMountsAndConfig = pkg: result@{ configuration, ... }:
       let
@@ -189,26 +209,6 @@
       in
         recursiveUpdate configuration (listToAttrs extendedAttrList);
 
-    storeMountsConfigsOptions = pkg: configuration: options:
-      let
-        mountsAndConfig = storeMountsAndConfig pkg { inherit configuration; };
-        collectedOptions = collectOptions { inherit pkg; inherit (mountsAndConfig) configuration; };
-        extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
-      in
-        if extendedConfig == mountsAndConfig.configuration then
-          # Although we have now extended the config, there's the
-          # possibility that we have values in the storeMounts attrset
-          # that have closure captured an older config. Therefore at
-          # this point, with the config fully done, we go back and
-          # regenerate the storeMounts completely.
-          let
-            mountsAndConfig = storeMountsAndConfig pkg
-                                { configuration = extendedConfig; };
-          in
-            (mountsAndConfig // { options = collectedOptions; })
-        else
-          storeMountsConfigsOptions pkg extendedConfig options;
-
     validateRequiredOptions = { options, configuration, ... }:
       fold (optName: acc:
              let opt = getAttr optName options; in
@@ -246,7 +246,7 @@
                throw "Configuration ${confName} used but not declared in any package reached."
            ) true (attrNames configuration);
 
-    storeMountsFile = name: configuration: pkg:
+    storeMountsFile = pkgConf@{name, ...}:
       let
         f = path: pkgConf: acc:
           descend (child: acc:
@@ -256,7 +256,7 @@
                       [{name = path + child.name; value = child.pkg;}] ++ acc)
                   (childResult: _pkgSet: childResult)
                   pkgConf acc;
-        pkgs = f (name + ".") { inherit pkg configuration; } [];
+        pkgs = f (name + ".") pkgConf [];
       in
         stdenv.mkDerivation {
           name = "${name}-storeMounts";
@@ -266,7 +266,7 @@
             ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
         };
 
-    lxcConfBaseInit = name: allLxcPkgs: configuration:
+    lxcConfBaseInit = {name, configuration, ...}: allLxcPkgs:
       let
         allLxcConfFuns = map (pkg: pkg.lxcConf) allLxcPkgs;
         completeConfig = sequence allLxcConfFuns lxcLib.defaults;
@@ -280,7 +280,7 @@
           };
          inherit init; };
 
-    createStartScripts = pkg: allLxcPkgs: configuration: {init, ...}:
+    createStartScripts = { pkg, configuration, init, ...}: allLxcPkgs:
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: pkg.onCreate) allLxcPkgs);
@@ -309,39 +309,38 @@
           '';
         };
 
-    collectLxcPkgs = configuration: pkg:
+    collectLxcPkgs = pkgConf:
       let
         f = pkgConf: acc:
           descend (child: acc: if isLxcPkg child.pkg then f child acc else acc)
                   (childResult: pkgSet: [pkgSet] ++ childResult)
                   pkgConf acc;
       in
-        f { inherit pkg configuration; } [];
+        f pkgConf [];
 
   in fun:
     assert builtins.isFunction fun;
     let
       pkg = {
-        inherit fun name validated mounts scripts module;
+        inherit fun pkg name validated mounts scripts module;
         inherit (mountsConfigOptions) configuration options;
-        inherit (lxcConfigInit) lxcConfig;
+        inherit (lxcConfigInit) lxcConfig init;
         _isLxc = true;
       };
-      allLxcPkgs = collectLxcPkgs mountsConfigOptions.configuration pkg;
       mountsConfigOptions = storeMountsConfigsOptions pkg {} {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
                   (validateUsedOptionsDeclared mountsConfigOptions);
-      name = (runPkg pkg mountsConfigOptions.configuration).name;
+      name = (runPkg pkg).name;
       mounts = if validated then
-                 storeMountsFile name mountsConfigOptions.configuration pkg
+                 storeMountsFile pkg
                else
                  throw "Unable to validate configuration.";
+      allLxcPkgs = collectLxcPkgs pkg;
       lxcConfigInit = if validated then
-                        lxcConfBaseInit name allLxcPkgs mountsConfigOptions.configuration
+                        lxcConfBaseInit pkg allLxcPkgs
                       else
                         throw "Unable to validate configuration.";
-      scripts = createStartScripts
-                  pkg allLxcPkgs mountsConfigOptions.configuration lxcConfigInit;
+      scripts = createStartScripts pkg allLxcPkgs;
       module = (import ./module.nix) pkg;
     in
       pkg
