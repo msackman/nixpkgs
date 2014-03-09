@@ -90,6 +90,25 @@
     sequence = list: init: foldl (acc: f: f acc) init list;
     joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
+    descendPkg = storeMounts: configuration: name:
+      { inherit name;
+        pkg = getAttr name storeMounts;
+        configuration = if hasAttr name configuration then
+                          getAttr name configuration
+                        else
+                          {};
+      };
+
+    descend = descenderFun: pkgFun: { configuration, pkg, ...}: acc:
+      let
+        pkgSet = runPkg pkg configuration;
+        pkgStoreMounts = pkgSet.storeMounts;
+        childResult = fold (name: acc:
+                             descenderFun (descendPkg pkgStoreMounts configuration name) acc
+                           ) acc (attrNames pkgStoreMounts);
+      in
+        pkgFun childResult pkgSet;
+
     ## We need to finalise configuration and
     ## storeMounts. Configuration depends on storeMounts and
     ## storeMounts depends on configuration (though progress is
@@ -108,8 +127,8 @@
 
     storeMountsAndConfig = pkg: result@{ configuration, ... }:
       let
-        configuration1 = collectConfiguration configuration pkg;
-        storeMounts1 = collectStoreMounts configuration pkg;
+        configuration1 = collectConfiguration { inherit configuration pkg; };
+        storeMounts1 = collectStoreMounts { inherit configuration pkg; };
         result1 = { configuration = configuration1;
                     storeMounts   = storeMounts1; };
       in
@@ -118,53 +137,36 @@
         else
           storeMountsAndConfig pkg result1;
 
-    collectConfiguration = configuration: pkg:
-      let
-        pkgSet = runPkg pkg configuration;
-        pkgStoreMounts = pkgSet.storeMounts;
-        configsAttrList =
-          fold (name: acc:
-                 let child = descendPkg pkgStoreMounts configuration name; in
-                 if isLxcPkg child.pkg then
-                   [{ inherit name;
-                      value = collectConfiguration child.configuration child.pkg;
-                    }] ++ acc
-                 else
-                   acc
-               ) [] (attrNames pkgStoreMounts);
-      in
-        recursiveUpdate configuration (
-          recursiveUpdate (listToAttrs configsAttrList) pkgSet.configuration);
+    collectConfiguration = pkgConf@{ configuration, ... }:
+      descend (child: acc:
+                if isLxcPkg child.pkg then
+                  [{ name = child.name; value = collectConfiguration child; }] ++ acc
+                else
+                  acc)
+              (childResult: pkgSet:
+                recursiveUpdate
+                  (recursiveUpdate (listToAttrs childResult) pkgSet.configuration)
+                  configuration)
+              pkgConf [];
 
-    collectStoreMounts = configuration: pkg:
-      let
-        pkgSet = runPkg pkg configuration;
-        pkgStoreMounts = pkgSet.storeMounts;
-        storeMountsAttrList =
-          map (name:
-                let child = descendPkg pkgStoreMounts configuration name; in
-                  if isLxcPkg child.pkg then
-                    { inherit name; value = collectStoreMounts child.configuration child.pkg; }
-                  else
-                    { inherit name; value = {}; }
-              ) (attrNames pkgStoreMounts);
-      in
-        listToAttrs storeMountsAttrList;
+    collectStoreMounts = pkgConf:
+        descend (child: acc:
+                  [(if isLxcPkg child.pkg then
+                      { name = child.name; value = collectStoreMounts child; }
+                    else
+                      { name = child.name; value = {}; })] ++ acc)
+                (childResult: _pkgSet: listToAttrs childResult)
+                pkgConf [];
 
-    collectOptions = configuration: pkg:
-      let
-        pkgSet = runPkg pkg configuration;
-        pkgStoreMounts = pkgSet.storeMounts;
-        childOptions = fold (name: acc:
-                              let child = descendPkg pkgStoreMounts configuration name; in
-                              if isLxcPkg child.pkg then
-                                [{ inherit name;
-                                   value = collectOptions child.configuration child.pkg; }] ++ acc
-                              else
-                                acc
-                            ) [] (attrNames pkgStoreMounts);
-      in
-        recursiveUpdate (listToAttrs childOptions) pkgSet.options;
+    collectOptions = pkgConf:
+      descend (child: acc:
+                if isLxcPkg child.pkg then
+                  [{ name = child.name; value = collectOptions child; }] ++ acc
+                else
+                  acc)
+              (childResult: pkgSet:
+                recursiveUpdate (listToAttrs childResult) pkgSet.options)
+              pkgConf [];
 
     extendConfig = options: configuration:
       let
@@ -191,7 +193,7 @@
     storeMountsConfigsOptions = pkg: configuration: options:
       let
         mountsAndConfig = storeMountsAndConfig pkg { inherit configuration; };
-        collectedOptions = collectOptions mountsAndConfig.configuration pkg;
+        collectedOptions = collectOptions { inherit pkg; inherit (mountsAndConfig) configuration; };
         extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
       in
         if extendedConfig == mountsAndConfig.configuration then
@@ -210,56 +212,52 @@
 
     validateRequiredOptions = { options, configuration, ... }:
       fold (optName: acc:
-        let opt = getAttr optName options; in
-        if isOption opt then
-          if ! opt.optional then
-            if ! (hasAttr optName configuration) then
-              throw "Unable to find required configuration ${optName}."
-            else
-              acc
-          else
-            acc
-        else
-          assert isAttrs opt;
-          let
-            childConfig = if hasAttr optName configuration then
-                            getAttr optName configuration
-                          else
-                            throw "Unconfigured section ${optName}.";
-          in
-            validateRequiredOptions { options = opt; configuration = childConfig; } && acc
+             let opt = getAttr optName options; in
+             if isOption opt then
+               if ! opt.optional then
+                 if ! (hasAttr optName configuration) then
+                   throw "Unable to find required configuration ${optName}."
+                 else
+                   acc
+               else
+                 acc
+             else
+               assert isAttrs opt;
+               let
+                 childConfig = if hasAttr optName configuration then
+                                 getAttr optName configuration
+                               else
+                                 throw "Unconfigured section ${optName}.";
+               in
+                 validateRequiredOptions { options = opt; configuration = childConfig; } && acc
            ) true (attrNames options);
 
     validateUsedOptionsDeclared = { options, configuration, ... }:
       fold (confName: acc:
-        if hasAttr confName options then
-          let
-            option = getAttr confName options;
-            childConfig = getAttr confName configuration;
-          in
-            if isOption option then
-              acc
-            else
-              validateUsedOptionsDeclared { options = option; configuration = childConfig; } && acc
-        else
-          throw "Configuration ${confName} used but not declared in any package reached."
-      ) true (attrNames configuration);
+             if hasAttr confName options then
+               let
+                 option = getAttr confName options;
+                 childConfig = getAttr confName configuration;
+               in
+                 if isOption option then
+                   acc
+                 else
+                   validateUsedOptionsDeclared { options = option; configuration = childConfig; } && acc
+             else
+               throw "Configuration ${confName} used but not declared in any package reached."
+           ) true (attrNames configuration);
 
     storeMountsFile = name: configuration: pkg:
       let
-        f = path: pkg: configuration: acc:
-          let
-            pkgSet = runPkg pkg configuration;
-            pkgStoreMounts = pkgSet.storeMounts;
-          in
-            fold (name: acc:
-                   let child = descendPkg pkgStoreMounts configuration name; in
-                   if isLxcPkg child.pkg then
-                     f (path + name + ".") child.pkg child.configuration acc
-                   else
-                     [{name = path + name; value = child.pkg;}] ++ acc
-                 ) acc (attrNames pkgStoreMounts);
-        pkgs = f (name + ".") pkg configuration [];
+        f = path: pkgConf: acc:
+          descend (child: acc:
+                    if isLxcPkg child.pkg then
+                      f (path + child.name + ".") child acc
+                    else
+                      [{name = path + child.name; value = child.pkg;}] ++ acc)
+                  (childResult: _pkgSet: childResult)
+                  pkgConf acc;
+        pkgs = f (name + ".") { inherit pkg configuration; } [];
       in
         stdenv.mkDerivation {
           name = "${name}-storeMounts";
@@ -312,31 +310,14 @@
           '';
         };
 
-    descendPkg = storeMounts: configuration: name:
-      { pkg = getAttr name storeMounts;
-        configuration = if hasAttr name configuration then
-                          getAttr name configuration
-                        else
-                          {};
-      };
-
     collectLxcPkgs = configuration: pkg:
       let
-        f = pkg: configuration: acc:
-          let
-            pkgSet = runPkg pkg configuration;
-            pkgStoreMounts = pkgSet.storeMounts;
-            acc1 = [pkgSet] ++ acc;
-          in
-            fold (name: acc2:
-                   let child = descendPkg pkgStoreMounts configuration name; in
-                     if isLxcPkg child.pkg then
-                       f child.pkg child.configuration acc2
-                     else
-                       acc2
-                 ) acc1 (attrNames pkgStoreMounts);
+        f = pkgConf: acc:
+          descend (child: acc: if isLxcPkg child.pkg then f child acc else acc)
+                  (childResult: pkgSet: [pkgSet] ++ childResult)
+                  pkgConf acc;
       in
-        f pkg configuration [];
+        f { inherit pkg configuration; } [];
 
   in fun:
     assert builtins.isFunction fun;
