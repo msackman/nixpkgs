@@ -150,13 +150,12 @@
               pkgConf [];
 
     collectStoreMounts = pkgConf:
-        descend (child: acc:
-                  [(if isLxcPkg child.pkg then
-                      { name = child.name; value = collectStoreMounts child; }
-                    else
-                      { name = child.name; value = {}; })] ++ acc)
-                (childResult: _pkgSet: listToAttrs childResult)
-                pkgConf [];
+      descend (child: acc:
+                [{ name = child.name;
+                   value = (if isLxcPkg child.pkg then collectStoreMounts child else {});
+                 }] ++ acc)
+              (childResult: _pkgSet: listToAttrs childResult)
+              pkgConf [];
 
     collectOptions = pkgConf:
       descend (child: acc:
