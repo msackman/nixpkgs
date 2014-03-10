@@ -6415,8 +6415,8 @@ let
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };
   tsp = { container = buildLXC;
-          module = path: arg@{ config, pkgs, ... }:
-                     ((import path) { inherit pkgs; }).module arg;
+          module = path: ((import path) { inherit pkgs; }).module;
+          systemd = callPackage ../build-support/build-lxc/systemd.nix { };
         };
 
   radius = callPackage ../servers/radius { };

@@ -81,8 +81,8 @@
     lxcPkgs = filter isLxcPkg;
     runPkg = { pkg, configuration, ...}:
         ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], onSterilise ? [],
-           options ? {}, configuration ? {}}:
-           { inherit name lxcConf onCreate onSterilise options configuration;
+           options ? {}, configuration ? {}, module ? (_: {})}:
+           { inherit name lxcConf onCreate onSterilise options configuration module;
              ## Slightly hacky: assume lxc is needed by everything. In
              ## truth, this is true, but we might be better off not
              ## quite inserting it EVERYWHERE!
@@ -362,6 +362,10 @@
                       else
                         throw "Unable to validate configuration.";
       scripts = createStartScripts pkg allLxcPkgs;
-      module = (import ./module.nix) pkg;
+      module = { config, pkgs, ...}: {
+                 imports = (map (pkgSet: pkgSet.module pkg) allLxcPkgs);
+                 options = {};
+                 config  = {};
+               };
     in
       pkg

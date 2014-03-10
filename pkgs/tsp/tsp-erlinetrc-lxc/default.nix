@@ -25,6 +25,7 @@ tsp.container ({ configuration, lxcLib }:
                       dev_proc_sys = tsp_dev_proc_sys;
                       home         = tsp_home;
                       network      = tsp_network;
+                      inherit (tsp) systemd;
                       inherit wrapped; };
       lxcConf = lxcLib.sequence [
         (if configuration.start then
