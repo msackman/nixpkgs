@@ -2,9 +2,9 @@
 
 tsp.container ({ configuration, lxcLib }:
   let
-    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys { };
-    tsp_home = callPackage ../tsp-home { };
-    tsp_network = callPackage ../tsp-network { };
+    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys-lxc { };
+    tsp_home = callPackage ../tsp-home-lxc { };
+    tsp_network = callPackage ../tsp-network-lxc { };
     wrapped = stdenv.mkDerivation rec {
       name = "${serfdom.name}-lxc-wrapper";
       buildCommand = ''
