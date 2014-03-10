@@ -30,9 +30,9 @@ tsp.container ({ configuration, lxcLib }:
           lxcLib.setInit "${bash}/bin/bash"
         else
           lxcLib.id;
-       onCreate = [ create ];
-       onSterilise = [ sterilise ];
-       options = {
-         start = lxcLib.mkOption { optional = true; default = false; };
-       };
+      onCreate = [ create ];
+      onSterilise = [ sterilise ];
+      options = {
+        start = lxcLib.mkOption { optional = true; default = false; };
+      };
     })
