@@ -2,11 +2,13 @@
 
 base=/var/lib/lxc
 dir=$base/@name@
+gcbase=@gcbase@
+gcdir=$gcbase/tsp/@name@
 
 [ -d $dir ]
 
 rm -f $dir/config $dir/fstab $dir/creator $dir/rootfs/sbin/init $dir/creator $dir/sterilise
-rm -rf $dir/rootfs/nix
+rm -rf $dir/rootfs/nix $gcdir
 
 for f in @onSterilise@; do
     $f $dir

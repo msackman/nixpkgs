@@ -299,16 +299,19 @@
                 -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@lxcConfigBase@|${pkg.lxcConfig}|g" \
                 -e "s|@storeMounts@|${pkg.mounts}|g" \
+                -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 -e "s|@onCreate@|${joinStrings " " "" allOnCreate}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@init@|${init}|g" \
                 -e "s|@sterilise@|$out/bin/lxc-sterilise-${name}|g" \
+                -e "s|@scripts@|$out|g" \
                 ${createFile} > $out/bin/lxc-create-${name}
             chmod +x $out/bin/lxc-create-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@onSterilise@|${joinStrings " " "" allOnSterilise}|g" \
+                -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 ${steriliseFile} > $out/bin/lxc-sterilise-${name}
             chmod +x $out/bin/lxc-sterilise-${name}
 
