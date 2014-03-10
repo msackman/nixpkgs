@@ -15,10 +15,11 @@
           else
             false;
 
-      mkOption = desc:
+      mkOption = desc@{ validator ? (_value: true), ... }:
         assert desc ? optional;
         assert (desc ? default) -> desc.optional;
-        {_isOption = true;} // desc;
+        assert isFunction validator;
+        {_isOption = true; inherit validator;} // desc;
 
       setPath = name: value: config:
         assert ! (hasPath name config);
@@ -214,13 +215,12 @@
       fold (optName: acc:
              let opt = getAttr optName options; in
              if isOption opt then
-               if ! opt.optional then
-                 if ! (hasAttr optName configuration) then
-                   throw "Unable to find required configuration ${optName}."
-                 else
-                   acc
-               else
+               if hasAttr optName configuration then
+                 (opt.validator (getAttr optName configuration)) && acc
+               else if opt.optional then
                  acc
+               else
+                 throw "Unable to find required configuration ${optName}."
              else
                assert isAttrs opt;
                let

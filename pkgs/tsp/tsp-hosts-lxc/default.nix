@@ -34,5 +34,16 @@ tsp.container ({ configuration, lxcLib }:
       storeMounts = { inherit hosts; };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
-      options = { hosts = lxcLib.mkOption { optional = false; }; };
+      options = {
+        hosts = lxcLib.mkOption {
+                  optional = false;
+                  validator =
+                    lib.fold ({ip, host}: acc:
+                      assert builtins.isString ip;
+                      assert builtins.isString host;
+                      let components = lib.splitString "." ip; in
+                      assert builtins.length components == 4;
+                      acc) true;
+                };
+      };
     })
