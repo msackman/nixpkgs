@@ -1,6 +1,6 @@
-{ buildLXC, lib }:
+{ tsp, lib }:
 
-buildLXC ({ configuration, lxcLib }:
+tsp.container ({ configuration, lxcLib }:
   {
     name = "network-lxc";
     lxcConf =

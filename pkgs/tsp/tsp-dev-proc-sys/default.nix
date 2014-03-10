@@ -1,6 +1,6 @@
-{ stdenv, buildLXC, coreutils }:
+{ stdenv, tsp, coreutils }:
 
-buildLXC ({ configuration, lxcLib }:
+tsp.container ({ configuration, lxcLib }:
   let
     name = "tsp-dev-proc-sys";
     boolToStr = b: if b then "true" else "false";

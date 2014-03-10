@@ -1,11 +1,11 @@
-{ stdenv, tsp_http, erlang, buildLXC, bash, coreutils, lib, graphviz }:
+{ stdenv, tsp_http, erlang, tsp, coreutils, graphviz, callPackage }:
 
-buildLXC ({ configuration, lxcLib }:
+tsp.container ({ configuration, lxcLib }:
   let
-    tsp_bash = (import ../tsp-bash) { inherit stdenv buildLXC bash coreutils; };
-    tsp_dev_proc_sys = (import ../tsp-dev-proc-sys) { inherit stdenv buildLXC coreutils; };
-    tsp_home = (import ../tsp-home) { inherit stdenv buildLXC coreutils bash; };
-    tsp_network = (import ../tsp-network) { inherit buildLXC lib; };
+    tsp_bash = callPackage ../tsp-bash { };
+    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys { };
+    tsp_home = callPackage ../tsp-home { };
+    tsp_network = callPackage ../tsp-network { };
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_http.name}-lxc-wrapper";
       buildCommand = ''

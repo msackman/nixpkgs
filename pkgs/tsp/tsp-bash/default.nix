@@ -1,6 +1,6 @@
-{ stdenv, buildLXC, bash, coreutils }:
+{ stdenv, tsp, bash, coreutils }:
 
-buildLXC ({ configuration, lxcLib }:
+tsp.container ({ configuration, lxcLib }:
   let
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;

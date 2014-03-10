@@ -1,6 +1,6 @@
-{ stdenv, buildLXC, coreutils, lib }:
+{ stdenv, tsp, coreutils, lib }:
 
-buildLXC ({ configuration, lxcLib }:
+tsp.container ({ configuration, lxcLib }:
   let
     name = "tsp-hosts";
     createIn = ./on-create.sh.in;
