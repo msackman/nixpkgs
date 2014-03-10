@@ -2,9 +2,11 @@
 
 buildLXC ({ configuration, lxcLib }:
   let
+    name = "tsp-hosts";
     createIn = ./on-create.sh.in;
-    create = stdenv.mkDerivation rec {
-      name = "tsp-hosts-oncreate";
+    steriliseIn = ./on-sterilise.sh.in;
+    create = stdenv.mkDerivation {
+      name = "${name}-oncreate";
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
             -e "s|@hosts@|${hosts}|g" \
@@ -12,16 +14,25 @@ buildLXC ({ configuration, lxcLib }:
         chmod +x $out
       '';
     };
-    hosts = stdenv.mkDerivation rec {
-      name = "tsp-hosts-hosts";
+    sterilise = stdenv.mkDerivation {
+      name = "${name}-onsterilise";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            ${steriliseIn} > $out
+        chmod +x $out
+      '';
+    };
+    hosts = stdenv.mkDerivation {
+      name = "${name}-hosts";
       buildCommand = lib.concatStringsSep "\n"
         (map (entry: "printf '%s %s\n' \"${entry.ip}\" \"${entry.host}\" >> $out")
          configuration.hosts);
     };
   in
     {
-      name = "tsp-hosts-lxc";
+      name = "${name}-lxc";
       storeMounts = { inherit hosts; };
       onCreate = [ create ];
+      onSterilise = [ sterilise ];
       options = { hosts = lxcLib.mkOption { optional = false; }; };
     })

@@ -1,0 +1,6 @@
+dir=$1;
+@coreutils@/bin/rm -f $dir/rootfs/etc/passwd
+@coreutils@/bin/rm -f $dir/rootfs/etc/group
+
+# Note, we deliberately do not remove the actual home directory as
+# that may well be stateful!

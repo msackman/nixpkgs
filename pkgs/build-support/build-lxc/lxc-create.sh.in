@@ -3,11 +3,12 @@
 base=/var/lib/lxc
 dir=$base/@name@
 
-mkdir -p $base # don't mind if this already exists
+mkdir -p $dir
 
-mkdir $dir     # do mind if this already exists
+[ ! -e $dir/config ] # sterilise will remove this, so this is our test for whether it's been sterilised or not.
+
 mkdir -p $dir/rootfs/sbin
-mkdir -m 1777 $dir/rootfs/tmp
+mkdir -p -m 1777 $dir/rootfs/tmp
 
 printf \
 'lxc.include = @lxcConfigBase@
@@ -31,3 +32,5 @@ for f in @onCreate@; do
 done
 
 @coreutils@/bin/ln -s @init@ $dir/rootfs/sbin/init
+@coreutils@/bin/ln -s $(@coreutils@/bin/readlink -f "$0") $dir/creator
+@coreutils@/bin/ln -s @sterilise@ $dir/sterilise

@@ -1,0 +1,13 @@
+#! @shell@ -e
+
+base=/var/lib/lxc
+dir=$base/@name@
+
+[ -d $dir ]
+
+rm -f $dir/config $dir/fstab $dir/creator $dir/rootfs/sbin/init $dir/creator $dir/sterilise
+rm -rf $dir/rootfs/nix
+
+for f in @onSterilise@; do
+    $f $dir
+done

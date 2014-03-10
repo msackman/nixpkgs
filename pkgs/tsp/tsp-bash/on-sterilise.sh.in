@@ -1,0 +1,3 @@
+dir=$1;
+
+@coreutils@/bin/rm -f $dir/rootfs/bin/sh

@@ -1,0 +1,11 @@
+#! @shell@ -e
+
+base=/var/lib/lxc
+dir=$base/@name@
+
+( [ -d $dir ] && [ -e $dir/sterilise ] && [ -e $dir/creator ] )
+
+if [ "$(@coreutils@/bin/readlink -f $dir/creator)" != "@creator@" ]; then
+    $dir/sterilise
+    @creator@
+fi

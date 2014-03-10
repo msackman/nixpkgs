@@ -5,6 +5,7 @@ lxcDesc:
       name = lxcDesc.name;
       cfg = builtins.getAttr name config.services.lxc;
       createScript = lxcDesc.scripts + "/bin/lxc-create-${name}";
+      upgradeScript = lxcDesc.scripts + "/bin/lxc-upgrade-${name}";
       startScript = lxcDesc.scripts + "/bin/lxc-start-${name}";
     in
     {
@@ -36,6 +37,8 @@ lxcDesc:
             preStart = ''
               if [ ! -f "/var/lib/lxc/${name}/config" ]; then
                 ${createScript}
+              else
+                ${upgradeScript}
               fi
             '';
             serviceConfig = {

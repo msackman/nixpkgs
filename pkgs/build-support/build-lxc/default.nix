@@ -79,8 +79,9 @@
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
     runPkg = { pkg, configuration, ...}:
-        ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], options ? {}, configuration ? {}}:
-           { inherit name lxcConf onCreate options configuration;
+        ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], onSterilise ? [],
+           options ? {}, configuration ? {}}:
+           { inherit name lxcConf onCreate onSterilise options configuration;
              ## Slightly hacky: assume lxc is needed by everything. In
              ## truth, this is true, but we might be better off not
              ## quite inserting it EVERYWHERE!
@@ -284,8 +285,11 @@
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: pkg.onCreate) allLxcPkgs);
+        allOnSterilise = concatLists (map (pkg: pkg.onSterilise) allLxcPkgs);
         createFile = ./lxc-create.sh.in;
         startFile = ./lxc-start.sh.in;
+        steriliseFile = ./lxc-sterilise.sh.in;
+        upgradeFile = ./lxc-upgrade.sh.in;
       in
         stdenv.mkDerivation {
           name = "${name}-lxc-scripts";
@@ -298,8 +302,22 @@
                 -e "s|@onCreate@|${joinStrings " " "" allOnCreate}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@init@|${init}|g" \
+                -e "s|@sterilise@|$out/bin/lxc-sterilise-${name}|g" \
                 ${createFile} > $out/bin/lxc-create-${name}
             chmod +x $out/bin/lxc-create-${name}
+
+            sed -e "s|@shell@|${stdenv.shell}|g" \
+                -e "s|@name@|${name}|g" \
+                -e "s|@onSterilise@|${joinStrings " " "" allOnSterilise}|g" \
+                ${steriliseFile} > $out/bin/lxc-sterilise-${name}
+            chmod +x $out/bin/lxc-sterilise-${name}
+
+            sed -e "s|@shell@|${stdenv.shell}|g" \
+                -e "s|@name@|${name}|g" \
+                -e "s|@coreutils@|${coreutils}|g" \
+                -e "s|@creator@|$out/bin/lxc-create-${name}|g" \
+                ${upgradeFile} > $out/bin/lxc-upgrade-${name}
+            chmod +x $out/bin/lxc-upgrade-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@name@|${name}|g" \

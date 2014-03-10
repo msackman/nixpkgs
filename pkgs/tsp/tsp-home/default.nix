@@ -2,9 +2,11 @@
 
 buildLXC ({ configuration, lxcLib }:
   let
+    name = "tsp-home";
     createIn = ./on-create.sh.in;
-    create = stdenv.mkDerivation rec {
-      name = "tsp-home-oncreate";
+    steriliseIn = ./on-sterilise.sh.in;
+    create = stdenv.mkDerivation {
+      name = "${name}-oncreate";
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
             -e "s|@user@|${configuration.user}|g" \
@@ -16,11 +18,20 @@ buildLXC ({ configuration, lxcLib }:
         chmod +x $out
       '';
     };
+    sterilise = stdenv.mkDerivation {
+      name = "${name}-onsterilise";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            ${steriliseIn} > $out
+        chmod +x $out
+      '';
+    };
   in
     {
-      name = "tsp-home-lxc";
+      name = "${name}-lxc";
       storeMounts = { inherit bash; };
       onCreate = [ create ];
+      onSterilise = [ sterilise ];
       options = {
         user  = lxcLib.mkOption { optional = false; };
         uid   = lxcLib.mkOption { optional = false; };
