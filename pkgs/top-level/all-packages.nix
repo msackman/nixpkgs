@@ -6417,6 +6417,7 @@ let
   tsp = { container = buildLXC;
           module = path: ((import path) { inherit pkgs; }).module;
           systemd = callPackage ../build-support/build-lxc/systemd.nix { };
+          init = callPackage ../build-support/build-lxc/init.nix { };
         };
 
   radius = callPackage ../servers/radius { };

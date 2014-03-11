@@ -40,10 +40,6 @@
         else
           appendPath name value config;
 
-      setInit = path:
-        assert isString path;
-        setPath "extra.init" path;
-
       emptyConfig = [];
 
       defaults = sequence [
@@ -111,83 +107,47 @@
       in
         pkgFun childResult pkgSet;
 
-    ## We need to finalise configuration and
-    ## storeMounts. Configuration depends on storeMounts and
-    ## storeMounts depends on configuration (though progress is
-    ## guaranteed). Both onCreate and lxcConf depend on on storeMounts
-    ## and configuration. Also lxcConf is also a list of functions and
-    ## we can't do equality on functions. However, once storeMounts
-    ## and configuration has stopped changing, we should then just be
-    ## able to run through lxcConf, so lxcConf shouldn't come into the
-    ## fixed point calculation (neither should onCreate).
+    storeMountsConfigsOptions = pkg: configuration:
+      let result = analyse { inherit pkg configuration; }; in
+      if configuration == result.configuration then
+        result
+      else
+        storeMountsConfigsOptions pkg result.configuration;
 
-    ## 1. Establish fixed point on configuration and storeMounts.
-    ## 2. Collect options
-    ## 3. Add to configuration default values from options. If this alters configuration, goto (1).
-    ## 4. Verify options
-    ## 5. write out lxc.conf, lxc-create.sh and lxc-start.sh scripts
-
-    storeMountsConfigsOptions = pkg: configuration: options:
+    analyse = pkgConf@{ configuration, ... }:
       let
-        mountsAndConfig = storeMountsAndConfig pkg { inherit configuration; };
-        collectedOptions = collectOptions { inherit pkg; inherit (mountsAndConfig) configuration; };
-        extendedConfig = extendConfig collectedOptions mountsAndConfig.configuration;
+        pkgSet = runPkg pkgConf;
+        pkgOptions = pkgSet.options;
+        configuration1 = extendConfig pkgOptions configuration;
       in
-        if extendedConfig == mountsAndConfig.configuration then
-          # Although we have now extended the config, there's the
-          # possibility that we have values in the storeMounts attrset
-          # that have closure captured an older config. Therefore at
-          # this point, with the config fully done, we go back and
-          # regenerate the storeMounts completely.
+        if configuration == configuration1 then
           let
-            mountsAndConfig = storeMountsAndConfig pkg
-                                { configuration = extendedConfig; };
+            pkgStoreMounts = pkgSet.storeMounts;
+            gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
+              let childPkgConf = descendPkg pkgStoreMounts configuration name; in
+              if isLxcPkg childPkgConf.pkg then
+                let childResult = analyse childPkgConf; in
+                {
+                  configurationAcc = [{inherit name; value = childResult.configuration;}] ++ configurationAcc;
+                  optionsAcc       = [{inherit name; value = childResult.options;}] ++ optionsAcc;
+                  storeMountsAcc   = [{inherit name; value = childResult.storeMounts;}] ++ storeMountsAcc;
+                }
+              else
+                acc // { storeMountsAcc = [{inherit name; value = {};}] ++ storeMountsAcc; })
+              {configurationAcc = []; optionsAcc = []; storeMountsAcc = [];} (attrNames pkgStoreMounts);
+              childrenConfiguration = listToAttrs gathered.configurationAcc;
+              childrenOptions = listToAttrs gathered.optionsAcc;
+              childrenStoreMounts = listToAttrs gathered.storeMountsAcc;
           in
-            (mountsAndConfig // { options = collectedOptions; })
+            {
+              configuration = recursiveUpdate
+                                (recursiveUpdate childrenConfiguration pkgSet.configuration)
+                                configuration;
+              options       = recursiveUpdate childrenOptions pkgOptions;
+              storeMounts   = childrenStoreMounts;
+            }
         else
-          storeMountsConfigsOptions pkg extendedConfig options;
-
-    storeMountsAndConfig = pkg: result@{ configuration, ... }:
-      let
-        configuration1 = collectConfiguration { inherit configuration pkg; };
-        storeMounts1 = collectStoreMounts { inherit configuration pkg; };
-        result1 = { configuration = configuration1;
-                    storeMounts   = storeMounts1; };
-      in
-        if result == result1 then
-          result
-        else
-          storeMountsAndConfig pkg result1;
-
-    collectConfiguration = pkgConf@{ configuration, ... }:
-      descend (child: acc:
-                if isLxcPkg child.pkg then
-                  [{ name = child.name; value = collectConfiguration child; }] ++ acc
-                else
-                  acc)
-              (childResult: pkgSet:
-                recursiveUpdate
-                  (recursiveUpdate (listToAttrs childResult) pkgSet.configuration)
-                  configuration)
-              pkgConf [];
-
-    collectStoreMounts = pkgConf:
-      descend (child: acc:
-                [{ name = child.name;
-                   value = (if isLxcPkg child.pkg then collectStoreMounts child else {});
-                 }] ++ acc)
-              (childResult: _pkgSet: listToAttrs childResult)
-              pkgConf [];
-
-    collectOptions = pkgConf:
-      descend (child: acc:
-                if isLxcPkg child.pkg then
-                  [{ name = child.name; value = collectOptions child; }] ++ acc
-                else
-                  acc)
-              (childResult: pkgSet:
-                recursiveUpdate (listToAttrs childResult) pkgSet.options)
-              pkgConf [];
+          analyse (pkgConf // { configuration = configuration1; });
 
     extendConfig = options: configuration:
       let
@@ -247,17 +207,14 @@
                throw "Configuration ${confName} used but not declared in any package reached."
            ) true (attrNames configuration);
 
-    storeMountsFile = pkgConf@{name, ...}:
+    storeMountsFile = name: nonLxcPkgs:
       let
-        f = path: pkgConf: acc:
-          descend (child: acc:
-                    if isLxcPkg child.pkg then
-                      f (path + child.name + ".") child acc
-                    else
-                      [{name = path + child.name; value = child.pkg;}] ++ acc)
-                  (childResult: _pkgSet: childResult)
-                  pkgConf acc;
-        pkgs = f (name + ".") pkgConf [];
+        pkgs = (fold (pkg: {num, list}:
+                        {
+                          num  = num+1;
+                          list = [{name = toString num; value = pkg;}] ++ list;
+                        }) {num = 0; list = [];} nonLxcPkgs
+               ).list;
       in
         stdenv.mkDerivation {
           name = "${name}-storeMounts";
@@ -267,21 +224,17 @@
             ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
         };
 
-    lxcConfBaseInit = {name, configuration, ...}: allLxcPkgs:
+    lxcConfBase = {name, configuration, ...}: allLxcPkgs:
       let
         allLxcConfFuns = map (pkg: pkg.lxcConf) allLxcPkgs;
-        completeConfig = sequence allLxcConfFuns lxcLib.defaults;
-        init = (head (filter (e: e.name == "extra.init") completeConfig)).value;
-        config = filter (e: (substring 0 6 e.name) != "extra.") completeConfig;
+        config = sequence allLxcConfFuns lxcLib.defaults;
       in
-        {lxcConfig =
-          stdenv.mkDerivation {
-            name = "${name}-lxcConfBase";
-            buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
-          };
-         inherit init; };
+        stdenv.mkDerivation {
+          name = "${name}-lxcConfBase";
+          buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
+        };
 
-    createStartScripts = { pkg, configuration, init, ...}: allLxcPkgs:
+    createStartScripts = { pkg, configuration, ...}: allLxcPkgs:
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: pkg.onCreate) allLxcPkgs);
@@ -302,13 +255,13 @@
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 -e "s|@onCreate@|${joinStrings " " "" allOnCreate}|g" \
                 -e "s|@name@|${name}|g" \
-                -e "s|@init@|${init}|g" \
                 -e "s|@sterilise@|$out/bin/lxc-sterilise-${name}|g" \
                 -e "s|@scripts@|$out|g" \
                 ${createFile} > $out/bin/lxc-create-${name}
             chmod +x $out/bin/lxc-create-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
+                -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@onSterilise@|${joinStrings " " "" allOnSterilise}|g" \
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
@@ -330,40 +283,52 @@
           '';
         };
 
-    collectLxcPkgs = pkgConf:
+    groupPkgs = pkgConf:
       let
         f = pkgConf: acc:
-          descend (child: acc: if isLxcPkg child.pkg then f child acc else acc)
-                  (childResult: pkgSet: [pkgSet] ++ childResult)
+          descend (child: acc@{all, lxc, other}:
+                    if isLxcPkg child.pkg then
+                      f child acc
+                    else
+                      {
+                        all = [child.pkg] ++ all;
+                        other = [child.pkg] ++ other;
+                        inherit lxc;
+                      })
+                  ({all, lxc, other}: pkgSet:
+                    {
+                      all = [pkgSet] ++ all;
+                      lxc = [pkgSet] ++ lxc;
+                      inherit other;
+                    })
                   pkgConf acc;
       in
-        f pkgConf [];
+        f pkgConf {all = []; lxc = []; other = [];};
 
   in fun:
     assert builtins.isFunction fun;
     let
       pkg = {
-        inherit fun pkg name validated mounts scripts module;
+        inherit fun pkg name validated mounts scripts module lxcConfig;
         inherit (mountsConfigOptions) configuration options;
-        inherit (lxcConfigInit) lxcConfig init;
         _isLxc = true;
       };
-      mountsConfigOptions = storeMountsConfigsOptions pkg {} {};
+      mountsConfigOptions = storeMountsConfigsOptions pkg {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
                   (validateUsedOptionsDeclared mountsConfigOptions);
       name = (runPkg pkg).name;
       mounts = if validated then
-                 storeMountsFile pkg
+                 storeMountsFile name groupedPkgs.other
                else
                  throw "Unable to validate configuration.";
-      allLxcPkgs = collectLxcPkgs pkg;
-      lxcConfigInit = if validated then
-                        lxcConfBaseInit pkg allLxcPkgs
-                      else
-                        throw "Unable to validate configuration.";
-      scripts = createStartScripts pkg allLxcPkgs;
-      module = { config, pkgs, ...}: {
-                 imports = (map (pkgSet: pkgSet.module pkg) allLxcPkgs);
+      groupedPkgs = groupPkgs pkg;
+      lxcConfig = if validated then
+                    lxcConfBase pkg groupedPkgs.lxc
+                  else
+                    throw "Unable to validate configuration.";
+      scripts = createStartScripts pkg groupedPkgs.lxc;
+      module = { config, pkgs, ... }: {
+                 imports = (map (pkgSet: pkgSet.module pkg) groupedPkgs.lxc);
                  options = {};
                  config  = {};
                };

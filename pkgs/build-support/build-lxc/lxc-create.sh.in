@@ -5,6 +5,8 @@ dir=$base/@name@
 gcbase=@gcbase@
 gcdir=$gcbase/tsp/@name@
 
+@coreutils@/bin/rm -rf $gcdir
+
 @coreutils@/bin/mkdir -p $dir $gcdir
 
 [ ! -e $dir/config ] # sterilise will remove this, so this is our test for whether it's been sterilised or not.
@@ -33,7 +35,6 @@ for f in @onCreate@; do
     $f $dir $dir/config $dir/fstab
 done
 
-@coreutils@/bin/ln -s @init@ $dir/rootfs/sbin/init
 @coreutils@/bin/ln -s $(@coreutils@/bin/readlink -f "$0") $dir/creator
 @coreutils@/bin/ln -s @sterilise@ $dir/sterilise
 

@@ -18,6 +18,7 @@ tsp.container ({ configuration, lxcLib }:
         chmod +x $out/sbin/erlinetrc-start
       '';
     };
+    doStart = configuration.start;
   in
     {
       name = "${tsp_erlinetrc.name}-lxc";
@@ -26,13 +27,8 @@ tsp.container ({ configuration, lxcLib }:
                       home         = tsp_home;
                       network      = tsp_network;
                       inherit (tsp) systemd;
-                      inherit wrapped; };
-      lxcConf = lxcLib.sequence [
-        (if configuration.start then
-           lxcLib.setInit "${wrapped}/sbin/erlinetrc-start"
-         else
-           lxcLib.id)
-      ];
+                      inherit wrapped;
+                    } // (if doStart then { inherit (tsp) init; } else {});
       options = {
         start           = lxcLib.mkOption { optional = true; default = false; };
         name            = lxcLib.mkOption { optional = false; };
@@ -45,5 +41,5 @@ tsp.container ({ configuration, lxcLib }:
         home.uid   = 1000;
         home.group = "erlinetrc";
         home.gid   = 1000;
-      };
+      } // (if doStart then { init.init  = "${wrapped}/sbin/erlinetrc-start"; } else {});
     })

@@ -18,6 +18,7 @@ tsp.container ({ configuration, lxcLib }:
         done
       '';
     };
+    doStart = configuration.start;
   in
     {
       name = "rabbitmq-server-lxc";
@@ -25,12 +26,8 @@ tsp.container ({ configuration, lxcLib }:
                       dev_proc_sys = tsp_dev_proc_sys;
                       network      = tsp_network;
                       home         = tsp_home;
-                      inherit wrapped; };
-      lxcConf =
-        if configuration.start then
-          lxcLib.setInit "${wrapped}/sbin/rabbitmq-server"
-        else
-          lxcLib.id;
+                      inherit wrapped;
+                    } // (if doStart then { inherit (tsp) init; } else {});
       options = {
         start = lxcLib.mkOption { optional = true; default = false; };
       };
@@ -39,5 +36,5 @@ tsp.container ({ configuration, lxcLib }:
         home.uid   = 1000;
         home.group = "rabbit";
         home.gid   = 1000;
-      };
+      } // (if doStart then { init.init = "${wrapped}/sbin/rabbitmq-server"; } else {});
     })

@@ -19,6 +19,7 @@ tsp.container ({ configuration, lxcLib }:
         chmod +x $out/sbin/http-start
       '';
     };
+    doStart = configuration.start;
   in
     {
       name = "${tsp_http.name}-lxc";
@@ -26,13 +27,8 @@ tsp.container ({ configuration, lxcLib }:
                       dev_proc_sys = tsp_dev_proc_sys;
                       home         = tsp_home;
                       network      = tsp_network;
-                      inherit wrapped; };
-      lxcConf = lxcLib.sequence [
-        (if configuration.start then
-           lxcLib.setInit "${wrapped}/sbin/http-start"
-         else
-           lxcLib.id)
-      ];
+                      inherit wrapped;
+                    } // (if doStart then { inherit (tsp) init; } else {});
       options = {
         start           = lxcLib.mkOption { optional = true; default = false; };
         router.hostname = lxcLib.mkOption { optional = false; };
@@ -43,5 +39,5 @@ tsp.container ({ configuration, lxcLib }:
         home.uid   = 1000;
         home.group = "http";
         home.gid   = 1000;
-      };
+      } // (if doStart then { init.init = "${wrapped}/sbin/http-start"; } else {});
     })

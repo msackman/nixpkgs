@@ -21,18 +21,15 @@ tsp.container ({ configuration, lxcLib }:
         chmod +x $out
       '';
     };
+    doStart = configuration.start;
   in
     {
       name = "${bash.name}-lxc";
-      storeMounts = { inherit bash; };
-      lxcConf =
-        if configuration.start then
-          lxcLib.setInit "${bash}/bin/bash"
-        else
-          lxcLib.id;
+      storeMounts = { inherit bash; } // (if doStart then { inherit (tsp) init; } else {});
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
         start = lxcLib.mkOption { optional = true; default = false; };
       };
+      configuration = if doStart then { init.init = "${bash}/bin/bash"; } else {};
     })

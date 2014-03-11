@@ -33,6 +33,7 @@ tsp.container ({ configuration, lxcLib }:
         chmod +x $out/sbin/router-start
       '';
     };
+    doStart = configuration.start;
   in
     {
       name = "${tsp_router.name}-lxc";
@@ -40,12 +41,9 @@ tsp.container ({ configuration, lxcLib }:
                       dev_proc_sys = tsp_dev_proc_sys;
                       home         = tsp_home;
                       network      = tsp_network;
-                      inherit wrapped; };
+                      inherit wrapped;
+                    } // (if doStart then { inherit (tsp) init; } else {});
       lxcConf = lxcLib.sequence [
-        (if configuration.start then
-           lxcLib.setInit "${wrapped}/sbin/router-start"
-         else
-           lxcLib.id)
         (lxcLib.replacePath "cap.drop" (old:
            let
              dropped = lib.splitString " " old.value;
@@ -72,5 +70,5 @@ tsp.container ({ configuration, lxcLib }:
         home.uid   = 1000;
         home.group = "router";
         home.gid   = 1000;
-      };
+      } // (if doStart then { init.init = "${wrapped}/sbin/router-start"; } else {});
     })
