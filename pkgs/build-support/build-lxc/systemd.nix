@@ -5,57 +5,40 @@ tsp.container ({ configuration, lxcLib }:
     name = "systemd-lxc";
     options = {
       wantedBy = lxcLib.mkOption { optional = true; default = [ "multi-user.target" ]; };
+      after = lxcLib.mkOption { optional = true; default = [ "network.target" ]; };
+      enabled = lxcLib.mkOption { optional = true; default = false; };
+      name = lxcLib.mkOption { optional = true; default = null; };
+      dir = lxcLib.mkOption { optional = true; default = null; };
     };
     module =
       pkg: { config, pkgs, ... }:
         with pkgs.lib;
         let
-          name = pkg.name;
-          cfg = builtins.getAttr name config.services.lxc;
-          createScript = pkg.scripts + "/bin/lxc-create-${name}";
-          upgradeScript = pkg.scripts + "/bin/lxc-upgrade-${name}";
-          startScript = pkg.scripts + "/bin/lxc-start-${name}";
+          name = if configuration.name == null then pkg.name else configuration.name;
+          dir = if configuration.dir == null then "/var/lib/lxc/${name}" else configuration.dir;
         in
           {
-            ###### interface
-            options = {
-              services.lxc = builtins.listToAttrs [
-              { inherit name;
-                value = {
-                  enable = mkOption {
-                    type = types.bool;
-                    default = false;
-                    description = ''
-                      Whether to run the ${name} container.
-                    '';
-                  };
-                };
-              }];
-            };
-
-            ###### implementation
-            config = mkIf cfg.enable {
+            config = mkIf configuration.enabled {
               environment.systemPackages = [pkgs.lxc];
               systemd.services = builtins.listToAttrs [{
                 inherit name;
                 value = {
                   description = "LXC container: ${name}";
-                  inherit (configuration) wantedBy;
-                  after = [ "network.target" ];
+                  inherit (configuration) wantedBy after;
                   preStart = ''
-                    if [ ! -f "/var/lib/lxc/${name}/config" ]; then
-                      ${createScript}
+                    if [ ! -f "${dir}/config" ]; then
+                      ${pkg.create}
                     else
-                      ${upgradeScript}
+                      ${pkg.upgrade}
                     fi
                   '';
                   serviceConfig = {
-                    ExecStart = "${startScript}";
-                    ExecStop = "${pkgs.lxc}/bin/lxc-stop -n ${name}";
-                    Type = "simple";
-                    Restart = "always";
+                    ExecStart = "${pkg.start}";
+                    ExecStop  = "${pkgs.lxc}/bin/lxc-stop -n ${name}";
+                    Type      = "simple";
+                    Restart   = "always";
                   };
-                  unitConfig.RequiresMountsFor = "/var/lib/lxc/${name}";
+                  unitConfig.RequiresMountsFor = dir;
                 };
               }];
             };

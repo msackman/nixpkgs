@@ -234,7 +234,7 @@
           buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
         };
 
-    createStartScripts = { pkg, configuration, ...}: allLxcPkgs:
+    createScripts = { pkg, configuration, ...}: allLxcPkgs:
       let
         name = pkg.name;
         allOnCreate = concatLists (map (pkg: pkg.onCreate) allLxcPkgs);
@@ -311,7 +311,11 @@
       pkg = {
         inherit fun pkg name validated mounts scripts module lxcConfig;
         inherit (mountsConfigOptions) configuration options;
-        _isLxc = true;
+        create    = "${scripts}/bin/lxc-create-${name}";
+        sterilise = "${scripts}/bin/lxc-sterilise-${name}";
+        upgrade   = "${scripts}/bin/lxc-upgrade-${name}";
+        start     = "${scripts}/bin/lxc-start-${name}";
+        _isLxc    = true;
       };
       mountsConfigOptions = storeMountsConfigsOptions pkg {};
       validated = (validateRequiredOptions mountsConfigOptions) &&
@@ -326,11 +330,9 @@
                     lxcConfBase pkg groupedPkgs.lxc
                   else
                     throw "Unable to validate configuration.";
-      scripts = createStartScripts pkg groupedPkgs.lxc;
+      scripts = createScripts pkg groupedPkgs.lxc;
       module = { config, pkgs, ... }: {
                  imports = (map (pkgSet: pkgSet.module pkg) groupedPkgs.lxc);
-                 options = {};
-                 config  = {};
                };
     in
       pkg
