@@ -35,6 +35,24 @@ let
         fetcher = git;
         deps = [ procket ];
       };
+    goldrush =
+      {
+        name = "goldrush";
+        url = "git://github.com/DeadZen/goldrush.git";
+        rev = "71e63212f12c25827e0c1b4198d37d5d018a7fec";
+        sha256 = "168432a0c09a253a047abcd36616e6308671ce0779347ea7a5161ed65843be54";
+        fetcher = git;
+        deps = [ ];
+      };
+    lager =
+      {
+        name = "lager";
+        url = "git://github.com/basho/lager.git";
+        rev = "1613842357c4c8cee6edadca47733ce6edc70106";
+        sha256 = "83f6216363e67a699a0d6e88f198c383f1e7e0b29ce5cda01078fb43b8320dd9";
+        fetcher = git;
+        deps = [ goldrush ];
+      };
     mochiweb =
       {
         name = "mochiweb";
@@ -48,10 +66,10 @@ let
       {
         name = "tsp-demo-router";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-router";
-        sha256 = "1kp334lxa58zi76rwc67yb71pf791ba5rjmangvkc1jsl5xjg2jl";
-        tag = "c0e25b52ce48";
+        sha256 = "1qarhsfyh8ws94bl4labc82yw62xcz354h861y6yhdxpg6h4mmfk";
+        tag = "3c963f9bec05";
         fetcher = hg;
-        deps = [ procket msgpack pkt tunctl mochiweb ];
+        deps = [ procket msgpack pkt tunctl mochiweb lager ];
       };
   };
   git = desc: fetchgit { inherit (desc) url rev sha256; };
