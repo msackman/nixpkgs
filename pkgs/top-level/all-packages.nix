@@ -6415,7 +6415,8 @@ let
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };
   tsp = { container = buildLXC;
-          module = path: ((import path) { inherit pkgs; }).module;
+          module = path: ((if builtins.isFunction path then path else import path)
+                          { inherit pkgs; }).module;
           systemd = callPackage ../build-support/build-lxc/systemd.nix { };
           init = callPackage ../build-support/build-lxc/init.nix { };
         };
