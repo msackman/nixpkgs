@@ -23,6 +23,7 @@ tsp.container ({ configuration, lxcLib }:
       storeMounts = { dev_proc_sys = tsp_dev_proc_sys;
                       home         = tsp_home;
                       network      = tsp_network;
+                      inherit (tsp) systemd;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
       options = {

@@ -1,14 +1,21 @@
-{ tsp }:
+{ tsp, lib }:
 
 tsp.container ({ configuration, lxcLib }:
   {
     name = "systemd-lxc";
     options = {
-      wantedBy = lxcLib.mkOption { optional = true; default = [ "multi-user.target" ]; };
-      after = lxcLib.mkOption { optional = true; default = [ "network.target" ]; };
-      enabled = lxcLib.mkOption { optional = true; default = false; };
-      name = lxcLib.mkOption { optional = true; default = null; };
-      dir = lxcLib.mkOption { optional = true; default = null; };
+      after      = lxcLib.mkOption { optional = true; default = [ "network.target" ]; };
+      before     = lxcLib.mkOption { optional = true; default = []; };
+      bindsTo    = lxcLib.mkOption { optional = true; default = []; };
+      conflicts  = lxcLib.mkOption { optional = true; default = []; };
+      partOf     = lxcLib.mkOption { optional = true; default = []; };
+      requiredBy = lxcLib.mkOption { optional = true; default = []; };
+      requires   = lxcLib.mkOption { optional = true; default = []; };
+      wantedBy   = lxcLib.mkOption { optional = true; default = [ "multi-user.target" ]; };
+      wants      = lxcLib.mkOption { optional = true; default = []; };
+      enabled    = lxcLib.mkOption { optional = true; default = false; };
+      name       = lxcLib.mkOption { optional = true; default = null; };
+      dir        = lxcLib.mkOption { optional = true; default = null; };
     };
     module =
       pkg: { config, pkgs, ... }:
@@ -24,7 +31,8 @@ tsp.container ({ configuration, lxcLib }:
                 inherit name;
                 value = {
                   description = "LXC container: ${name}";
-                  inherit (configuration) wantedBy after;
+                  inherit (configuration)
+                    after before bindsTo conflicts partOf requiredBy requires wantedBy wants;
                   preStart = ''
                     if [ ! -f "${dir}/config" ]; then
                       ${pkg.create}
