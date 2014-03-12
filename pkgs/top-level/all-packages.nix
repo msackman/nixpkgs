@@ -434,6 +434,8 @@ let
 
   analog = callPackage ../tools/admin/analog {};
 
+  apt-offline = callPackage ../tools/misc/apt-offline { };
+
   archivemount = callPackage ../tools/filesystems/archivemount { };
 
   arandr = callPackage ../tools/X11/arandr { };
@@ -661,6 +663,8 @@ let
 
   cabextract = callPackage ../tools/archivers/cabextract { };
 
+  can-utils = callPackage ../os-specific/linux/can-utils { };
+
   ccid = callPackage ../tools/security/ccid { };
 
   ccrypt = callPackage ../tools/security/ccrypt { };
@@ -848,7 +852,7 @@ let
   dtach = callPackage ../tools/misc/dtach { };
 
   duplicity = callPackage ../tools/backup/duplicity {
-    inherit (pythonPackages) boto;
+    inherit (pythonPackages) boto lockfile;
     gnupg = gnupg1;
   };
 
@@ -1002,7 +1006,8 @@ let
 
   g500-control = callPackage ../tools/misc/g500-control { };
 
-  gawk = lowPrio (callPackage ../tools/text/gawk { });
+  gawk = callPackage ../tools/text/gawk { };
+
   gawkInteractive = appendToName "interactive"
     (gawk.override { readlineSupport = true; });
 
@@ -1581,9 +1586,9 @@ let
       pam = if stdenv.isLinux then pam else null;
     };
 
-  openssh_hpn = lowPrio (pkgs.appendToName "hpn" (openssh.override { hpnSupport = true; }));
+  openssh_hpn = pkgs.appendToName "with-hpn" (openssh.override { hpnSupport = true; });
 
-  openssh_with_kerberos = lowPrio (pkgs.appendToName "with-kerberos" (openssh.override { withKerberos = true; }));
+  openssh_with_kerberos = pkgs.appendToName "with-kerberos" (openssh.override { withKerberos = true; });
 
   opensp = callPackage ../tools/text/sgml/opensp { };
 
@@ -2724,6 +2729,7 @@ let
   haskellPackages_ghc763_profiling    = recurseIntoAttrs (haskell.packages_ghc763.profiling);
   haskellPackages_ghc763              = recurseIntoAttrs (haskell.packages_ghc763.highPrio);
   # Reasonably current HEAD snapshot.
+  haskellPackages_ghc781 = haskell.packages_ghc781;
   haskellPackages_ghcHEAD = haskell.packages_ghcHEAD;
 
   haxe = callPackage ../development/compilers/haxe { };
@@ -2800,12 +2806,12 @@ let
 
   jdkdistro = installjdk: pluginSupport:
     assert supportsJDK;
-    (if pluginSupport then appendToName "plugin" else x: x)
+    (if pluginSupport then appendToName "with-plugin" else x: x)
       (callPackage ../development/compilers/jdk/jdk6-linux.nix { });
 
   oraclejdk7distro = installjdk: pluginSupport:
     assert supportsJDK;
-    (if pluginSupport then appendToName "plugin" else x: x)
+    (if pluginSupport then appendToName "with-plugin" else x: x)
       (callPackage ../development/compilers/jdk/jdk7-linux.nix { inherit installjdk; });
 
   jikes = callPackage ../development/compilers/jikes { };
@@ -3757,7 +3763,7 @@ let
 
   remake = callPackage ../development/tools/build-managers/remake { };
 
-  saleaeLogic = callPackage ../development/tools/misc/saleae-logic { };
+  saleae-logic = callPackage ../development/tools/misc/saleae-logic { };
 
   # couldn't find the source yet
   seleniumRCBin = callPackage ../development/tools/selenium/remote-control {
@@ -4181,6 +4187,8 @@ let
   fam = gamin;
 
   gamin = callPackage ../development/libraries/gamin { };
+
+  ganv = callPackage ../development/libraries/ganv { };
 
   gav = callPackage ../games/gav { };
 
@@ -5001,7 +5009,11 @@ let
 
   libpaper = callPackage ../development/libraries/libpaper { };
 
-  libproxy = callPackage ../development/libraries/libproxy { };
+  libproxy = callPackage ../development/libraries/libproxy {
+    stdenv = if stdenv.isDarwin
+      then overrideGCC stdenv gcc
+      else stdenv;
+  };
 
   libpseudo = callPackage ../development/libraries/libpseudo { };
 
@@ -5437,13 +5449,6 @@ let
   poppler = callPackage ../development/libraries/poppler { lcms = lcms2; };
   popplerQt4 = poppler.poppler_qt4;
 
-  poppler_0_18 = callPackage ../development/libraries/poppler/0.18.nix {
-    lcms = lcms2;
-    glibSupport = true;
-    gtk3Support = false;
-    qt4Support  = false;
-  };
-
   popt = callPackage ../development/libraries/popt { };
 
   portaudio = callPackage ../development/libraries/portaudio {
@@ -5546,6 +5551,8 @@ let
 
   rabbitmq-c = callPackage ../development/libraries/rabbitmq-c {};
 
+  raul = callPackage ../development/libraries/audio/raul { };
+
   readline = readline6;
 
   readline4 = callPackage ../development/libraries/readline/readline4.nix { };
@@ -5574,6 +5581,8 @@ let
   lilv = callPackage ../development/libraries/audio/lilv { };
 
   lv2 = callPackage ../development/libraries/audio/lv2 { };
+
+  lvtk = callPackage ../development/libraries/audio/lvtk { };
 
   qrupdate = callPackage ../development/libraries/qrupdate { };
 
@@ -6075,7 +6084,6 @@ let
   # regardless.
   python26Packages = import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = python26;
   };
 
@@ -6083,31 +6091,26 @@ let
 
   python33Packages = recurseIntoAttrs (import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = python33;
   });
 
   python34Packages = import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = python34;
   };
 
   python32Packages = import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = python32;
   };
 
   python27Packages = recurseIntoAttrs (import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = python27;
   });
 
   pypyPackages = recurseIntoAttrs (import ./python-packages.nix {
     inherit pkgs;
-    inherit (lib) lowPrio;
     python = pypy;
   });
 
@@ -6744,7 +6747,7 @@ let
   })) (args: grsecurityOverrider args));
 
   linux_3_13_grsecurity = lowPrio (lib.overrideDerivation (linux_3_13.override (args: {
-    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_13_5 kernelPatches.grsec_path ];
+    kernelPatches = args.kernelPatches ++ [ kernelPatches.grsecurity_3_0_3_13_6 kernelPatches.grsec_path ];
     argsOverride = {
       modDirVersion = "${linux_3_13.modDirVersion}-grsec";
     };
@@ -7469,6 +7472,8 @@ let
 
   alchemy = callPackage ../applications/graphics/alchemy { };
 
+  ams-lv2 = callPackage ../applications/audio/ams-lv2 { };
+
   amsn = callPackage ../applications/networking/instant-messengers/amsn { };
 
   antiword = callPackage ../applications/office/antiword {};
@@ -7635,6 +7640,7 @@ let
   comical = callPackage ../applications/graphics/comical { };
 
   conkeror = callPackage ../applications/networking/browsers/conkeror { };
+
   conkerorWrapper = wrapFirefox {
     browser = conkeror;
     browserName = "conkeror";
@@ -7930,11 +7936,15 @@ let
     fftw = fftwFloat;
   };
 
+  gnuradio-osmosdr = callPackage ../applications/misc/gnuradio-osmosdr { };
+
   goldendict = callPackage ../applications/misc/goldendict { };
 
   google-musicmanager = callPackage ../applications/audio/google-musicmanager { };
 
   gpicview = callPackage ../applications/graphics/gpicview { };
+
+  gqrx = callPackage ../applications/misc/gqrx { };
 
   grass = import ../applications/misc/grass {
     inherit (xlibs) libXmu libXext libXp libX11 libXt libSM libICE libXpm
@@ -7991,7 +8001,7 @@ let
     inherit (gnome) libIDL;
   };
 
-  firefox13Wrapper = lowPrio (wrapFirefox { browser = firefox13Pkgs.firefox; });
+  firefox13Wrapper = wrapFirefox { browser = firefox13Pkgs.firefox; };
 
   firefoxPkgs = callPackage ../applications/networking/browsers/firefox {
     inherit (gnome) libIDL;
@@ -8390,7 +8400,6 @@ let
         freefont_ttf xorg.fontmiscmisc xorg.fontbhttf
       ];
     };
-    poppler = poppler_0_18;
     clucene_core = clucene_core_2;
     lcms = lcms2;
     mdds = mdds_0_7_1;
@@ -8447,7 +8456,7 @@ let
     guiSupport = false; # use mercurialFull to get hgk GUI
   };
 
-  mercurialFull = lowPrio (appendToName "full" (pkgs.mercurial.override { guiSupport = true; }));
+  mercurialFull = appendToName "full" (pkgs.mercurial.override { guiSupport = true; });
 
   merkaartor = callPackage ../applications/misc/merkaartor { };
 
@@ -8804,6 +8813,8 @@ let
     enableCopyDevicesPatch = (config.rsync.enableCopyDevicesPatch or false);
   };
 
+  rtl-sdr = callPackage ../applications/misc/rtl-sdr { };
+
   rubyripper = callPackage ../applications/audio/rubyripper {};
 
   rxvt = callPackage ../applications/misc/rxvt { };
@@ -8929,11 +8940,11 @@ let
     sasl = cyrus_sasl;
   };
 
-  subversionClient = lowPrio (appendToName "client" (subversion.override {
+  subversionClient = appendToName "client" (subversion.override {
     bdbSupport = false;
     perlBindings = true;
     pythonBindings = true;
-  }));
+  });
 
   surf = callPackage ../applications/misc/surf {
     libsoup = gnome.libsoup;
@@ -9481,6 +9492,8 @@ let
   hexen = callPackage ../games/hexen { };
 
   icbm3d = callPackage ../games/icbm3d { };
+
+  ingen = callPackage ../applications/audio/ingen { };
 
   instead = callPackage ../games/instead {
     lua = lua5;
@@ -10497,13 +10510,13 @@ let
   wineStable = callPackage_i686 ../misc/emulators/wine/stable.nix {
     bison = bison2;
   };
+
   wineUnstable = lowPrio (callPackage_i686 ../misc/emulators/wine/unstable.nix {
     bison = bison2;
   });
+
   wine = wineStable;
 
-  # winetricks is a shell script with no binary components. Safe to just use the current platforms
-  # build instead of the i686 specific build.
   winetricks = callPackage ../misc/emulators/wine/winetricks.nix {
     inherit (gnome2) zenity;
   };
