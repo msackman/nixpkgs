@@ -17,6 +17,41 @@ tsp.container ({ configuration, lxcLib }:
         chmod +x $out
       '';
     };
+    logDirName = tsp_router.name;
+
+    # Erlang is monumentally stupid and demands that it can take the
+    # value passed via -config and add a ".config" suffix and then
+    # that's the name of the file. Hence the daftness in what follows:
+    configFile = stdenv.mkDerivation rec {
+      name = "${tsp_router.name}-config";
+      buildCommand = ''
+        mkdir -p $out
+        printf '
+        [
+          {sasl, [{sasl_error_logger, {file, "/var/log/${logDirName}/sasl.log"}}]},
+          {lager, [
+            {handlers, [
+              {lager_console_backend, info},
+              {lager_file_backend, [{file, "/var/log/${logDirName}/error.log"}, {level, error}]},
+              {lager_file_backend, [{file, "/var/log/${logDirName}/console.log"}, {level, info}]}
+             ]},
+            {error_logger_redirect, false}
+           ]},
+          {tsp, [
+            {node_name, "${configuration.identity}"},
+            {serf_addr, "${configuration.serfdom}"},
+            {tap_name,  "tsp%%d"},
+            {eth_dev,   undefined},
+            {bridge,    "${configuration.internal_bridge.name}"}
+           ]}
+        ].
+        ' > $out/config.config
+      '';
+    };
+    cookieStr = if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then
+                  "-setcookie ${configuration.erlang.cookie}"
+                else
+                  "";
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_router.name}-lxc-wrapper";
       buildCommand = ''
@@ -27,9 +62,9 @@ tsp.container ({ configuration, lxcLib }:
         brctl addbr ${configuration.internal_bridge.name}
         brctl addif ${configuration.internal_bridge.name} ${configuration.internal_bridge.nic}
         ifconfig ${configuration.internal_bridge.name} ${configuration.internal_bridge.ip} netmask ${configuration.internal_bridge.netmask} up
-        export LOG_DIR=/var/log/${wrapped.name}
+        export LOG_DIR=/var/log/${logDirName}
         mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -tsp node_name \\"${configuration.identity}\\" -tsp serf_addr \\"${configuration.serfdom}\\" -tsp tap_name \\"tsp%%d\\" -tsp eth_dev undefined -tsp bridge \\"${configuration.internal_bridge.name}\\" -sname router ${if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then "-setcookie ${configuration.erlang.cookie}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
+        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -sname router ${cookieStr} -config ${configFile}/config -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
