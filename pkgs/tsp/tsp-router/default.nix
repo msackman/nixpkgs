@@ -69,7 +69,7 @@ let
         sha256 = "1qarhsfyh8ws94bl4labc82yw62xcz354h861y6yhdxpg6h4mmfk";
         tag = "3c963f9bec05";
         fetcher = hg;
-        deps = [ procket msgpack pkt tunctl mochiweb lager ];
+        deps = [ procket msgpack pkt tunctl mochiweb lager goldrush ];
       };
   };
   git = desc: fetchgit { inherit (desc) url rev sha256; };
