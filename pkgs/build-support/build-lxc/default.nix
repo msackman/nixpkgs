@@ -78,11 +78,7 @@
     runPkg = { pkg, configuration, ...}:
         ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], onSterilise ? [],
            options ? {}, configuration ? {}, module ? (_: {})}:
-           { inherit name lxcConf onCreate onSterilise options configuration module;
-             ## Slightly hacky: assume lxc is needed by everything. In
-             ## truth, this is true, but we might be better off not
-             ## quite inserting it EVERYWHERE!
-             storeMounts = { inherit lxc; } // storeMounts; })
+           { inherit name lxcConf onCreate onSterilise options configuration module storeMounts; })
         (pkg.fun { inherit configuration lxcLib; });
     isOption = thing: isAttrs thing && thing ? _isOption && thing._isOption;
     sequence = list: init: foldl (acc: f: f acc) init list;

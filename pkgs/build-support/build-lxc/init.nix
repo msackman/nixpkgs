@@ -1,4 +1,4 @@
-{ stdenv, tsp, coreutils }:
+{ stdenv, tsp, coreutils, lxc }:
 
 tsp.container ({ configuration, lxcLib }:
   let
@@ -30,4 +30,5 @@ tsp.container ({ configuration, lxcLib }:
       };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
+      storeMounts = { inherit lxc; };
     })
