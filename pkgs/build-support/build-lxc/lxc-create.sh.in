@@ -15,7 +15,7 @@ gcdir=$gcbase/tsp/@name@
 @coreutils@/bin/mkdir -p -m 1777 $dir/rootfs/tmp
 
 printf \
-'lxc.include = @lxcConfigBase@
+'lxc.include = @lxcConfigBase@/config
 lxc.rootfs = %s
 lxc.mount = %s
 lxc.console = %s' \
@@ -30,6 +30,9 @@ for f in $(cat @storeMounts@); do
       @coreutils@/bin/touch $dir/rootfs$f
     fi
 done
+
+@gnused@/bin/sed -e "s|@rootfs@|$dir/rootfs|g" \
+  @lxcConfigBase@/config.xml > $dir/config.xml
 
 for f in @onCreate@; do
     $f $dir $dir/config $dir/fstab

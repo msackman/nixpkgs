@@ -1,0 +1,23 @@
+<domain type='lxc'>
+  <name>@name@</name>
+  <memory unit='MiB'>64</memory>
+  <vcpu>1</vcpu>
+  <os>
+    <type>exe</type>
+    <init>/sbin/init</init>
+  </os>
+  <clock offset='utc'/>
+  <on_poweroff>destroy</on_poweroff>
+  <on_reboot>restart</on_reboot>
+  <on_crash>destroy</on_crash>
+  <devices>
+    <emulator>@emulator@</emulator>
+    <filesystem type='mount'>
+      <source dir='@rootfs@'/>
+      <target dir='/'/>
+    </filesystem>
+    @storeMounts@
+    <console type='pty' />
+    @network@
+  </devices>
+</domain>

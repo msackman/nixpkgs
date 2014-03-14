@@ -1,7 +1,7 @@
-{stdenv, lib, lxc, coreutils}:
+{stdenv, lib, lxc, libvirt, coreutils, gnused}:
   let
     inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head tail removeAttrs;
-    inherit (lib) id foldl fold sort substring attrValues recursiveUpdate;
+    inherit (lib) id foldl fold sort substring attrValues recursiveUpdate concatStringsSep;
     lxcLib = rec {
       inherit sequence id;
 
@@ -60,7 +60,7 @@
         (appendPath "cgroup.devices.allow" "c 5:2 rwm"   )
         (appendPath "cgroup.devices.allow" "c 10:200 rwm") # tuntap
         (setPath "cap.drop"
-          (joinStrings " " ""
+          (concatStringsSep " "
             ["setpcap" "sys_module" "sys_rawio" "sys_pacct" "sys_admin"
              "sys_nice" "sys_resource" "sys_time" "sys_tty_config" "mknod"
              "audit_write" "audit_control" "mac_override mac_admin"]))
@@ -70,7 +70,7 @@
       hasPath = path: fold (e: acc: if acc then acc else e == path) false;
 
       configToString = config:
-        joinStrings "\n" "" (
+        concatStringsSep "\n" (
           map (attrs: "lxc.${attrs.name} = ${toString attrs.value}") config);
     };
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
@@ -82,7 +82,6 @@
         (pkg.fun { inherit configuration lxcLib; });
     isOption = thing: isAttrs thing && thing ? _isOption && thing._isOption;
     sequence = list: init: foldl (acc: f: f acc) init list;
-    joinStrings = sep: lib.fold (e: acc: e + sep + acc);
 
     descendPkg = storeMounts: configuration: name:
       { inherit name;
@@ -215,19 +214,35 @@
         stdenv.mkDerivation {
           name = "${name}-storeMounts";
           exportReferencesGraph = concatLists (map (pkg: [pkg.name pkg.value]) pkgs);
-          buildCommand = joinStrings "\n" ""
-            ((map (pkg: "cat ${pkg.name} >> deps") pkgs) ++
-            ["cat deps | sort | uniq | grep '^[^0-9]' > $out"]);
+          buildCommand = ''
+            mkdir $out
+            '' + (concatStringsSep "\n" (map (pkg: "cat ${pkg.name} >> deps") pkgs)) + ''\n
+            cat deps | grep '^[^0-9]' | sort | uniq > $out/mounts
+            for m in $(cat $out/mounts); do
+              printf '<filesystem type='"'"'mount'"'"'>\n<source dir='"'"'%s'"'"'/>\n<target dir='"'"'%s'"'"'/>\n</filesystem>\n' "$m" "$m" >> $out/mounts.xml
+            done
+          '';
         };
 
-    lxcConfBase = {name, configuration, ...}: allLxcPkgs:
+    lxcConfBase = {name, configuration, mounts, ...}: allLxcPkgs:
       let
         allLxcConfFuns = map (pkg: pkg.lxcConf) allLxcPkgs;
         config = sequence allLxcConfFuns lxcLib.defaults;
+        configXMLIn = ./config.xml.in;
       in
         stdenv.mkDerivation {
           name = "${name}-lxcConfBase";
-          buildCommand = "printf '%s' '${lxcLib.configToString config}' > $out";
+          buildCommand = ''
+            mkdir $out
+            printf '%s' '${lxcLib.configToString config}' > $out/config
+            sed -e "s|@emulator@|${libvirt}/libexec/libvirt_lxc|g" \
+                -e "s|@name@|${name}|g" \
+                -e "/@storeMounts@/{
+                        r ${mounts}/mounts.xml
+                        d
+                        }" \
+                ${configXMLIn} > $out/config.xml
+          '';
         };
 
     createScripts = { pkg, configuration, ...}: allLxcPkgs:
@@ -246,10 +261,11 @@
             mkdir -p $out/bin
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@coreutils@|${coreutils}|g" \
+                -e "s|@gnused@|${gnused}|g" \
                 -e "s|@lxcConfigBase@|${pkg.lxcConfig}|g" \
-                -e "s|@storeMounts@|${pkg.mounts}|g" \
+                -e "s|@storeMounts@|${pkg.mounts}/mounts|g" \
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
-                -e "s|@onCreate@|${joinStrings " " "" allOnCreate}|g" \
+                -e "s|@onCreate@|${concatStringsSep " " allOnCreate}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@sterilise@|$out/bin/lxc-sterilise-${name}|g" \
                 -e "s|@scripts@|$out|g" \
@@ -259,7 +275,7 @@
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@name@|${name}|g" \
-                -e "s|@onSterilise@|${joinStrings " " "" allOnSterilise}|g" \
+                -e "s|@onSterilise@|${concatStringsSep " " allOnSterilise}|g" \
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 ${steriliseFile} > $out/bin/lxc-sterilise-${name}
             chmod +x $out/bin/lxc-sterilise-${name}
