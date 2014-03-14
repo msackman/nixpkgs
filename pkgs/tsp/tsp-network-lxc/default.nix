@@ -1,10 +1,11 @@
-{ tsp, lib }:
+{ stdenv, tsp, lib, coreutils }:
 
 tsp.container ({ configuration, lxcLib }:
   let
     inherit (lib) fold splitString;
     inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString elem;
     inherit (lxcLib) sequence removePath appendPath setPath;
+    name = "network";
     baseNetwork = {
       type  = "veth";
       link  = "br0";
@@ -24,17 +25,51 @@ tsp.container ({ configuration, lxcLib }:
                else
                  [];
     listDelete = toDelete: filter (e: e != toDelete);
-    addNetwork = network: acc:
+
+    addNetworkLXC = network: acc:
       let fullNetwork = nic network; in
       # 'type' must come first as it symbolises the start of a new network section.
       fold (name: acc:
         [(appendPath "network.${name}" (getAttr name fullNetwork))] ++ acc)
         acc (["type"] ++ (listDelete "type" (attrNames fullNetwork)));
-    networks = fold addNetwork hostname configuration.networks;
+    networksLXC = fold addNetworkLXC hostname configuration.networks;
+
+    addNetworkLibVirt = network:
+      let fullNetwork = nic network; in ''
+      <interface type='"'"'bridge'"'"'>
+        <target dev='"'"'${fullNetwork.name}'"'"'/>
+        <source bridge='"'"'${fullNetwork.link}'"'"'/>
+        ${if fullNetwork ? hwaddr then ''<mac address='"'"'${fullNetwork.hwaddr}'"'"'/>'' else ""}
+      </interface>
+      '';
+    networksLibVirt = map addNetworkLibVirt configuration.networks;
+
+    createIn = ./on-create.sh.in;
+    steriliseIn = ./on-sterilise.sh.in;
+    create = stdenv.mkDerivation {
+      name = "${name}-oncreate";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            -e "s|@hostname@|${configuration.hostname}|g" \
+            ${createIn} > $out
+        chmod +x $out
+      '';
+    };
+    sterilise = stdenv.mkDerivation {
+      name = "${name}-onsterilise";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            ${steriliseIn} > $out
+        chmod +x $out
+      '';
+    };
   in
   {
-    name = "network-lxc";
-    lxcConf = sequence networks;
+    name = "${name}-lxc";
+    lxcConf = sequence networksLXC;
+    libVirtConf = { devices = networksLibVirt; };
+    onCreate = [ create ];
+    onSterilise = [ sterilise ];
     options = {
       hostname = lxcLib.mkOption { optional = true; };
       networks = lxcLib.mkOption {

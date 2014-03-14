@@ -1,6 +1,6 @@
 {stdenv, lib, lxc, libvirt, coreutils, gnused}:
   let
-    inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head tail removeAttrs;
+    inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head tail removeAttrs isList;
     inherit (lib) id foldl fold sort substring attrValues recursiveUpdate concatStringsSep;
     lxcLib = rec {
       inherit sequence id;
@@ -76,9 +76,9 @@
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
     runPkg = { pkg, configuration, ...}:
-        ({ name, lxcConf ? id, storeMounts ? {}, onCreate ? [], onSterilise ? [],
+        ({ name, lxcConf ? id, libVirtConf ? {}, storeMounts ? {}, onCreate ? [], onSterilise ? [],
            options ? {}, configuration ? {}, module ? (_: {})}:
-           { inherit name lxcConf onCreate onSterilise options configuration module storeMounts; })
+           { inherit name lxcConf onCreate onSterilise options configuration module storeMounts libVirtConf; })
         (pkg.fun { inherit configuration lxcLib; });
     isOption = thing: isAttrs thing && thing ? _isOption && thing._isOption;
     sequence = list: init: foldl (acc: f: f acc) init list;
@@ -224,19 +224,52 @@
           '';
         };
 
+    toLibVirt = libVirtConfs:
+      let
+        merged = fold (libVirtConf: acc:
+                   let
+                     attrsList = fold (name: listAcc:
+                       let
+                         value = getAttr name libVirtConf;
+                         valueList = if isList value then value else [value];
+                         newValue = if hasAttr name acc then
+                                      valueList ++ (getAttr name acc)
+                                    else
+                                      valueList;
+                       in
+                         [{inherit name; value = newValue;}] ++ listAcc
+                     ) [] (attrNames libVirtConf);
+                   in
+                     acc // (listToAttrs attrsList)
+                 ) {} libVirtConfs;
+      in
+        fold (name: acc:
+          (acc + ''
+            <${name}>
+          '' + (concatStringsSep "\n" (getAttr name merged)) + ''
+            </${name}>
+          '')) "" (attrNames merged);
+
     lxcConfBase = {name, configuration, mounts, ...}: allLxcPkgs:
       let
         allLxcConfFuns = map (pkg: pkg.lxcConf) allLxcPkgs;
-        config = sequence allLxcConfFuns lxcLib.defaults;
+        allLibVirtConf = map (pkg: pkg.libVirtConf) allLxcPkgs;
+        configLXC = sequence allLxcConfFuns lxcLib.defaults;
+        configLibVirt = toLibVirt allLibVirtConf;
         configXMLIn = ./config.xml.in;
       in
         stdenv.mkDerivation {
           name = "${name}-lxcConfBase";
           buildCommand = ''
             mkdir $out
-            printf '%s' '${lxcLib.configToString config}' > $out/config
+            printf '%s' '${lxcLib.configToString configLXC}' > $out/config
+            printf '%s' '${configLibVirt}' > devices
             sed -e "s|@emulator@|${libvirt}/libexec/libvirt_lxc|g" \
                 -e "s|@name@|${name}|g" \
+                -e "/@devices@/{
+                        r devices
+                        d
+                        }" \
                 -e "/@storeMounts@/{
                         r ${mounts}/mounts.xml
                         d
@@ -318,7 +351,7 @@
         f pkgConf {all = []; lxc = []; other = [];};
 
   in fun:
-    assert builtins.isFunction fun;
+    assert isFunction fun;
     let
       pkg = {
         inherit fun pkg name validated mounts scripts module lxcConfig;

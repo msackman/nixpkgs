@@ -18,6 +18,6 @@
     </filesystem>
     @storeMounts@
     <console type='pty' />
-    @network@
+    @devices@
   </devices>
 </domain>
