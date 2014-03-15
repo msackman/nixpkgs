@@ -79,7 +79,7 @@ tsp.container ({ configuration, containerLib }:
                     } // (if doStart then { inherit (tsp) init; } else {});
       containerConf =
         containerLib.extendContainerConf ["devices"]
-                                         { name = "capabilities"; type = "misc";
+                                         { name = "hostdev"; mode = "capabilities"; type = "misc";
                                            value = { name = "source";
                                                      value = { name = "char";
                                                                value = "/dev/net/tun";
