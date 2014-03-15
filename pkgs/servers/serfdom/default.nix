@@ -5,8 +5,8 @@ let
     {
       dir     = "github.com/hashicorp";
       name    = "serf";
-      rev     = "7e5ec2546b5feaf1169f0d369eab34ec3cf57747";
-      sha256  = "5be6fab7804123abdfc887eead8fa5d44f385034d220fd798f03bbbdf8721e6e";
+      rev     = "c5b41a9d1d261135117a8d501d3293efade3cc74";
+      sha256  = "a314d3c13fb370842a8f7c6650abfa907b51172a09c64f9184a240fab05b43df";
       fetcher = git;
     }
     {
@@ -54,8 +54,8 @@ let
     {
       dir     = "github.com/miekg";
       name    = "dns";
-      rev     = "45c5ad39c54770e72aca1ca81ff9c8717131ce91";
-      sha256  = "988b8d0594427776c1d871f23401d1e16fba0229e8e656651a466ba6d6ff64a3";
+      rev     = "7ebb4c59b39d5984952a355086606dd91f6cfe86";
+      sha256  = "8418ad2d27e607cef1dc0003471416294443e467f2de9df135e3a2ab411e2512";
       fetcher = git;
     }
     {
@@ -94,12 +94,12 @@ let
             '') goDeps);
 in
   stdenv.mkDerivation rec {
-    version = "0.4.5";
+    version = "0.5.0";
     name = "serfdom-${version}";
 
     src = fetchurl {
       url = "https://github.com/hashicorp/serf/archive/v${version}.tar.gz";
-      sha256 = "08fxhvzcbkbxlq6psfm10bgrn68bgm0wvyzrcwpd1hza1faszfgf";
+      sha256 = "1p2cpkdx0gck1ypxc98im7gsv3275avpkizhsif3nxvl1xd8g1qp";
     };
 
     buildInputs = [ go ];
