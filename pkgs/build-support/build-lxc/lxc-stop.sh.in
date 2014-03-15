@@ -5,4 +5,4 @@ dir=$base/@name@
 
 [ -e $dir/creator ]
 
-exec @virsh@ -c lxc:/// create $dir/config.xml
+exec @virsh@ -c lxc:/// shutdown @name@

@@ -1,8 +1,7 @@
 { stdenv, serfdom, tsp, coreutils, callPackage }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
-    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
     wrapped = stdenv.mkDerivation rec {
@@ -20,17 +19,16 @@ tsp.container ({ configuration, lxcLib }:
   in
     {
       name = "serfdom-lxc";
-      storeMounts = { dev_proc_sys = tsp_dev_proc_sys;
-                      home         = tsp_home;
+      storeMounts = { home         = tsp_home;
                       network      = tsp_network;
                       inherit (tsp) systemd;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
       options = {
-        start        = lxcLib.mkOption { optional = true; default = false; };
-        routerIP     = lxcLib.mkOption { optional = false; };
-        rpcIP        = lxcLib.mkOption { optional = false; };
-        identity     = lxcLib.mkOption { optional = false; };
+        start        = containerLib.mkOption { optional = true; default = false; };
+        routerIP     = containerLib.mkOption { optional = false; };
+        rpcIP        = containerLib.mkOption { optional = false; };
+        identity     = containerLib.mkOption { optional = false; };
       };
       configuration = {
         home.user  = "serfdom";

@@ -1,6 +1,6 @@
 { stdenv, tsp, coreutils, bash }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     name = "tsp-home";
     createIn = ./on-create.sh.in;
@@ -33,9 +33,9 @@ tsp.container ({ configuration, lxcLib }:
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
-        user  = lxcLib.mkOption { optional = false; };
-        uid   = lxcLib.mkOption { optional = false; };
-        group = lxcLib.mkOption { optional = false; };
-        gid   = lxcLib.mkOption { optional = false; };
+        user  = containerLib.mkOption { optional = false; };
+        uid   = containerLib.mkOption { optional = false; };
+        group = containerLib.mkOption { optional = false; };
+        gid   = containerLib.mkOption { optional = false; };
       };
     })

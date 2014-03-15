@@ -1,10 +1,9 @@
 { stdenv, tsp, lib, coreutils }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     inherit (lib) fold splitString;
     inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString elem;
-    inherit (lxcLib) sequence removePath appendPath setPath;
     name = "network";
     baseNetwork = {
       type  = "veth";
@@ -20,29 +19,19 @@ tsp.container ({ configuration, lxcLib }:
                 []
              )) [] validKeys;
     nic = network: baseNetwork // (listToAttrs (networkConfiguration network));
-    hostname = if configuration ? hostname then
-                 [(setPath "utsname" configuration.hostname)]
-               else
-                 [];
-    listDelete = toDelete: filter (e: e != toDelete);
 
-    addNetworkLXC = network: acc:
+    addNetwork = network:
       let fullNetwork = nic network; in
-      # 'type' must come first as it symbolises the start of a new network section.
-      fold (name: acc:
-        [(appendPath "network.${name}" (getAttr name fullNetwork))] ++ acc)
-        acc (["type"] ++ (listDelete "type" (attrNames fullNetwork)));
-    networksLXC = fold addNetworkLXC hostname configuration.networks;
-
-    addNetworkLibVirt = network:
-      let fullNetwork = nic network; in ''
-      <interface type='"'"'bridge'"'"'>
-        <target dev='"'"'${fullNetwork.name}'"'"'/>
-        <source bridge='"'"'${fullNetwork.link}'"'"'/>
-        ${if fullNetwork ? hwaddr then ''<mac address='"'"'${fullNetwork.hwaddr}'"'"'/>'' else ""}
-      </interface>
-      '';
-    networksLibVirt = map addNetworkLibVirt configuration.networks;
+      { name = "interface"; type = "bridge";
+        value = [
+            { name = "target"; dev = fullNetwork.name; }
+            { name = "source"; bridge = fullNetwork.link; }
+          ] ++ (if fullNetwork ? hwaddr then
+                  [{ name = "mac"; address = fullNetwork.hwaddr; }]
+                else
+                  []);
+      };
+    networks = map addNetwork configuration.networks;
 
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
@@ -66,13 +55,12 @@ tsp.container ({ configuration, lxcLib }:
   in
   {
     name = "${name}-lxc";
-    lxcConf = sequence networksLXC;
-    libVirtConf = { devices = networksLibVirt; };
+    containerConf = containerLib.extendContainerConf ["devices"] networks;
     onCreate = [ create ];
     onSterilise = [ sterilise ];
     options = {
-      hostname = lxcLib.mkOption { optional = true; };
-      networks = lxcLib.mkOption {
+      hostname = containerLib.mkOption { optional = true; };
+      networks = containerLib.mkOption {
                    optional = true;
                    default = [];
                    validator =

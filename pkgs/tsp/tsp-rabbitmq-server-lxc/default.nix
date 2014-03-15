@@ -1,9 +1,8 @@
 { stdenv, makeWrapper, tsp_rabbitmq_server, tsp, callPackage }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     tsp_bash = callPackage ../tsp-bash-lxc { };
-    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
     wrapped = stdenv.mkDerivation rec {
@@ -23,13 +22,12 @@ tsp.container ({ configuration, lxcLib }:
     {
       name = "rabbitmq-server-lxc";
       storeMounts = { bash         = tsp_bash;
-                      dev_proc_sys = tsp_dev_proc_sys;
                       network      = tsp_network;
                       home         = tsp_home;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
       options = {
-        start = lxcLib.mkOption { optional = true; default = false; };
+        start = containerLib.mkOption { optional = true; default = false; };
       };
       configuration = {
         home.user  = "rabbit";

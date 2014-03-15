@@ -1,6 +1,6 @@
 { stdenv, tsp, coreutils, lxc }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     name = "init";
     createIn = ./init-on-create.sh.in;
@@ -26,7 +26,7 @@ tsp.container ({ configuration, lxcLib }:
     {
       name = "${name}-lxc";
       options = {
-        init = lxcLib.mkOption { optional = false; };
+        init = containerLib.mkOption { optional = false; };
       };
       onCreate = [ create ];
       onSterilise = [ sterilise ];

@@ -1,21 +1,21 @@
 { tsp, lib }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   {
     name = "systemd-lxc";
     options = {
-      after      = lxcLib.mkOption { optional = true; default = [ "network.target" ]; };
-      before     = lxcLib.mkOption { optional = true; default = []; };
-      bindsTo    = lxcLib.mkOption { optional = true; default = []; };
-      conflicts  = lxcLib.mkOption { optional = true; default = []; };
-      partOf     = lxcLib.mkOption { optional = true; default = []; };
-      requiredBy = lxcLib.mkOption { optional = true; default = []; };
-      requires   = lxcLib.mkOption { optional = true; default = []; };
-      wantedBy   = lxcLib.mkOption { optional = true; default = [ "multi-user.target" ]; };
-      wants      = lxcLib.mkOption { optional = true; default = []; };
-      enabled    = lxcLib.mkOption { optional = true; default = false; };
-      name       = lxcLib.mkOption { optional = true; default = null; };
-      dir        = lxcLib.mkOption { optional = true; default = null; };
+      after      = containerLib.mkOption { optional = true; default = [ "network.target" ]; };
+      before     = containerLib.mkOption { optional = true; default = []; };
+      bindsTo    = containerLib.mkOption { optional = true; default = []; };
+      conflicts  = containerLib.mkOption { optional = true; default = []; };
+      partOf     = containerLib.mkOption { optional = true; default = []; };
+      requiredBy = containerLib.mkOption { optional = true; default = []; };
+      requires   = containerLib.mkOption { optional = true; default = []; };
+      wantedBy   = containerLib.mkOption { optional = true; default = [ "multi-user.target" ]; };
+      wants      = containerLib.mkOption { optional = true; default = []; };
+      enabled    = containerLib.mkOption { optional = true; default = false; };
+      name       = containerLib.mkOption { optional = true; default = null; };
+      dir        = containerLib.mkOption { optional = true; default = null; };
     };
     module =
       pkg: { config, pkgs, ... }:
@@ -41,10 +41,11 @@ tsp.container ({ configuration, lxcLib }:
                     fi
                   '';
                   serviceConfig = {
-                    ExecStart = "${pkg.start}";
-                    ExecStop  = "${pkgs.lxc}/bin/lxc-stop -n ${name}";
-                    Type      = "simple";
-                    Restart   = "always";
+                    ExecStart       = "${pkg.start}";
+                    ExecStop        = "${pkg.stop}";
+                    Type            = "oneshot";
+                    Restart         = "always";
+                    RemainAfterExit = true;
                   };
                   unitConfig.RequiresMountsFor = dir;
                 };

@@ -9,21 +9,12 @@ gcdir=$gcbase/tsp/@name@
 
 @coreutils@/bin/mkdir -p $dir $gcdir
 
-[ ! -e $dir/config ] # sterilise will remove this, so this is our test for whether it's been sterilised or not.
+[ ! -e $dir/creator ] # sterilise will remove this, so this is our test for whether it's been sterilised or not.
 
 @coreutils@/bin/mkdir -p $dir/rootfs/sbin
 @coreutils@/bin/mkdir -p -m 1777 $dir/rootfs/tmp
 
-printf \
-'lxc.include = @lxcConfigBase@/config
-lxc.rootfs = %s
-lxc.mount = %s
-lxc.console = %s' \
-       $dir/rootfs $dir/fstab $dir/console \
-       > $dir/config
-
 for f in $(cat @storeMounts@); do
-    printf '%s %s/rootfs%s none ro,bind 0 0\n' $f $dir $f >> $dir/fstab
     if [ -d "$f" ]; then
       @coreutils@/bin/mkdir -p $dir/rootfs$f
     else
@@ -32,15 +23,15 @@ for f in $(cat @storeMounts@); do
 done
 
 @gnused@/bin/sed -e "s|@rootfs@|$dir/rootfs|g" \
-  @lxcConfigBase@/config.xml > $dir/config.xml
+  @containerConfig@/config.xml > $dir/config.xml
 
 for f in @onCreate@; do
-    $f $dir $dir/config $dir/fstab
+    $f $dir
 done
 
 @coreutils@/bin/ln -s $(@coreutils@/bin/readlink -f "$0") $dir/creator
 @coreutils@/bin/ln -s @sterilise@ $dir/sterilise
 
 @coreutils@/bin/ln -s $dir/rootfs/nix/store $gcdir/store
-@coreutils@/bin/ln -s @lxcConfigBase@ $gcdir/configBase
+@coreutils@/bin/ln -s @containerConfig@ $gcdir/config
 @coreutils@/bin/ln -s @scripts@ $gcdir/scripts

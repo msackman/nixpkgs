@@ -5,9 +5,9 @@ dir=$base/@name@
 gcbase=@gcbase@
 gcdir=$gcbase/tsp/@name@
 
-[ -d $dir ]
+[ -e $dir/creator ]
 
-@coreutils@/bin/rm -f $dir/config $dir/fstab $dir/creator $dir/creator $dir/sterilise
+@coreutils@/bin/rm -f $dir/config.xml $dir/fstab $dir/creator $dir/sterilise
 @coreutils@/bin/rm -rf $dir/rootfs/nix $gcdir
 
 for f in @onSterilise@; do

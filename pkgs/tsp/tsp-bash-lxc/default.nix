@@ -1,6 +1,6 @@
 { stdenv, tsp, bash, coreutils }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
@@ -29,7 +29,7 @@ tsp.container ({ configuration, lxcLib }:
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
-        start = lxcLib.mkOption { optional = true; default = false; };
+        start = containerLib.mkOption { optional = true; default = false; };
       };
       configuration = if doStart then { init.init = "${bash}/bin/bash"; } else {};
     })

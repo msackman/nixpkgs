@@ -1,6 +1,6 @@
 { stdenv, tsp, coreutils, lib }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     name = "tsp-hosts";
     createIn = ./on-create.sh.in;
@@ -35,7 +35,7 @@ tsp.container ({ configuration, lxcLib }:
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
-        hosts = lxcLib.mkOption {
+        hosts = containerLib.mkOption {
                   optional = false;
                   validator =
                     lib.fold ({ip, host}: acc:

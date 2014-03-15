@@ -1,4 +1,4 @@
-dir=$1; lxcConf=$2; fstab=$3;
+dir=$1
 
 @coreutils@/bin/mkdir -p $dir/rootfs/etc
 @coreutils@/bin/ln -s @hosts@ $dir/rootfs/etc/hosts

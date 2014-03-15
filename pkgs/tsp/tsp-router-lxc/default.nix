@@ -1,9 +1,8 @@
 { stdenv, tsp_router, erlang, bridge_utils, nettools, tsp, coreutils, lib, callPackage }:
 
-tsp.container ({ configuration, lxcLib }:
+tsp.container ({ configuration, containerLib }:
   let
     tsp_bash = callPackage ../tsp-bash-lxc { };
-    tsp_dev_proc_sys = callPackage ../tsp-dev-proc-sys-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
     mknodtuntap = stdenv.mkDerivation rec {
@@ -48,7 +47,7 @@ tsp.container ({ configuration, lxcLib }:
         ' > $out/config.config
       '';
     };
-    cookieStr = if lxcLib.hasConfigurationPath configuration ["erlang" "cookie"] then
+    cookieStr = if containerLib.hasConfigurationPath configuration ["erlang" "cookie"] then
                   "-setcookie ${configuration.erlang.cookie}"
                 else
                   "";
@@ -73,33 +72,31 @@ tsp.container ({ configuration, lxcLib }:
     {
       name = "${tsp_router.name}-lxc";
       storeMounts = { bash         = tsp_bash;
-                      dev_proc_sys = tsp_dev_proc_sys;
                       home         = tsp_home;
                       network      = tsp_network;
                       inherit (tsp) systemd;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
-      lxcConf = lxcLib.sequence [
-        (lxcLib.replacePath "cap.drop" (old:
-           let
-             dropped = lib.splitString " " old.value;
-             remains = builtins.filter (e: e != "sys_admin") dropped;
-             rejoined = lib.concatStringsSep " " remains;
-           in
-             old // { value = rejoined; }))
-        (lxcLib.appendPath "hook.autodev" mknodtuntap)
-      ];
+      containerConf =
+        containerLib.extendContainerConf ["devices"]
+                                         { name = "capabilities"; type = "misc";
+                                           value = { name = "source";
+                                                     value = { name = "char";
+                                                               value = "/dev/net/tun";
+                                                             };
+                                                   };
+                                         };
       options = {
-        start           = lxcLib.mkOption { optional = true; default = false; };
-        identity        = lxcLib.mkOption { optional = false; };
+        start           = containerLib.mkOption { optional = true; default = false; };
+        identity        = containerLib.mkOption { optional = false; };
         internal_bridge = {
-          name           = lxcLib.mkOption { optional = true; default = "br0"; };
-          ip             = lxcLib.mkOption { optional = false; };
-          netmask        = lxcLib.mkOption { optional = false; };
-          nic            = lxcLib.mkOption { optional = false; };
+          name           = containerLib.mkOption { optional = true; default = "br0"; };
+          ip             = containerLib.mkOption { optional = false; };
+          netmask        = containerLib.mkOption { optional = false; };
+          nic            = containerLib.mkOption { optional = false; };
         };
-        erlang.cookie   = lxcLib.mkOption { optional = true; };
-        serfdom         = lxcLib.mkOption { optional = false; };
+        erlang.cookie   = containerLib.mkOption { optional = true; };
+        serfdom         = containerLib.mkOption { optional = false; };
       };
       configuration = {
         home.user  = "router";
