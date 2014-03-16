@@ -1,6 +1,6 @@
 { stdenv, makeWrapper, tsp_rabbitmq_server, tsp, callPackage }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     tsp_bash = callPackage ../tsp-bash-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };

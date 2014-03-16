@@ -1,6 +1,6 @@
 { stdenv, tsp, coreutils, lxc }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     name = "init";
     createIn = ./init-on-create.sh.in;

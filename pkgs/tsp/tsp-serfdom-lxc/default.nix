@@ -1,6 +1,6 @@
 { stdenv, serfdom, tsp, coreutils, callPackage }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };

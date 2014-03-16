@@ -1,6 +1,6 @@
 { tsp, lib }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   {
     name = "systemd-lxc";
     options = {

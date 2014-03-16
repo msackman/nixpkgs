@@ -1,6 +1,6 @@
 { stdenv, tsp, bash, coreutils }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;

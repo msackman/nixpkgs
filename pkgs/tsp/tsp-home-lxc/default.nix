@@ -1,6 +1,6 @@
 { stdenv, tsp, coreutils, bash }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     name = "tsp-home";
     createIn = ./on-create.sh.in;

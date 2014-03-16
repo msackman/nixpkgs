@@ -1,6 +1,6 @@
 { stdenv, tsp, lib, coreutils }:
 
-tsp.container ({ configuration, containerLib }:
+tsp.container ({ global, configuration, containerLib }:
   let
     inherit (lib) fold splitString;
     inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString elem;
