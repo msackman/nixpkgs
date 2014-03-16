@@ -98,38 +98,48 @@
 
     analyse = pkgConf@{ global, configuration, ... }:
       let
-        pkgSet = runPkg pkgConf;
-        pkgOptions = pkgSet.options;
-        configuration1 = extendConfig pkgOptions configuration;
+        f = pkgConf@{ configuration, ... }:
+              let
+                pkgSet = runPkg pkgConf;
+                pkgOptions = pkgSet.options;
+                configuration1 = extendConfig pkgOptions configuration;
+              in
+                if configuration == configuration1 then
+                  { inherit pkgSet pkgOptions; configurationWithOptions = configuration; }
+                else
+                  f (pkgConf // { configuration = configuration1; });
+        r = f pkgConf;
+        pkgSet = r.pkgSet;
+        pkgOptions = r.pkgOptions;
+        configurationWithOptions = r.configurationWithOptions;
       in
-        if configuration == configuration1 then
-          let
-            pkgStoreMounts = pkgSet.storeMounts;
-            gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
-              let childPkgConf = descendPkg pkgStoreMounts global configuration name; in
-              if isLxcPkg childPkgConf.pkg then
-                let childResult = analyse childPkgConf; in
-                {
-                  configurationAcc = [{inherit name; value = childResult.configuration;}] ++ configurationAcc;
-                  optionsAcc       = [{inherit name; value = childResult.options;}] ++ optionsAcc;
-                  storeMountsAcc   = [{inherit name; value = childResult.storeMounts;}] ++ storeMountsAcc;
-                }
-              else
-                acc // { storeMountsAcc = [{inherit name; value = {};}] ++ storeMountsAcc; })
-              {configurationAcc = []; optionsAcc = []; storeMountsAcc = [];} (attrNames pkgStoreMounts);
-              childrenConfiguration = listToAttrs gathered.configurationAcc;
-              childrenOptions = listToAttrs gathered.optionsAcc;
-              childrenStoreMounts = listToAttrs gathered.storeMountsAcc;
-          in
-            {
-              configuration = recursiveUpdate
-                                (recursiveUpdate childrenConfiguration pkgSet.configuration)
-                                configuration;
-              options       = recursiveUpdate childrenOptions pkgOptions;
-              storeMounts   = childrenStoreMounts;
-            }
-        else
-          analyse (pkgConf // { configuration = configuration1; });
+        let
+          pkgStoreMounts = pkgSet.storeMounts;
+          gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
+            let childPkgConf = descendPkg pkgStoreMounts global configurationWithOptions name; in
+            if isLxcPkg childPkgConf.pkg then
+              let childResult = analyse childPkgConf; in
+              {
+                configurationAcc = [{inherit name; value = childResult.configuration;}] ++ configurationAcc;
+                optionsAcc       = [{inherit name; value = childResult.options;}] ++ optionsAcc;
+                storeMountsAcc   = [{inherit name; value = childResult.storeMounts;}] ++ storeMountsAcc;
+              }
+            else
+              acc // { storeMountsAcc = [{inherit name; value = {};}] ++ storeMountsAcc; })
+            {configurationAcc = []; optionsAcc = []; storeMountsAcc = [];} (attrNames pkgStoreMounts);
+          childrenConfiguration = listToAttrs gathered.configurationAcc;
+          childrenOptions = listToAttrs gathered.optionsAcc;
+          childrenStoreMounts = listToAttrs gathered.storeMountsAcc;
+        in
+          {
+            configuration = recursiveUpdate
+                              (recursiveUpdate
+                                configurationWithOptions # with default options loses the most
+                                (recursiveUpdate childrenConfiguration pkgSet.configuration))
+                              configuration;   # parent wins
+            options       = recursiveUpdate childrenOptions pkgOptions;
+            storeMounts   = childrenStoreMounts;
+          };
 
     extendConfig = options: configuration:
       let

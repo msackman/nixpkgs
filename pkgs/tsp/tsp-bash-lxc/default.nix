@@ -1,7 +1,8 @@
-{ stdenv, tsp, bash, coreutils }:
+{ stdenv, tsp, bash, coreutils, callPackage }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
     create = stdenv.mkDerivation rec {
@@ -21,15 +22,15 @@ tsp.container ({ global, configuration, containerLib }:
         chmod +x $out
       '';
     };
-    doStart = configuration.start;
+    enable = configuration.enable;
   in
     {
       name = "${bash.name}-lxc";
-      storeMounts = { inherit bash; } // (if doStart then { inherit (tsp) init; } else {});
+      storeMounts = { inherit bash; } // (if enable then { systemd = tsp_systemd_units; } else {});
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
-        start = containerLib.mkOption { optional = true; default = false; };
+        enable = containerLib.mkOption { optional = true; default = false; };
       };
-      configuration = if doStart then { init.init = "${bash}/bin/bash"; } else {};
+      configuration = if enable then { systemd.units = ["hello"]; } else {};
     })
