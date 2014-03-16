@@ -39,7 +39,27 @@
             conf // { value = [(extendContainerConf tl values foundVal)] ++
                               (if conf ? value then others else []); };
 
+      gatherPathsWithSuffix = suffixPath: config:
+        assert isList suffixPath;
+        if suffixPath == [] then
+          [config]
+        else if isAttrs config then
+          let
+            hd = head suffixPath;
+            tl = tail suffixPath;
+            local = if hasAttr hd config then
+                      gatherPathsWithSuffix tl (getAttr hd config)
+                    else
+                      [];
+            deep = concatLists
+                     (map (gatherPathsWithSuffix suffixPath) (attrValues config));
+          in
+            assert isString hd;
+            local ++ deep
+        else
+          [];
     };
+
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
     runPkg = { pkg, global, configuration, ...}:
