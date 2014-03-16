@@ -92,12 +92,15 @@
     storeMountsConfigsOptions = pkg: configuration:
       let result = analyse { inherit pkg configuration; global = configuration; }; in
       if configuration == result.configuration then
-        result
+        result // { configuration = extendConfig result.options configuration; }
       else
         storeMountsConfigsOptions pkg result.configuration;
 
-    analyse = pkgConf@{ global, configuration, ... }:
+    analyse = pkgConfOrig@{ global, configuration, ... }:
       let
+        # function f here permits options to be dependent on
+        # configuration. Yes, that's a bit of a nutty idea, but here
+        # it is anyway.
         f = pkgConf@{ configuration, ... }:
               let
                 pkgSet = runPkg pkgConf;
@@ -108,15 +111,13 @@
                   { inherit pkgSet pkgOptions; configurationWithOptions = configuration; }
                 else
                   f (pkgConf // { configuration = configuration1; });
-        r = f pkgConf;
-        pkgSet = r.pkgSet;
-        pkgOptions = r.pkgOptions;
-        configurationWithOptions = r.configurationWithOptions;
+        pkgConf = f pkgConfOrig;
+        pkgSet = pkgConf.pkgSet;
       in
         let
           pkgStoreMounts = pkgSet.storeMounts;
           gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
-            let childPkgConf = descendPkg pkgStoreMounts global configurationWithOptions name; in
+            let childPkgConf = descendPkg pkgStoreMounts global configuration name; in
             if isLxcPkg childPkgConf.pkg then
               let childResult = analyse childPkgConf; in
               {
@@ -132,12 +133,15 @@
           childrenStoreMounts = listToAttrs gathered.storeMountsAcc;
         in
           {
+            # The newer value should always win, but the newer value
+            # may contain defaults from options, so we have to be
+            # careful that we don't mix in any options at this point,
+            # and only add those in permanently once we're otherwise
+            # finished with everything.
             configuration = recursiveUpdate
-                              (recursiveUpdate
-                                configurationWithOptions # with default options loses the most
-                                (recursiveUpdate childrenConfiguration pkgSet.configuration))
-                              configuration;   # parent wins
-            options       = recursiveUpdate childrenOptions pkgOptions;
+                              configuration
+                              (recursiveUpdate pkgSet.configuration childrenConfiguration);
+            options       = recursiveUpdate childrenOptions pkgConf.pkgOptions;
             storeMounts   = childrenStoreMounts;
           };
 

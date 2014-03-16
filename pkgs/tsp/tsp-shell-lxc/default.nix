@@ -21,6 +21,5 @@ tsp.container ({ global, configuration, containerLib }:
         home.gid   = 1000;
         bash.enable = true;
         systemd.asInit = true;
-        systemd.units = ["wibble"];
       };
     })

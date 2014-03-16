@@ -1,9 +1,10 @@
-{ stdenv, tsp, lib, coreutils }:
+{ stdenv, tsp, lib, coreutils, callPackage }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
     inherit (lib) fold splitString;
     inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString elem;
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     name = "network";
     baseNetwork = {
       type  = "veth";
@@ -58,6 +59,8 @@ tsp.container ({ global, configuration, containerLib }:
     containerConf = containerLib.extendContainerConf ["devices"] networks;
     onCreate = [ create ];
     onSterilise = [ sterilise ];
+    storeMounts = { systemd = tsp_systemd_units; };
+    configuration = { systemd.units = ["goodbye"]; };
     options = {
       hostname = containerLib.mkOption { optional = true; };
       networks = containerLib.mkOption {
