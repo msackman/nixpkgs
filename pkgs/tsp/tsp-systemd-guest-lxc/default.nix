@@ -34,7 +34,13 @@ tsp.container ({ global, configuration, containerLib }:
         asInit = containerLib.mkOption { optional = true; default = true; };
         allUnits = containerLib.mkOption { optional = true; default = allUnitsList; };
       };
-      configuration = if doInit then { init.init = "${systemd}/lib/systemd/systemd"; } else {};
+      configuration = if doInit then
+                        {
+                          init.init = "${systemd}/lib/systemd/systemd";
+                          init.args = [ "--log-target=journal" ];
+                        }
+                      else
+                        {};
       onCreate = [ create ];
       onSterilise = [ sterilise ];
     })

@@ -234,9 +234,7 @@
             { name = "on_poweroff"; value = "destroy"; }
             { name = "on_reboot"; value = "restart"; }
             { name = "on_crash"; value = "destroy"; }
-            { name = "os";
-              value = [{name = "type"; value = "exe";}
-                       {name = "init"; value = "/sbin/init";}]; }
+            { name = "os"; value = [{name = "type"; value = "exe";}]; }
             { name = "devices";
               value = [{name = "emulator"; value = "${libvirt}/libexec/libvirt_lxc";}
                        {name = "filesystem"; type = "mount";

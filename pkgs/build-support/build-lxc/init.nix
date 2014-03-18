@@ -27,7 +27,11 @@ tsp.container ({ global, configuration, containerLib }:
       name = "${name}-lxc";
       options = {
         init = containerLib.mkOption { optional = false; };
+        args = containerLib.mkOption { optional = true; default = []; };
       };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
+      containerConf = containerLib.extendContainerConf ["os"]
+                      ([{name = "init"; value = "/sbin/init";}] ++
+                      map (arg: {name = "initarg"; value = arg;}) configuration.args);
     })
