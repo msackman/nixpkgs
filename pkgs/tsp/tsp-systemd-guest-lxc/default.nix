@@ -7,6 +7,24 @@ tsp.container ({ global, configuration, containerLib }:
     doInit = configuration.asInit;
     allUnits = containerLib.gatherPathsWithSuffix ["systemd_units"] global;
     allUnitsList = lib.concatLists (builtins.filter (e: builtins.isList e) allUnits);
+    createIn = ./on-create.sh.in;
+    steriliseIn = ./on-create.sh.in;
+    create = stdenv.mkDerivation {
+      name = "${name}-oncreate";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            ${createIn} > $out
+        chmod +x $out
+      '';
+    };
+    sterilise = stdenv.mkDerivation {
+      name = "${name}-onsterilise";
+      buildCommand = ''
+        sed -e "s|@coreutils@|${coreutils}|g" \
+            ${steriliseIn} > $out
+        chmod +x $out
+      '';
+    };
   in
     {
       name = "${name}-lxc";
@@ -17,4 +35,6 @@ tsp.container ({ global, configuration, containerLib }:
         allUnits = containerLib.mkOption { optional = true; default = allUnitsList; };
       };
       configuration = if doInit then { init.init = "${systemd}/lib/systemd/systemd"; } else {};
+      onCreate = [ create ];
+      onSterilise = [ sterilise ];
     })

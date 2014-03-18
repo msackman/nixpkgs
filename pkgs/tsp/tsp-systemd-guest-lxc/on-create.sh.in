@@ -1,0 +1,3 @@
+dir=$1
+@coreutils@/bin/mkdir -p $dir/rootfs/etc
+@coreutils@/bin/ln -s /proc/self/mounts $dir/rootfs/etc/mtab
