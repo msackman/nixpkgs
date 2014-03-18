@@ -116,8 +116,9 @@
       in
         let
           pkgStoreMounts = pkgSet.storeMounts;
+          configForChildren = recursiveUpdate configuration pkgSet.configuration;
           gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
-            let childPkgConf = descendPkg pkgStoreMounts global configuration name; in
+            let childPkgConf = descendPkg pkgStoreMounts global configForChildren name; in
             if isLxcPkg childPkgConf.pkg then
               let childResult = analyse childPkgConf; in
               {
@@ -138,9 +139,7 @@
             # careful that we don't mix in any options at this point,
             # and only add those in permanently once we're otherwise
             # finished with everything.
-            configuration = recursiveUpdate
-                              configuration
-                              (recursiveUpdate pkgSet.configuration childrenConfiguration);
+            configuration = recursiveUpdate configForChildren childrenConfiguration;
             options       = recursiveUpdate childrenOptions pkgConf.pkgOptions;
             storeMounts   = childrenStoreMounts;
           };
