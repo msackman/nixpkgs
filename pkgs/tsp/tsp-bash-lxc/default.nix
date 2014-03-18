@@ -26,11 +26,11 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${bash.name}-lxc";
-      storeMounts = { inherit bash; } // (if enable then { systemd = tsp_systemd_units; } else {});
+      storeMounts = { inherit bash; } // (if enable then { systemd_units = tsp_systemd_units; } else {});
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
         enable = containerLib.mkOption { optional = true; default = false; };
       };
-      configuration = if enable then { systemd.units = ["hello"]; } else {};
+      configuration = if enable then { systemd_units.units = []; } else {};
     })

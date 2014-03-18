@@ -1,21 +1,18 @@
 { stdenv, tsp, coreutils, systemd }:
 
+# This component is the guest-systemd
 tsp.container ({ global, configuration, containerLib }:
   let
-    name = "tsp-systemd";
+    name = "tsp-systemd-guest";
     doInit = configuration.asInit;
-    allUnits = containerLib.gatherPathsWithSuffix ["systemd" "units"] global;
+    allUnits = containerLib.gatherPathsWithSuffix ["systemd-units"] global;
   in
     {
       name = "${name}-lxc";
       storeMounts = { inherit systemd; }
                     // (if doInit then { inherit (tsp) init; } else {});
       options = {
-        allUnits = containerLib.mkOption {
-                  optional = true;
-                  default  = ["thedefault"];
-                };
-        asInit = containerLib.mkOption { optional = true; default = false; };
+        asInit = containerLib.mkOption { optional = true; default = true; };
       };
       configuration = { inherit allUnits; } //
                       (if doInit then { init.init = "${systemd}/lib/systemd/systemd"; } else {});

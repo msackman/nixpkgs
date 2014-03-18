@@ -5,6 +5,8 @@ tsp.container ({ global, configuration, containerLib }:
     tsp_bash = callPackage ../tsp-bash-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
+    tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_erlinetrc.name}-lxc-wrapper";
       buildCommand = ''
@@ -17,18 +19,18 @@ tsp.container ({ global, configuration, containerLib }:
         chmod +x $out/sbin/erlinetrc-start
       '';
     };
-    doStart = configuration.start;
   in
     {
       name = "${tsp_erlinetrc.name}-lxc";
-      storeMounts = { bash         = tsp_bash;
-                      home         = tsp_home;
-                      network      = tsp_network;
+      storeMounts = { bash          = tsp_bash;
+                      home          = tsp_home;
+                      network       = tsp_network;
+                      systemd_guest = tsp_systemd_guest;
+                      systemd_units = tsp_systemd_units;
                       inherit (tsp) systemd_host;
                       inherit wrapped;
-                    } // (if doStart then { inherit (tsp) init; } else {});
+                    };
       options = {
-        start           = containerLib.mkOption { optional = true; default = false; };
         name            = containerLib.mkOption { optional = false; };
         router.hostname = containerLib.mkOption { optional = false; };
         output_path     = containerLib.mkOption { optional = false; };
@@ -39,5 +41,5 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "erlinetrc";
         home.gid   = 1000;
-      } // (if doStart then { init.init  = "${wrapped}/sbin/erlinetrc-start"; } else {});
+      };
     })

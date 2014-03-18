@@ -5,17 +5,8 @@ tsp.container ({ global, configuration, containerLib }:
     tsp_bash = callPackage ../tsp-bash-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
-    mknodtuntap = stdenv.mkDerivation rec {
-      name = "${tsp_router.name}-mknodtuntap";
-      buildCommand = ''
-        printf 'mkdir -p $LXC_ROOTFS_MOUNT/dev/net
-        if [ ! -e "$LXC_ROOTFS_MOUNT/dev/net/tun" ]; then
-          ${coreutils}/bin/mknod $LXC_ROOTFS_MOUNT/dev/net/tun c 10 200
-        fi
-        ' > $out
-        chmod +x $out
-      '';
-    };
+    tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     logDirName = tsp_router.name;
 
     # Erlang is monumentally stupid and demands that it can take the
@@ -67,16 +58,17 @@ tsp.container ({ global, configuration, containerLib }:
         chmod +x $out/sbin/router-start
       '';
     };
-    doStart = configuration.start;
   in
     {
       name = "${tsp_router.name}-lxc";
-      storeMounts = { bash         = tsp_bash;
-                      home         = tsp_home;
-                      network      = tsp_network;
+      storeMounts = { bash          = tsp_bash;
+                      home          = tsp_home;
+                      network       = tsp_network;
+                      systemd_guest = tsp_systemd_guest;
+                      systemd_units = tsp_systemd_units;
                       inherit (tsp) systemd_host;
                       inherit wrapped;
-                    } // (if doStart then { inherit (tsp) init; } else {});
+                    };
       containerConf =
         containerLib.extendContainerConf ["devices"]
                                          { name = "hostdev"; mode = "capabilities"; type = "misc";
@@ -87,7 +79,6 @@ tsp.container ({ global, configuration, containerLib }:
                                                    };
                                          };
       options = {
-        start           = containerLib.mkOption { optional = true; default = false; };
         identity        = containerLib.mkOption { optional = false; };
         internal_bridge = {
           name           = containerLib.mkOption { optional = true; default = "br0"; };
@@ -103,5 +94,5 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "router";
         home.gid   = 1000;
-      } // (if doStart then { init.init = "${wrapped}/sbin/router-start"; } else {});
+      };
     })

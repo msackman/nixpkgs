@@ -4,6 +4,8 @@ tsp.container ({ global, configuration, containerLib }:
   let
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
+    tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     wrapped = stdenv.mkDerivation rec {
       name = "${serfdom.name}-lxc-wrapper";
       buildCommand = ''
@@ -15,15 +17,16 @@ tsp.container ({ global, configuration, containerLib }:
         chmod +x $out/sbin/serfdom-start
       '';
     };
-    doStart = configuration.start;
   in
     {
       name = "serfdom-lxc";
-      storeMounts = { home         = tsp_home;
-                      network      = tsp_network;
+      storeMounts = { home          = tsp_home;
+                      network       = tsp_network;
+                      systemd_guest = tsp_systemd_guest;
+                      systemd_units = tsp_systemd_units;
                       inherit (tsp) systemd_host;
                       inherit wrapped;
-                    } // (if doStart then { inherit (tsp) init; } else {});
+                    };
       options = {
         start        = containerLib.mkOption { optional = true; default = false; };
         routerIP     = containerLib.mkOption { optional = false; };
@@ -35,5 +38,5 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "serfdom";
         home.gid   = 1000;
-      } // (if doStart then { init.init = "${wrapped}/sbin/serfdom-start"; } else {});
+      };
     })

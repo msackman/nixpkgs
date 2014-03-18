@@ -5,6 +5,8 @@ tsp.container ({ global, configuration, containerLib }:
     tsp_bash = callPackage ../tsp-bash-lxc { };
     tsp_home = callPackage ../tsp-home-lxc { };
     tsp_network = callPackage ../tsp-network-lxc { };
+    tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
+    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_rabbitmq_server.name}-lxc-wrapper";
       buildInputs = [ makeWrapper ];
@@ -17,22 +19,20 @@ tsp.container ({ global, configuration, containerLib }:
         done
       '';
     };
-    doStart = configuration.start;
   in
     {
       name = "rabbitmq-server-lxc";
-      storeMounts = { bash         = tsp_bash;
-                      network      = tsp_network;
-                      home         = tsp_home;
+      storeMounts = { bash          = tsp_bash;
+                      network       = tsp_network;
+                      home          = tsp_home;
+                      systemd_guest = tsp_systemd_guest;
+                      systemd_units = tsp_systemd_units;
                       inherit wrapped;
-                    } // (if doStart then { inherit (tsp) init; } else {});
-      options = {
-        start = containerLib.mkOption { optional = true; default = false; };
-      };
+                    };
       configuration = {
         home.user  = "rabbit";
         home.uid   = 1000;
         home.group = "rabbit";
         home.gid   = 1000;
-      } // (if doStart then { init.init = "${wrapped}/sbin/rabbitmq-server"; } else {});
+      };
     })
