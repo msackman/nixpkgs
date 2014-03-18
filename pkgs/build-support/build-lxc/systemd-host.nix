@@ -2,7 +2,7 @@
 
 tsp.container ({ global, configuration, containerLib }:
   {
-    name = "systemd-lxc";
+    name = "systemd-host-lxc";
     options = {
       after      = containerLib.mkOption { optional = true; default = [ "network.target" ]; };
       before     = containerLib.mkOption { optional = true; default = []; };

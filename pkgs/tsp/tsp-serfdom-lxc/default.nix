@@ -21,7 +21,7 @@ tsp.container ({ global, configuration, containerLib }:
       name = "serfdom-lxc";
       storeMounts = { home         = tsp_home;
                       network      = tsp_network;
-                      inherit (tsp) systemd;
+                      inherit (tsp) systemd_host;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
       options = {

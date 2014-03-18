@@ -25,7 +25,7 @@ tsp.container ({ global, configuration, containerLib }:
       storeMounts = { bash         = tsp_bash;
                       home         = tsp_home;
                       network      = tsp_network;
-                      inherit (tsp) systemd;
+                      inherit (tsp) systemd_host;
                       inherit wrapped;
                     } // (if doStart then { inherit (tsp) init; } else {});
       options = {
