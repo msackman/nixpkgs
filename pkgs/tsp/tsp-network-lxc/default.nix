@@ -59,8 +59,8 @@ tsp.container ({ global, configuration, containerLib }:
     containerConf = containerLib.extendContainerConf ["devices"] networks;
     onCreate = [ create ];
     onSterilise = [ sterilise ];
-    storeMounts = { systemd = tsp_systemd_units; };
-    configuration = { systemd.units = ["goodbye"]; };
+    storeMounts = { systemd_units = tsp_systemd_units; };
+    configuration = { systemd_units.systemd_units = ["goodbye"]; };
     options = {
       hostname = containerLib.mkOption { optional = true; };
       networks = containerLib.mkOption {

@@ -22,15 +22,13 @@ tsp.container ({ global, configuration, containerLib }:
         chmod +x $out
       '';
     };
-    enable = configuration.enable;
   in
     {
       name = "${bash.name}-lxc";
-      storeMounts = { inherit bash; } // (if enable then { systemd_units = tsp_systemd_units; } else {});
+      storeMounts = { inherit bash;
+                      systemd_units = tsp_systemd_units;
+                    };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
-      options = {
-        enable = containerLib.mkOption { optional = true; default = false; };
-      };
-      configuration = if enable then { systemd_units.units = []; } else {};
+      configuration = { systemd_units.systemd_units = []; };
     })

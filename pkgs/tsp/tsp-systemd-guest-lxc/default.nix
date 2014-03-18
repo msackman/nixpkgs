@@ -14,6 +14,5 @@ tsp.container ({ global, configuration, containerLib }:
       options = {
         asInit = containerLib.mkOption { optional = true; default = true; };
       };
-      configuration = { inherit allUnits; } //
-                      (if doInit then { init.init = "${systemd}/lib/systemd/systemd"; } else {});
+      configuration = if doInit then { init.init = "${systemd}/lib/systemd/systemd"; } else {};
     })

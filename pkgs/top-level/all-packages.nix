@@ -6420,7 +6420,7 @@ let
   tsp = { container = buildLXC;
           module = path: ((if builtins.isFunction path then path else import path)
                           { inherit pkgs; }).module;
-          systemd_host = callPackage ../build-support/build-lxc/systemd_host.nix { };
+          systemd_host = callPackage ../build-support/build-lxc/systemd-host.nix { };
           init = callPackage ../build-support/build-lxc/init.nix { };
         };
 

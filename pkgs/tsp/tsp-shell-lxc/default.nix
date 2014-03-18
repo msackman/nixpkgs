@@ -19,6 +19,5 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "shell";
         home.gid   = 1000;
-        bash.enable = true;
       };
     })
