@@ -7,6 +7,10 @@ tsp.container ({ global, configuration, containerLib }:
     tsp_network = callPackage ../tsp-network-lxc { };
     tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
     tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
+    cookieStr = if containerLib.hasConfigurationPath configuration ["erlang" "cookie"] then
+                  "-setcookie ${configuration.erlang.cookie}"
+                else
+                  "";
     wrapped = stdenv.mkDerivation rec {
       name = "${tsp_erlinetrc.name}-lxc-wrapper";
       buildCommand = ''
@@ -15,7 +19,7 @@ tsp.container ({ global, configuration, containerLib }:
         export HOME=/home/${configuration.home.user}
         export LOG_DIR=/var/log/${wrapped.name}
         ${coreutils}/bin/mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration.router.hostname} -tsp_erlinetrc name \\"${configuration.name}\\" -tsp_erlinetrc output_path \\"${configuration.output_path}\\" -sname erlinetrc ${if containerLib.hasConfigurationPath configuration ["erlang" "cookie"] then "-setcookie ${configuration.erlang.cookie}" else ""} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/erlinetrc-start
+        exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration.router.hostname} -tsp_erlinetrc name \\"${configuration.name}\\" -tsp_erlinetrc output_path \\"${configuration.output_path}\\" -sname erlinetrc ${cookieStr} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput' > $out/sbin/erlinetrc-start
         chmod +x $out/sbin/erlinetrc-start
       '';
     };
@@ -41,5 +45,13 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "erlinetrc";
         home.gid   = 1000;
+        systemd_units.systemd_units = [{
+          description = "${tsp_erlinetrc.name}";
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${wrapped}/sbin/erlinetrc-start";
+          };
+        }];
       };
     })

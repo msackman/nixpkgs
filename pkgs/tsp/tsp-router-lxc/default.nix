@@ -53,8 +53,8 @@ tsp.container ({ global, configuration, containerLib }:
         brctl addif ${configuration.internal_bridge.name} ${configuration.internal_bridge.nic}
         ifconfig ${configuration.internal_bridge.name} ${configuration.internal_bridge.ip} netmask ${configuration.internal_bridge.netmask} up
         export LOG_DIR=/var/log/${logDirName}
-        mkdir -p $LOG_DIR
-        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -sname router ${cookieStr} -config ${configFile}/config -s tsp -noinput > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/router-start
+        mkdir -p $LOG_DIR # still need this for lager and sasl logs
+        exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -sname router ${cookieStr} -config ${configFile}/config -s tsp -noinput' > $out/sbin/router-start
         chmod +x $out/sbin/router-start
       '';
     };
@@ -94,5 +94,13 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "router";
         home.gid   = 1000;
+        systemd_units.systemd_units = [{
+          description = "${tsp_router.name}";
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${wrapped}/sbin/router-start";
+          };
+        }];
       };
     })

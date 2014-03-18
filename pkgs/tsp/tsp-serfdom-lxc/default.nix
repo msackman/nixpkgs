@@ -1,4 +1,4 @@
-{ stdenv, serfdom, tsp, coreutils, callPackage }:
+{ stdenv, serfdom, tsp, callPackage }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
@@ -11,9 +11,7 @@ tsp.container ({ global, configuration, containerLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        export LOG_DIR=/var/log/${wrapped.name}
-        ${coreutils}/bin/mkdir -p $LOG_DIR
-        exec ${serfdom}/bin/serf agent -rpc-addr=${configuration.rpcIP}:7373 -tag router=${configuration.routerIP} -node=${configuration.identity} > $LOG_DIR/stdout 2> $LOG_DIR/stderr 0<&-' > $out/sbin/serfdom-start
+        exec ${serfdom}/bin/serf agent -rpc-addr=${configuration.rpcIP}:7373 -tag router=${configuration.routerIP} -node=${configuration.identity}' > $out/sbin/serfdom-start
         chmod +x $out/sbin/serfdom-start
       '';
     };
@@ -38,5 +36,13 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "serfdom";
         home.gid   = 1000;
+        systemd_units.systemd_units = [{
+          description = "${serfdom.name}";
+          wantedBy = [ "multi-user.target" ];
+          serviceConfig = {
+            Type = "simple";
+            ExecStart = "${wrapped}/sbin/serfdom-start";
+          };
+        }];
       };
     })
