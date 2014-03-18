@@ -42,6 +42,7 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "http";
         home.gid   = 1000;
+      } // (if configuration ? home then {
         systemd_units.systemd_units = [{
           description = "${tsp_http.name}";
           wantedBy = [ "multi-user.target" ];
@@ -49,6 +50,5 @@ tsp.container ({ global, configuration, containerLib }:
             Type = "simple";
             ExecStart = "${wrapped}/sbin/http-start";
           };
-        }];
-      };
+        }]; } else {});
     })

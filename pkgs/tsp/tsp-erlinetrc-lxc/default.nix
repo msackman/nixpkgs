@@ -45,6 +45,7 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "erlinetrc";
         home.gid   = 1000;
+      } // (if configuration ? home then {
         systemd_units.systemd_units = [{
           description = "${tsp_erlinetrc.name}";
           wantedBy = [ "multi-user.target" ];
@@ -52,6 +53,5 @@ tsp.container ({ global, configuration, containerLib }:
             Type = "simple";
             ExecStart = "${wrapped}/sbin/erlinetrc-start";
           };
-        }];
-      };
+        }]; } else {});
     })
