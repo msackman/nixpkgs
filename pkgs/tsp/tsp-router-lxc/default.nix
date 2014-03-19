@@ -55,7 +55,7 @@ tsp.container ({ global, configuration, containerLib }:
         export LOG_DIR=/var/log/${logDirName}
         mkdir -p $LOG_DIR # still need this for lager and sasl logs
         exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -sname router ${cookieStr} -config ${configFile}/config -s tsp -noinput' > $out/sbin/router-start
-        chmod +x $out/sbin/router-start
+        chmod +x $out/sbin/router-start  # */ <- hack for emacs mode
       '';
     };
   in
@@ -95,12 +95,15 @@ tsp.container ({ global, configuration, containerLib }:
         home.group = "router";
         home.gid   = 1000;
       } // (if configuration ? home then {
-        systemd_units.systemd_units = [{
-          description = "${tsp_router.name}";
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${wrapped}/sbin/router-start";
+        systemd_units.systemd_services = {
+          router = {
+            description = "${tsp_router.name}";
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart = "${wrapped}/sbin/router-start";
+            };
           };
-        }]; } else {});
+        };
+      } else {});
     })

@@ -36,13 +36,17 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "serfdom";
         home.gid   = 1000;
-        systemd_units.systemd_units = [{
-          description = "${serfdom.name}";
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${wrapped}/sbin/serfdom-start";
+        systemd_units.systemd_services = {
+          serfdom = {
+            description = "${serfdom.name}";
+            wantedBy = [ "multi-user.target" ];
+            requires = [ "network.target" ];
+            after = [ "network.target" ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart = "${wrapped}/sbin/serfdom-start";
+            };
           };
-        }];
+        };
       };
     })

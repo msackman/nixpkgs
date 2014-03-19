@@ -21,7 +21,7 @@ tsp.container ({ global, configuration, containerLib }:
         ${coreutils}/bin/mkdir -p $LOG_DIR
         exec ${erlang}/bin/erl -pa ${tsp_erlinetrc}/deps/*/ebin ${tsp_erlinetrc}/ebin -tsp_erlinetrc router_node router@${configuration.router.hostname} -tsp_erlinetrc name \\"${configuration.name}\\" -tsp_erlinetrc output_path \\"${configuration.output_path}\\" -sname erlinetrc ${cookieStr} -sasl sasl_error_logger \\{file,\\"$LOG_DIR/sasl\\"\\} -sasl errlog_type error -s tsp_erlinetrc -noinput' > $out/sbin/erlinetrc-start
         chmod +x $out/sbin/erlinetrc-start
-      '';
+      ''; # */ <- hack for emacs mode
     };
   in
     {
@@ -46,12 +46,15 @@ tsp.container ({ global, configuration, containerLib }:
         home.group = "erlinetrc";
         home.gid   = 1000;
       } // (if configuration ? home then {
-        systemd_units.systemd_units = [{
-          description = "${tsp_erlinetrc.name}";
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${wrapped}/sbin/erlinetrc-start";
+        systemd_units.systemd_services = {
+          erlinetrc = {
+            description = "${tsp_erlinetrc.name}";
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart = "${wrapped}/sbin/erlinetrc-start";
+            };
           };
-        }]; } else {});
+        };
+      } else {});
     })

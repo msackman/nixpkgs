@@ -20,7 +20,7 @@ tsp.container ({ global, configuration, containerLib }:
         export PATH=${graphviz}/bin:${coreutils}/bin:$PATH
         exec ${erlang}/bin/erl -pa ${tsp_http}/deps/*/ebin ${tsp_http}/ebin -tsp_http router_node router@${configuration.router.hostname} -tsp_http docroot \\"${tsp_http}/priv/www\\" -sname http ${cookieStr} -s tsp_http -noinput' > $out/sbin/http-start
         chmod +x $out/sbin/http-start
-      '';
+      ''; # */ <- hack for emacs mode
     };
   in
     {
@@ -43,12 +43,15 @@ tsp.container ({ global, configuration, containerLib }:
         home.group = "http";
         home.gid   = 1000;
       } // (if configuration ? home then {
-        systemd_units.systemd_units = [{
-          description = "${tsp_http.name}";
-          wantedBy = [ "multi-user.target" ];
-          serviceConfig = {
-            Type = "simple";
-            ExecStart = "${wrapped}/sbin/http-start";
+        systemd_units.systemd_services = {
+          http = {
+            description = "${tsp_http.name}";
+            wantedBy = [ "multi-user.target" ];
+            serviceConfig = {
+              Type = "simple";
+              ExecStart = "${wrapped}/sbin/http-start";
+            };
           };
-        }]; } else {});
+        };
+      } else {});
     })

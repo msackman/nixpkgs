@@ -42,31 +42,35 @@ tsp.container ({ global, configuration, containerLib }:
         mask = if length ipPrefix == 2 then elemAt ipPrefix 1 else "24";
       in
         {
-          description = "Network interface configuration for ${fullNetwork.name}";
-          wantedBy = [ "network-interfaces.target" ];
-          serviceConfig.Type = "oneshot";
-          serviceConfig.RemainAfterExit = true;
-          script =
-            ''
-              printf "bringing up interface...\n"
-              ${iproute}/sbin/ip link set "${fullNetwork.name}" up
-            ''
-            + optionalString (fullNetwork ? hwaddr)
-              ''
-                printf "setting MAC address to ${fullNetwork.hwaddr}...\n"
-                ${iproute}/sbin/ip link set "${fullNetwork.name}" address "${fullNetwork.hwaddr}"
-              ''
-            + optionalString (fullNetwork ? mtu)
-              ''
-                printf "setting MTU to ${toString fullNetwork.mtu}...\n"
-                ${iproute}/sbin/ip link set "${fullNetwork.name}" mtu "${toString fullNetwork.mtu}"
-              ''
-            + optionalString (fullNetwork ? ipv4)
-              ''
-                printf "configuring interface...\n"
-                ${iproute}/sbin/ip -4 addr flush dev "${fullNetwork.name}"
-                ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${fullNetwork.name}"
-              '';
+          name = "network-${fullNetwork.name}";
+          value =
+            {
+              description = "Network interface configuration for ${fullNetwork.name}";
+              wantedBy = [ "network.target" ];
+              serviceConfig.Type = "oneshot";
+              serviceConfig.RemainAfterExit = true;
+              script =
+                ''
+                  printf "bringing up interface...\n"
+                  ${iproute}/sbin/ip link set "${fullNetwork.name}" up
+                ''
+                + optionalString (fullNetwork ? hwaddr)
+                  ''
+                    printf "setting MAC address to ${fullNetwork.hwaddr}...\n"
+                    ${iproute}/sbin/ip link set "${fullNetwork.name}" address "${fullNetwork.hwaddr}"
+                  ''
+                + optionalString (fullNetwork ? mtu)
+                  ''
+                    printf "setting MTU to ${toString fullNetwork.mtu}...\n"
+                    ${iproute}/sbin/ip link set "${fullNetwork.name}" mtu "${toString fullNetwork.mtu}"
+                  ''
+                + optionalString (fullNetwork ? ipv4)
+                  ''
+                    printf "configuring interface...\n"
+                    ${iproute}/sbin/ip -4 addr flush dev "${fullNetwork.name}"
+                    ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${fullNetwork.name}"
+                  '';
+            };
         };
 
     createIn = ./on-create.sh.in;
@@ -96,7 +100,8 @@ tsp.container ({ global, configuration, containerLib }:
     onCreate = [ create ];
     onSterilise = [ sterilise ];
     storeMounts = { systemd_units = tsp_systemd_units; };
-    configuration = { systemd_units.systemd_units = map systemdGuestService configuration.networks; };
+    configuration = { systemd_units.systemd_services =
+                        listToAttrs (map systemdGuestService configuration.networks); };
     options = {
       hostname = containerLib.mkOption { optional = true; };
       networks = containerLib.mkOption {

@@ -2,7 +2,6 @@
 
 tsp.container ({ global, configuration, containerLib }:
   let
-    tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
     create = stdenv.mkDerivation rec {
@@ -25,10 +24,7 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${bash.name}-lxc";
-      storeMounts = { inherit bash;
-                      systemd_units = tsp_systemd_units;
-                    };
+      storeMounts = { inherit bash; };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
-      configuration = { systemd_units.systemd_units = []; };
     })

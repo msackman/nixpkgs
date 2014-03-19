@@ -1,3 +1,5 @@
 dir=$1
-@coreutils@/bin/mkdir -p $dir/rootfs/etc
+@coreutils@/bin/mkdir -p $dir/rootfs/etc/systemd
 @coreutils@/bin/ln -s /proc/self/mounts $dir/rootfs/etc/mtab
+@coreutils@/bin/mkdir -m 0755 -p $dir/rootfs/var/log/journal
+@coreutils@/bin/ln -s @units@ $dir/rootfs/etc/systemd/system
