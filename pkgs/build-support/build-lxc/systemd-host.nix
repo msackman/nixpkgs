@@ -26,13 +26,15 @@ tsp.container ({ global, configuration, containerLib }:
         in
           {
             config = mkIf configuration.enabled {
-              environment.systemPackages = [pkgs.lxc];
+              environment.systemPackages = [pkgs.libvirt];
               systemd.services = builtins.listToAttrs [{
                 inherit name;
                 value = {
                   description = "LXC container: ${name}";
                   inherit (configuration)
-                    after before bindsTo conflicts partOf requiredBy requires wantedBy wants;
+                    before bindsTo conflicts partOf requiredBy wantedBy wants;
+                  requires = ["libvirtd.service"] ++ configuration.requires;
+                  after = ["libvirtd.service"] ++ configuration.after;
                   preStart = ''
                     if [ ! -f "${dir}/creator" ]; then
                       ${pkg.create}

@@ -49,7 +49,6 @@ tsp.container ({ global, configuration, containerLib }:
         systemd_units.systemd_services = {
           erlinetrc = {
             description = "${tsp_erlinetrc.name}";
-            wantedBy = [ "multi-user.target" ];
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/erlinetrc-start";

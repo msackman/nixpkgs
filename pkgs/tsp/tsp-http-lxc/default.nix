@@ -46,7 +46,6 @@ tsp.container ({ global, configuration, containerLib }:
         systemd_units.systemd_services = {
           http = {
             description = "${tsp_http.name}";
-            wantedBy = [ "multi-user.target" ];
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/http-start";

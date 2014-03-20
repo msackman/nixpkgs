@@ -33,15 +33,15 @@ tsp.container ({ global, configuration, containerLib }:
     unitDefaults = {
       enable = true;
       description = "";
-      requires = [];
+      requires = [ "network.target" ];
       wants = [];
-      after = [];
+      after = [ "network.target" ];
       before = [];
       bindsTo = [];
       partOf = [];
       conflicts = [];
       requiredBy = [];
-      wantedBy = [];
+      wantedBy = [ "multi-user.target" ];
       unitConfig = {};
       restartTriggers = [];
     };

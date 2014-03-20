@@ -39,9 +39,6 @@ tsp.container ({ global, configuration, containerLib }:
         systemd_units.systemd_services = {
           serfdom = {
             description = "${serfdom.name}";
-            wantedBy = [ "multi-user.target" ];
-            requires = [ "network.target" ];
-            after = [ "network.target" ];
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/serfdom-start";

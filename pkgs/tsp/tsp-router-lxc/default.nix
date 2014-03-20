@@ -98,9 +98,6 @@ tsp.container ({ global, configuration, containerLib }:
         systemd_units.systemd_services = {
           router = {
             description = "${tsp_router.name}";
-            wantedBy = [ "multi-user.target" ];
-            requires = [ "network.target" ];
-            after = [ "network.target" ];
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/router-start";
