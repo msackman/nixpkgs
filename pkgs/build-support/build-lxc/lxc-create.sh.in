@@ -35,3 +35,5 @@ done
 @coreutils@/bin/ln -s $dir/rootfs/nix/store $gcdir/store
 @coreutils@/bin/ln -s @containerConfig@ $gcdir/config
 @coreutils@/bin/ln -s @scripts@ $gcdir/scripts
+
+@libvirt@/bin/virsh -c lxc:/// define $dir/config.xml

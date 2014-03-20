@@ -7,6 +7,8 @@ gcdir=$gcbase/tsp/@name@
 
 [ -e $dir/creator ]
 
+@libvirt@/bin/virsh -c lxc:/// undefine @name@
+
 @coreutils@/bin/rm -f $dir/config.xml $dir/fstab $dir/creator $dir/sterilise
 @coreutils@/bin/rm -rf $dir/rootfs/nix $gcdir
 

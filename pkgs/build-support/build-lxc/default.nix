@@ -305,12 +305,14 @@
                 -e "s|@name@|${name}|g" \
                 -e "s|@sterilise@|$out/bin/lxc-sterilise-${name}|g" \
                 -e "s|@scripts@|$out|g" \
+                -e "s|@libvirt@|${libvirt}|g" \
                 ${createFile} > $out/bin/lxc-create-${name}
             chmod +x $out/bin/lxc-create-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@name@|${name}|g" \
+                -e "s|@libvirt@|${libvirt}|g" \
                 -e "s|@onSterilise@|${concatStringsSep " " allOnSterilise}|g" \
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 ${steriliseFile} > $out/bin/lxc-sterilise-${name}
@@ -325,13 +327,13 @@
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@name@|${name}|g" \
-                -e "s|@virsh@|${libvirt}/bin/virsh|g" \
+                -e "s|@libvirt@|${libvirt}|g" \
                 ${startFile} > $out/bin/lxc-start-${name}
             chmod +x $out/bin/lxc-start-${name}
 
             sed -e "s|@shell@|${stdenv.shell}|g" \
                 -e "s|@name@|${name}|g" \
-                -e "s|@virsh@|${libvirt}/bin/virsh|g" \
+                -e "s|@libvirt@|${libvirt}|g" \
                 ${stopFile} > $out/bin/lxc-stop-${name}
             chmod +x $out/bin/lxc-stop-${name}
           '';

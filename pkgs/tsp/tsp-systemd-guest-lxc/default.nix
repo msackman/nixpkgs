@@ -9,7 +9,7 @@ tsp.container ({ global, configuration, containerLib }:
     doInit = configuration.asInit;
 
     createIn = ./on-create.sh.in;
-    steriliseIn = ./on-create.sh.in;
+    steriliseIn = ./on-sterilise.sh.in;
     create = stdenv.mkDerivation {
       name = "${name}-oncreate";
       buildCommand = ''
