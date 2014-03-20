@@ -1,4 +1,5 @@
 dir=$1
-@coreutils@/bin/rm $dir/rootfs/etc/mtab
+@coreutils@/bin/rm -f $dir/rootfs/etc/mtab
 @coreutils@/bin/rm -rf $dir/rootfs/etc/systemd
+@coreutils@/bin/rm -f $dir/rootfs/etc/os-release
 # We deliberately do not remove the journal log location (/var/log/journal)

@@ -8,6 +8,7 @@ tsp.container ({ global, configuration, containerLib }:
     name = "tsp-systemd-guest";
     doInit = configuration.asInit;
 
+    release = ./os-release.in;
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
     create = stdenv.mkDerivation {
@@ -15,6 +16,7 @@ tsp.container ({ global, configuration, containerLib }:
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
             -e "s|@units@|${allUnitsDerivation}|g" \
+            -e "s|@release@|${release}|g" \
             ${createIn} > $out
         chmod +x $out
       '';
@@ -219,7 +221,7 @@ tsp.container ({ global, configuration, containerLib }:
     {
       name = "${name}-lxc";
       storeMounts = {
-                      inherit systemd;
+                      inherit systemd release;
                       units = allUnitsDerivation;
                     } // (if doInit then { inherit (tsp) init; } else {});
       options = {

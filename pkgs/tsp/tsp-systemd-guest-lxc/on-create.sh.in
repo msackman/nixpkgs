@@ -3,3 +3,4 @@ dir=$1
 @coreutils@/bin/ln -s /proc/self/mounts $dir/rootfs/etc/mtab
 @coreutils@/bin/mkdir -m 0755 -p $dir/rootfs/var/log/journal
 @coreutils@/bin/ln -s @units@ $dir/rootfs/etc/systemd/system
+@coreutils@/bin/ln -s @release@ $dir/rootfs/etc/os-release
