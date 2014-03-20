@@ -1,0 +1,4 @@
+NAME=Teaspoon
+ID=teaspoon
+ID_LIKE=nixos
+PRETTY_NAME="Teaspoon container Linux"
