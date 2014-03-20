@@ -5,4 +5,7 @@ dir=$base/@name@
 
 [ -e $dir/creator ]
 
-exec @libvirt@/bin/virsh -c lxc:/// shutdown @name@
+# In theory we should just do a
+# exec @libvirt@/bin/virsh -c lxc:/// shutdown @name@
+# but that doesn't work for various reasons. So instead, we're doing a
+exec @libvirt@/bin/virsh -c lxc:/// send-process-signal @name@ 1 37
