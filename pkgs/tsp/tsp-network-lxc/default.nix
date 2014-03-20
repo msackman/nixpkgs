@@ -9,7 +9,6 @@ tsp.container ({ global, configuration, containerLib }:
     baseNetwork = {
       type  = "veth";
       link  = "br0";
-      name  = "eth0";
       flags = "up";
     };
     validKeys = (attrNames baseNetwork) ++ ["ipv4" "ipv4.gateway" "mtu" "hwaddr"];
@@ -25,7 +24,6 @@ tsp.container ({ global, configuration, containerLib }:
       let fullNetwork = nic network; in
       { name = "interface"; type = "bridge";
         value = [
-            { name = "target"; dev = fullNetwork.name; }
             { name = "source"; bridge = fullNetwork.link; }
           ] ++ (if fullNetwork ? hwaddr then
                   [{ name = "mac"; address = fullNetwork.hwaddr; }]
@@ -34,41 +32,42 @@ tsp.container ({ global, configuration, containerLib }:
       };
     networks = map addNetwork configuration.networks;
 
-    systemdGuestService = network:
+    systemdGuestService = nicNum: network:
       let
         fullNetwork = nic network;
         ipPrefix = lib.splitString "/" fullNetwork.ipv4;
         ipv4 = head ipPrefix;
         mask = if length ipPrefix == 2 then elemAt ipPrefix 1 else "24";
+        nicName = "eth${toString nicNum}"; # NB this is *highly* libvirt specific
       in
         {
-          name = "network-${fullNetwork.name}";
+          name = "network-${nicName}";
           value =
             {
-              description = "Network interface configuration for ${fullNetwork.name}";
+              description = "Network interface configuration for ${nicName}";
               wantedBy = [ "network.target" ];
               serviceConfig.Type = "oneshot";
               serviceConfig.RemainAfterExit = true;
               script =
                 ''
                   printf "bringing up interface...\n"
-                  ${iproute}/sbin/ip link set "${fullNetwork.name}" up
+                  ${iproute}/sbin/ip link set "${nicName}" up
                 ''
                 + optionalString (fullNetwork ? hwaddr)
                   ''
                     printf "setting MAC address to ${fullNetwork.hwaddr}...\n"
-                    ${iproute}/sbin/ip link set "${fullNetwork.name}" address "${fullNetwork.hwaddr}"
+                    ${iproute}/sbin/ip link set "${nicName}" address "${fullNetwork.hwaddr}"
                   ''
                 + optionalString (fullNetwork ? mtu)
                   ''
                     printf "setting MTU to ${toString fullNetwork.mtu}...\n"
-                    ${iproute}/sbin/ip link set "${fullNetwork.name}" mtu "${toString fullNetwork.mtu}"
+                    ${iproute}/sbin/ip link set "${nicName}" mtu "${toString fullNetwork.mtu}"
                   ''
                 + optionalString (fullNetwork ? ipv4)
                   ''
                     printf "configuring interface...\n"
-                    ${iproute}/sbin/ip -4 addr flush dev "${fullNetwork.name}"
-                    ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${fullNetwork.name}"
+                    ${iproute}/sbin/ip -4 addr flush dev "${nicName}"
+                    ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${nicName}"
                   '';
             };
         };
@@ -101,7 +100,12 @@ tsp.container ({ global, configuration, containerLib }:
     onSterilise = [ sterilise ];
     storeMounts = { systemd_units = tsp_systemd_units; };
     configuration = { systemd_units.systemd_services =
-                        listToAttrs (map systemdGuestService configuration.networks); };
+                        listToAttrs (
+                          fold (network: {num, list}: {
+                            num = num + 1;
+                            list = list ++ [(systemdGuestService num network)];
+                          }) { num = 0; list = []; } configuration.networks).list;
+                    };
     options = {
       hostname = containerLib.mkOption { optional = true; };
       networks = containerLib.mkOption {

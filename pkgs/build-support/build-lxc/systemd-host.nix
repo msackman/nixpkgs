@@ -34,7 +34,7 @@ tsp.container ({ global, configuration, containerLib }:
                   inherit (configuration)
                     after before bindsTo conflicts partOf requiredBy requires wantedBy wants;
                   preStart = ''
-                    if [ ! -f "${dir}/config" ]; then
+                    if [ ! -f "${dir}/creator" ]; then
                       ${pkg.create}
                     else
                       ${pkg.upgrade}
