@@ -85,12 +85,12 @@ tsp.container ({ global, configuration, containerLib }:
         "smartcard.target"
 
         # Login stuff.
-        "systemd-logind.service"
-        "autovt@.service"
+        #"systemd-logind.service"
+        #"autovt@.service"
         #"systemd-vconsole-setup.service"
-        "systemd-user-sessions.service"
-        "dbus-org.freedesktop.login1.service"
-        "user@.service"
+        #"systemd-user-sessions.service"
+        #"dbus-org.freedesktop.login1.service"
+        #"user@.service"
 
         # Journal.
         "systemd-journald.socket"

@@ -47,8 +47,8 @@ tsp.container ({ global, configuration, containerLib }:
                 {
                   description = "Network interface configuration for ${guestNicName}";
                   wantedBy = [ "network.target" ];
-                  requires = [];
-                  after = [];
+                  before = [ "network.target" ];
+                  after = [ "network-interfaces.target" ];
                   serviceConfig.Type = "oneshot";
                   serviceConfig.RemainAfterExit = true;
                   script =
