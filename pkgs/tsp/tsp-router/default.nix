@@ -66,8 +66,8 @@ let
       {
         name = "tsp-demo-router";
         url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-router";
-        sha256 = "1qarhsfyh8ws94bl4labc82yw62xcz354h861y6yhdxpg6h4mmfk";
-        tag = "3c963f9bec05";
+        sha256 = "0a6d3vs0dmw9q6d107cjqbm717l2khjwnk3ws4xh0pyy8r5lmf9l";
+        tag = "4ce30cf8dce9";
         fetcher = hg;
         deps = [ procket msgpack pkt tunctl mochiweb lager goldrush ];
       };
