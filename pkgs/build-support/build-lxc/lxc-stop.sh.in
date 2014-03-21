@@ -1,12 +1,20 @@
-#! @shell@ -e
+#! @shell@
 
 base=/var/lib/lxc
 dir=$base/@name@
 
-[ -e $dir/creator ]
-
 # In theory we should just do a
 # exec @libvirt@/bin/virsh -c lxc:/// shutdown @name@
 # but that doesn't work for various reasons. So instead, we're doing a:
-exec @libvirt@/bin/virsh -c lxc:/// send-process-signal @name@ 1 37
+@libvirt@/bin/virsh -c lxc:/// send-process-signal @name@ 1 37
 # 37 is SIGRTMIN+3 which is the "correct" signal to send the guest systemd to make it shut down.
+
+let i=0
+while [ -n "$(@libvirt@/bin/virsh -c lxc:/// dominfo @name@ 2>&1 | grep '^State:\s\+running')" ]; do
+    sleep 1
+    let i++
+    if ((i > 30)); then
+        @libvirt@/bin/virsh -c lxc:/// shutdown @name@ || @libvirt@/bin/virsh -c lxc:/// destroy @name@
+        break
+    fi
+done

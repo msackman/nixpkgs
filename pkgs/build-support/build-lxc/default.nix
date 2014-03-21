@@ -313,6 +313,7 @@
                 -e "s|@coreutils@|${coreutils}|g" \
                 -e "s|@name@|${name}|g" \
                 -e "s|@libvirt@|${libvirt}|g" \
+                -e "s|@stop@|$out/bin/lxc-stop-${name}|g" \
                 -e "s|@onSterilise@|${concatStringsSep " " allOnSterilise}|g" \
                 -e "s|@gcbase@|$NIX_STORE/../var/nix/gcroots|g" \
                 ${steriliseFile} > $out/bin/lxc-sterilise-${name}

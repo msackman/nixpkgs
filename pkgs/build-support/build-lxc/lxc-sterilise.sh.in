@@ -1,11 +1,11 @@
-#! @shell@ -e
+#! @shell@
 
 base=/var/lib/lxc
 dir=$base/@name@
 gcbase=@gcbase@
 gcdir=$gcbase/tsp/@name@
 
-[ -e $dir/creator ]
+@stop@
 
 @libvirt@/bin/virsh -c lxc:/// undefine @name@
 
