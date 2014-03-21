@@ -3,7 +3,7 @@
     inherit (builtins) getAttr isAttrs isFunction isString isBool hasAttr attrNames filter concatLists listToAttrs elem length head tail removeAttrs isList;
     inherit (lib) id foldl fold sort substring attrValues recursiveUpdate concatStrings concatStringsSep;
     containerLib = rec {
-      inherit sequence id;
+      inherit sequence id isLxcPkg;
 
       hasConfigurationPath = config: path:
         if path == [] then
