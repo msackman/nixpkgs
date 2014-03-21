@@ -72,6 +72,11 @@ tsp.container ({ global, configuration, containerLib }:
                         printf "configuring interface...\n"
                         ${iproute}/sbin/ip -4 addr flush dev "${guestNicName}"
                         ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${guestNicName}"
+                      ''
+                    + optionalString (fullNetwork ? "ipv4.gateway")
+                      ''
+                        printf "adding gateway...\n"
+                        ${iproute}/sbin/ip route add default via "${fullNetwork."ipv4.gateway"}" || true
                       '';
                 };
             };
