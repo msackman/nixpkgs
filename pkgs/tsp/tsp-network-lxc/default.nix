@@ -1,4 +1,4 @@
-{ stdenv, tsp, lib, coreutils, callPackage, iproute }:
+{ stdenv, tsp, lib, coreutils, callPackage, iproute, ethtool }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
@@ -77,6 +77,12 @@ tsp.container ({ global, configuration, containerLib }:
                       ''
                         printf "adding gateway...\n"
                         ${iproute}/sbin/ip route add default via "${fullNetwork."ipv4.gateway"}" || true
+                      ''
+                    + ''
+                        printf "turning off TOE expectations...\n"
+                        for opt in rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash; do
+                          ${ethtool}/sbin/ethtool --offload "${guestNicName}" "$opt" off || true
+                        done
                       '';
                 };
             };
