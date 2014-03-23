@@ -42,6 +42,7 @@ tsp.container ({ global, configuration, containerLib }:
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/serfdom-start";
+              Restart = "always";
             };
           };
         };

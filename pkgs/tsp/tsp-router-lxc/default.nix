@@ -101,6 +101,7 @@ tsp.container ({ global, configuration, containerLib }:
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/router-start";
+              Restart = "always";
             };
           };
         };
