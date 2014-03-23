@@ -6417,9 +6417,15 @@ let
   tsp_serfdom_lxc = callPackage ../tsp/tsp-serfdom-lxc { };
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };
-  tsp = { container = buildLXC;
-          module = path: ((if builtins.isFunction path then path else import path)
-                          { inherit pkgs; }).module;
+  tsp = rec {
+          container = buildLXC;
+          module = thing:
+                     if builtins.isList thing then
+                       map module thing
+                     else if builtins.isAttrs thing then
+                       thing.module
+                     else
+                       import thing;
           systemd_host = callPackage ../build-support/build-lxc/systemd-host.nix { };
           init = callPackage ../build-support/build-lxc/init.nix { };
         };

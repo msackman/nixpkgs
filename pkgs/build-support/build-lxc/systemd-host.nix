@@ -5,25 +5,24 @@ tsp.container ({ global, configuration, containerLib }:
     inherit (lib) fold getAttr attrNames attrValues;
     inherit (builtins) listToAttrs isList;
     analysed =
-      fold (configName: {includesAttrSetList, configAttrSetList}:
+      fold (configName: {importsAttrSetList, configAttrSetList}:
         let
           configValue = getAttr configName configuration;
-          analysed = fold (value: {includesAttrSetList, acc}:
+          analysed = fold (value: {importsAttrSetList, acc}:
                        if containerLib.isLxcPkg value then
-                         {includesAttrSetList = [{name = value.name; value = value.module;}] ++ includesAttrSetList;
+                         {importsAttrSetList = [{name = value.name; value = value.module;}] ++ importsAttrSetList;
                           acc = ["${value.name}.service"] ++ acc;}
                        else
-                         {inherit includesAttrSetList; acc = [value] ++ acc;}
-                     ) {includesAttrSetList = []; acc = [];} configValue;
+                         {inherit importsAttrSetList; acc = [value] ++ acc;}
+                     ) {importsAttrSetList = []; acc = [];} configValue;
         in
           if isList configValue then
-            {includesAttrSetList = analysed.includesAttrSetList ++ includesAttrSetList;
+            {importsAttrSetList = analysed.importsAttrSetList ++ importsAttrSetList;
              configAttrSetList = [{name = configName; value = analysed.acc;}] ++ configAttrSetList;}
           else
-            {inherit includesAttrSetList;
+            {inherit importsAttrSetList;
              configAttrSetList = [{name = configName; value = configValue;}] ++ configAttrSetList;}
-      ) {includesAttrSetList = []; configAttrSetList = [];} (attrNames configuration);
-    imports = attrValues (listToAttrs analysed.includesAttrSetList);
+      ) {importsAttrSetList = []; configAttrSetList = [];} (attrNames configuration);
     nameyConfig = listToAttrs analysed.configAttrSetList;
   in
   {
@@ -41,6 +40,7 @@ tsp.container ({ global, configuration, containerLib }:
       enabled    = containerLib.mkOption { optional = true; default = false; };
       dir        = containerLib.mkOption { optional = true; default = null; };
     };
+    configuration = nameyConfig;
     module =
       pkg: { config, pkgs, ... }:
         with pkgs.lib;
@@ -49,8 +49,6 @@ tsp.container ({ global, configuration, containerLib }:
           dir = if configuration.dir == null then "/var/lib/lxc/${name}" else configuration.dir;
         in
           {
-            inherit imports;
-
             config = mkIf configuration.enabled {
               environment.systemPackages = [pkgs.libvirt];
               systemd.services = builtins.listToAttrs [{
