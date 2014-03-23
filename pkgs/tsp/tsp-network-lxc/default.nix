@@ -12,7 +12,7 @@ tsp.container ({ global, configuration, containerLib }:
       link  = "br0";
       flags = "up";
     };
-    validKeys = (attrNames baseNetwork) ++ ["ipv4" "ipv4.gateway" "mtu" "hwaddr"];
+    validKeys = (attrNames baseNetwork) ++ ["ipv4" "mtu" "hwaddr"];
 
     extendNetwork = network:
       baseNetwork // (listToAttrs (fold (key: acc:
@@ -73,11 +73,6 @@ tsp.container ({ global, configuration, containerLib }:
                         ${iproute}/sbin/ip -4 addr flush dev "${guestNicName}"
                         ${iproute}/sbin/ip -4 addr add "${ipv4}/${mask}" dev "${guestNicName}"
                       ''
-                    + optionalString (fullNetwork ? "ipv4.gateway")
-                      ''
-                        printf "adding gateway...\n"
-                        ${iproute}/sbin/ip route add default via "${fullNetwork."ipv4.gateway"}" || true
-                      ''
                     + ''
                         printf "turning off TOE expectations...\n"
                         for opt in rx tx sg tso ufo gso gro lro rxvlan txvlan rxhash; do
@@ -95,6 +90,27 @@ tsp.container ({ global, configuration, containerLib }:
            num  = num + 1;
            list = list ++ [(configureNetwork num network)];
          }) {num = 0; list = [];} nets).list;
+
+    gatewaySystemdUnit =
+      if configuration ? defaultGateway then
+        {
+          networkDefaultGateway = {
+            description = "Network default gateway";
+            wantedBy = [ "network.target" ];
+            requires = map (e: "${e.systemd_unit_pair.name}.service") networks;
+            before = [ "network.target" ];
+            after = map (e: "${e.systemd_unit_pair.name}.service") networks;
+            serviceConfig.Type = "oneshot";
+            serviceConfig.RemainAfterExit = true;
+            script =
+              ''
+                printf "Setting default gateway...\n"
+                ${iproute}/sbin/ip route add default via "${configuration.defaultGateway}" || true
+              '';
+          };
+        }
+      else
+        {};
 
     createIn = ./on-create.sh.in;
     steriliseIn = ./on-sterilise.sh.in;
@@ -123,9 +139,18 @@ tsp.container ({ global, configuration, containerLib }:
     onCreate = [ create ];
     onSterilise = [ sterilise ];
     storeMounts = { systemd_units = tsp_systemd_units; };
-    configuration = { systemd_units.systemd_services = listToAttrs (map (e: e.systemd_unit_pair) networks); };
+    configuration = { systemd_units.systemd_services = gatewaySystemdUnit //
+                        (listToAttrs (map (e: e.systemd_unit_pair) networks)); };
     options = {
       hostname = containerLib.mkOption { optional = true; };
+      defaultGateway = containerLib.mkOption {
+                         optional = true;
+                         validator = value:
+                           let components = splitString "." value; in
+                           assert isString value;
+                           assert length components == 4;
+                           true;
+                       };
       networks = containerLib.mkOption {
                    optional = true;
                    default = [];
