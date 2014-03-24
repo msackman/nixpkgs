@@ -6428,6 +6428,7 @@ let
                        import thing;
           systemd_host = callPackage ../build-support/build-lxc/systemd-host.nix { };
           init = callPackage ../build-support/build-lxc/init.nix { };
+          no_default_network = callPackage ../tsp/tsp-libvirt-disable-network-lxc { };
         };
 
   radius = callPackage ../servers/radius { };

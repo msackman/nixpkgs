@@ -50,7 +50,7 @@ tsp.container ({ global, configuration, containerLib }:
         in
           {
             config = mkIf configuration.enabled {
-              environment.systemPackages = [pkgs.libvirt];
+              virtualisation.libvirtd.enable = true;
               systemd.services = builtins.listToAttrs [{
                 inherit name;
                 value = {
@@ -70,7 +70,6 @@ tsp.container ({ global, configuration, containerLib }:
                     ExecStart       = "${pkg.start}";
                     ExecStop        = "${pkg.stop}";
                     Type            = "oneshot";
-                    Restart         = "always";
                     RemainAfterExit = true;
                   };
                   unitConfig.RequiresMountsFor = dir;
