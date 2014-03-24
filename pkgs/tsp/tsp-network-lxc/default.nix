@@ -3,7 +3,7 @@
 tsp.container ({ global, configuration, containerLib }:
   let
     inherit (lib) fold foldl splitString optionalString;
-    inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString elem elemAt head;
+    inherit (builtins) getAttr attrNames hasAttr listToAttrs filter length isString isInt elem elemAt head;
     tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     name = "network";
 
@@ -11,8 +11,9 @@ tsp.container ({ global, configuration, containerLib }:
       type  = "veth"; ## In truth, we don't support anything else just ATM.
       link  = "br0";
       flags = "up";
+      mtu   = 1300; ## TEMPORARY HACK
     };
-    validKeys = (attrNames baseNetwork) ++ ["ipv4" "mtu" "hwaddr"];
+    validKeys = (attrNames baseNetwork) ++ ["ipv4" "hwaddr"];
 
     extendNetwork = network:
       baseNetwork // (listToAttrs (fold (key: acc:
@@ -166,6 +167,9 @@ tsp.container ({ global, configuration, containerLib }:
                          else if name == "hwaddr" then
                            let components = splitString ":" value; in
                            assert length components == 6;
+                           acc
+                         else if name == "mtu" then
+                           assert isInt value;
                            acc
                          else
                            assert isString value;

@@ -32,7 +32,7 @@ tsp.container ({ global, configuration, containerLib }:
             {serf_addr, "${configuration.serfdom}"},
             {tap_name,  "tsp%%d"},
             {eth_dev,   undefined},
-            {bridge,    "${configuration.internal_bridge.bridge}"}
+            {bridge,    "${configuration.internal_bridge}"}
            ]}
         ].
         ' > $out/config.config
@@ -49,10 +49,10 @@ tsp.container ({ global, configuration, containerLib }:
         printf '#! ${stdenv.shell}
         export HOME=/home/${configuration.home.user}
         export PATH=${bridge_utils}/bin:${bridge_utils}/sbin:${iproute}/bin:${iproute}/sbin:${coreutils}/bin:$PATH
-        brctl addbr ${configuration.internal_bridge.bridge}
-        brctl addif ${configuration.internal_bridge.bridge} "eth0"
-        ip link set "${configuration.internal_bridge.bridge}" up
-        ip -4 addr add "${configuration.sdn.guest_ip}/${toString configuration.sdn.prefix}" dev "${configuration.internal_bridge.bridge}"
+        brctl addbr ${configuration.internal_bridge}
+        brctl addif ${configuration.internal_bridge} "eth0"
+        ip link set "${configuration.internal_bridge}" up
+        ip -4 addr add "${configuration.sdn.guest_ip}/${toString configuration.sdn.prefix}" dev "${configuration.internal_bridge}"
         export LOG_DIR=/var/log/${logDirName}
         mkdir -p $LOG_DIR # still need this for lager and sasl logs
         exec ${erlang}/bin/erl -pa ${tsp_router}/deps/*/ebin ${tsp_router}/ebin -sname router ${cookieStr} -config ${configFile}/config -s tsp -noinput' > $out/sbin/router-start
@@ -93,10 +93,7 @@ tsp.container ({ global, configuration, containerLib }:
         external = bridgeOptions;
         identity        = containerLib.mkOption { optional = false; };
         serfdom         = containerLib.mkOption { optional = false; };
-        internal_bridge = {
-          bridge         = containerLib.mkOption { optional = false; };
-          guest_ip       = containerLib.mkOption { optional = false; };
-        };
+        internal_bridge = containerLib.mkOption { optional = true; default = "internalBridge"; };
         erlang.cookie   = containerLib.mkOption { optional = true; };
       };
       configuration = {
@@ -106,6 +103,7 @@ tsp.container ({ global, configuration, containerLib }:
         home.gid   = 1000;
         network.networks = [{link = configuration.sdn.bridge;}     # eth0
                             {link = configuration.external.bridge; # eth1
+                             mtu  = 1500;
                              ipv4 = "${configuration.external.guest_ip}/${toString configuration.external.prefix}";}];
         network.defaultGateway = configuration.external.host_ip;
       } // (if configuration ? home then {
@@ -130,8 +128,8 @@ tsp.container ({ global, configuration, containerLib }:
                 { name = configuration.external.bridge; value = { interfaces = []; }; }
               ];
             networking.interfaces = builtins.listToAttrs [
-                { name = configuration.sdn.bridge; value = {
-                    ipAddress = configuration.sdn.host_ip; prefixLength = configuration.sdn.prefix; }; }
+                { name = configuration.sdn.bridge; value = {                     ## TEMPORARY HACK MTU
+                    ipAddress = configuration.sdn.host_ip; prefixLength = configuration.sdn.prefix; mtu = 1300; }; }
                 { name = configuration.external.bridge; value = {
                     ipAddress = configuration.external.host_ip; prefixLength = configuration.external.prefix; }; }
               ];
