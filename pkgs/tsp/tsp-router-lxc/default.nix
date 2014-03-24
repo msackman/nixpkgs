@@ -1,4 +1,4 @@
-{ stdenv, tsp_router, erlang, bridge_utils, nettools, tsp, coreutils, lib, callPackage }:
+{ stdenv, tsp_router, erlang, bridge_utils, nettools, tsp, coreutils, iptables, lib, callPackage }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
@@ -88,6 +88,7 @@ tsp.container ({ global, configuration, containerLib }:
         };
         erlang.cookie   = containerLib.mkOption { optional = true; };
         serfdom         = containerLib.mkOption { optional = false; };
+        external_ipv4   = containerLib.mkOption { optional = false; };
       };
       configuration = {
         home.user  = "router";
@@ -106,4 +107,39 @@ tsp.container ({ global, configuration, containerLib }:
           };
         };
       } else {});
+      module =
+        pkg: { config, pkgs, ... }:
+        let externalNic = config.networking.nat.externalInterface; in
+        {
+          config = pkgs.lib.mkIf configuration.systemd_host.enabled {
+            assertions = [{ assertion = builtins.isString config.networking.nat.externalInterface &&
+                                        config.networking.nat.externalInterface != "";
+                            message = "Must define config.networking.nat.externalInterface"; }];
+
+            systemd.services.tsp_router_firewall_nat = {
+              description = "Firewall NAT for TSP Router";
+              before = ["${pkg.name}.service"];
+              requires = ["${pkg.name}.service"];
+              wantedBy = ["${pkg.name}.service"];
+              serviceConfig = {
+                Type = "oneshot";
+                RemainAfterExit = true;
+              };
+              script = ''
+                ${iptables}/sbin/iptables -t nat -D PREROUTING -p tcp --dport 33441 \
+                  -i "${externalNic}" -j DNAT \
+                  --to-destination "${configuration.external_ipv4}" || true
+                ${iptables}/sbin/iptables -t nat -D PREROUTING -p udp --dport 33441 \
+                  -i "${externalNic}" -j DNAT \
+                  --to-destination "${configuration.external_ipv4}" || true
+                ${iptables}/sbin/iptables -t nat -I PREROUTING -p tcp --dport 33441 \
+                  -i "${externalNic}" -j DNAT \
+                  --to-destination "${configuration.external_ipv4}"
+                ${iptables}/sbin/iptables -t nat -I PREROUTING -p udp --dport 33441 \
+                  -i "${externalNic}" -j DNAT \
+                  --to-destination "${configuration.external_ipv4}"
+              '';
+            };
+          };
+        };
     })
