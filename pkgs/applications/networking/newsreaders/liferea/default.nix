@@ -6,14 +6,14 @@
 }:
 
 let pname = "liferea";
-    version = "1.10.6";
+    version = "1.10.7";
 in
 stdenv.mkDerivation rec {
   name = "${pname}-${version}";
 
   src = fetchurl {
-    url = "https://github.com/lwindolf/${pname}/releases/download/v${version}/${name}.tar.gz";
-    sha256 = "0vp19z4p3cn3zbg1zjpg2iyzwq893dx5c1kh6aac06s3rf1124gm";
+    url = "https://github.com/lwindolf/${pname}/releases/download/v${version}/${name}.tar.bz2";
+    sha256 = "17kvg44brdz99firr5h5qx8icvadlr7p1cz3xr3437sf5rhj25wh";
   };
 
   buildInputs = with gst_all_1; [
@@ -37,7 +37,7 @@ stdenv.mkDerivation rec {
         --prefix LD_LIBRARY_PATH : "${gnome3.libgnome_keyring}/lib" \
         --prefix GI_TYPELIB_PATH : "$GI_TYPELIB_PATH" \
         --prefix GIO_EXTRA_MODULES : "${gnome3.dconf}/lib/gio/modules:${glib_networking}/lib/gio/modules" \
-        --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:${gnome3.gnome_icon_theme}/share:${gnome3.gsettings_desktop_schemas}/share:$out/share"
+        --prefix XDG_DATA_DIRS : "$XDG_ICON_DIRS:${gnome3.gnome_icon_theme}/share:${gnome3.gsettings_desktop_schemas}/share:${gnome3.gtk}/share:$out/share"
     done
   '';
 

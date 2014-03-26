@@ -1504,6 +1504,49 @@ rec {
       platforms = stdenv.lib.platforms.all;
     };
   };
+  
+  urllib3 = buildPythonPackage rec {
+    name = "urllib3-1.8";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/u/urllib3/${name}.tar.gz";
+      sha256 = "0pdigfxkq8mhzxxsn6isx8c4h9azqywr1k18yanwyxyj8cdzm28s";
+    };
+    
+    preConfigure = ''
+      substituteInPlace test-requirements.txt --replace 'nose==1.3' 'nose'
+    '';
+    
+    checkPhase = ''
+      nosetests --cover-min-percentage 70
+    '';
+
+    buildInputs = [ coverage tornado mock nose ];
+
+    meta = with stdenv.lib; {
+      description = "A Python library for Dropbox's HTTP-based Core and Datastore APIs";
+      homepage = https://www.dropbox.com/developers/core/docs;
+      license = licenses.mit;
+    };
+  };
+
+  
+  dropbox = buildPythonPackage rec {
+    name = "dropbox-2.0.0";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/d/dropbox/${name}.zip";
+      sha256 = "1bi2z1lql6ryylfflmizhqn98ab55777vn7n5krhqz40pdcjilkx";
+    };
+
+    propagatedBuildInputs = [ urllib3 mock setuptools ];
+
+    meta = with stdenv.lib; {
+      description = "A Python library for Dropbox's HTTP-based Core and Datastore APIs";
+      homepage = https://www.dropbox.com/developers/core/docs;
+      license = licenses.mit;
+    };
+  };
 
 
   evdev = buildPythonPackage rec {
@@ -2352,7 +2395,7 @@ rec {
     };
 
     propagatedBuildInputs = with pkgs; [
-      pyGtkGlade libtorrentRasterbar twisted Mako chardet pyxdg pyopenssl
+      pyGtkGlade libtorrentRasterbar twisted Mako chardet pyxdg pyopenssl modules.curses
     ];
 
     postInstall = ''
@@ -2982,7 +3025,32 @@ rec {
       maintainers = [ maintainers.bjornfor ];
     };
   };
+  
+  
+  gevent-socketio = buildPythonPackage rec {
+    name = "gevent-socketio-0.3.6";
 
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/g/gevent-socketio/${name}.tar.gz";
+      sha256 = "1zra86hg2l1jcpl9nsnqagy3nl3akws8bvrbpgdxk15x7ywllfak";
+    };
+
+    buildInputs = [ versiontools gevent-websocket mock pytest ];
+    propagatedBuildInputs = [ gevent ];
+
+  };
+  
+  gevent-websocket = buildPythonPackage rec {
+    name = "gevent-websocket-0.9.3";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/g/gevent-websocket/${name}.tar.gz";
+      sha256 = "07rqwfpbv13mk6gg8mf0bmvcf6siyffjpgai1xd8ky7r801j4xb4";
+    };
+
+    propagatedBuildInputs = [ gevent ];
+
+  };
 
   genzshcomp = buildPythonPackage {
     name = "genzshcomp-0.5.1";
@@ -3144,12 +3212,12 @@ rec {
 
   hetzner = buildPythonPackage rec {
     name = "hetzner-${version}";
-    version = "0.6.0";
+    version = "0.7.0";
 
     src = fetchurl {
       url = "https://github.com/RedMoonStudios/hetzner/archive/"
           + "v${version}.tar.gz";
-      sha256 = "1cgi77f453ahw3ad6hvqwbyp6fwnh90rlzfgl9cp79wg58wyar4w";
+      sha256 = "1ldbhwy6yk18frv6n9znvdsrqfnpch4mfvc70jrpq3f9fw236src";
     };
 
     # not there yet, but coming soon.
@@ -5523,17 +5591,24 @@ rec {
 
 
   pyopengl =
-    let version = "3.0.0b5";
+    let version = "3.0.2";
     in
       buildPythonPackage {
         name = "pyopengl-${version}";
 
         src = fetchurl {
-          url = "mirror://sourceforge/pyopengl/PyOpenGL-${version}.tar.gz";
-          sha256 = "1rjpl2qdcqn4wamkik840mywdycd39q8dn3wqfaiv35jdsbifxx3";
+          url = "http://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-${version}.tar.gz";
+          sha256 = "9ef93bbea2c193898341f574e281c3ca0dfe87c53aa25fbec4b03581f6d1ba03";
         };
 
         propagatedBuildInputs = with pkgs; [ mesa freeglut pil ];
+
+        patchPhase = ''
+          sed -i "s|util.find_library( name )|name|" OpenGL/platform/ctypesloader.py
+          sed -i "s|'GL',|'libGL.so',|" OpenGL/platform/glx.py
+          sed -i "s|'GLU',|'${pkgs.mesa}/lib/libGLU.so',|" OpenGL/platform/glx.py
+          sed -i "s|'glut',|'${pkgs.freeglut}/lib/libglut.so',|" OpenGL/platform/glx.py
+        '';
 
         meta = {
           homepage = http://pyopengl.sourceforge.net/;
@@ -5584,11 +5659,11 @@ rec {
 
 
   pyserial = buildPythonPackage rec {
-    name = "pyserial-2.6";
+    name = "pyserial-2.7";
 
     src = fetchurl {
       url = "http://pypi.python.org/packages/source/p/pyserial/${name}.tar.gz";
-      md5 = "cde799970b7c1ce1f7d6e9ceebe64c98";
+      sha256 = "3542ec0838793e61d6224e27ff05e8ce4ba5a5c5cc4ec5c6a3e8d49247985477";
     };
 
     doCheck = false;
@@ -7542,6 +7617,12 @@ rec {
     wxGTK = pkgs.wxGTK28;
   };
 
+  wxPython30 = import ../development/python-modules/wxPython/3.0.nix {
+    inherit (pkgs) stdenv fetchurl pkgconfig;
+    inherit pythonPackages;
+    wxGTK = pkgs.wxGTK30;
+  };
+
   xe = buildPythonPackage rec {
     url = "http://www.blarg.net/%7Esteveha/xe-0.7.4.tar.gz";
     name = stdenv.lib.nameFromURL url ".tar";
@@ -8429,6 +8510,16 @@ rec {
       maintainers = [ stdenv.lib.maintainers.rickynils ];
     };
   };
+  
+  versiontools = buildPythonPackage rec {
+    name = "versiontools-1.9.1";
+
+    src = fetchurl {
+      url = "https://pypi.python.org/packages/source/v/versiontools/${name}.tar.gz";
+      sha256 = "1xhl6kl7f4srgnw6zw4lr8j2z5vmrbaa83nzn2c9r2m1hwl36sd9";
+    };
+
+  };
 
   graphite_web = buildPythonPackage rec {
     name = "graphite-web-${version}";
@@ -8700,6 +8791,21 @@ rec {
       homepage = https://github.com/mitsuhiko/speaklater;
       license = "bsd";
       maintainers = [ stdenv.lib.maintainers.matejc ];
+    };
+  };
+
+  power = buildPythonPackage rec {
+    name = "power-1.2";
+
+    src = fetchurl {
+      url = "http://pypi.python.org/packages/source/p/power/${name}.tar.gz";
+      sha256 = "09a00af8357f63dbb1a1eb13b82e39ccc0a14d6d2e44e5b235afe60ce8ee8195";
+    };
+
+    meta = {
+      description = "Cross-platform system power status information";
+      homepage = https://github.com/Kentzo/Power;
+      license = "mit";
     };
   };
 
