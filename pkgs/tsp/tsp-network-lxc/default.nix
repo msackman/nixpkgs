@@ -43,7 +43,7 @@ tsp.container ({ global, configuration, containerLib }:
             };
           systemd_unit_pair =
             {
-              name = "network-${guestNicName}";
+              name = "${guestNicName}-cfg";
               value =
                 {
                   description = "Network interface configuration for ${guestNicName}";
@@ -95,12 +95,12 @@ tsp.container ({ global, configuration, containerLib }:
     gatewaySystemdUnit =
       if configuration ? defaultGateway then
         {
-          networkDefaultGateway = {
+          network-default-gateway = rec {
             description = "Network default gateway";
             wantedBy = [ "network.target" ];
             requires = map (e: "${e.systemd_unit_pair.name}.service") networks;
             before = [ "network.target" ];
-            after = map (e: "${e.systemd_unit_pair.name}.service") networks;
+            after = requires;
             serviceConfig.Type = "oneshot";
             serviceConfig.RemainAfterExit = true;
             script =

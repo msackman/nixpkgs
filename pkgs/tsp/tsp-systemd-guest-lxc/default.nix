@@ -1,4 +1,4 @@
-{ stdenv, tsp, coreutils, findutils, gnugrep, gnused, systemd, lib, runCommand, writeTextFile }:
+{ stdenv, tsp, coreutils, systemd, lib, runCommand }:
 
 with lib;
 

@@ -87,15 +87,13 @@ tsp.container ({ global, configuration, containerLib }:
           BindsTo = concatStringsSep " " config.bindsTo;
           PartOf = concatStringsSep " " config.partOf;
           Conflicts = concatStringsSep " " config.conflicts;
+        } // optionalAttrs (config.description != "") {
+          Description = config.description;
         };
       } config;
 
     transformService = name: config: recursiveUpdate (rec {
-        path = [pkgs.coreutils
-                pkgs.findutils
-                pkgs.gnugrep
-                pkgs.gnused
-                pkgs.systemd];
+        path = [pkgs.systemd];
         environment.PATH = "${makeSearchPath "bin" path}:${makeSearchPath "sbin" path}";
         serviceConfig = listToAttrs (concatLists [
           (if config.preStart != serviceDefaults.preStart then

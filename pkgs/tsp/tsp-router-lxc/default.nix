@@ -107,16 +107,17 @@ tsp.container ({ global, configuration, containerLib }:
                              ipv4 = "${configuration.external.guest_ip}/${toString configuration.external.prefix}";}];
         network.defaultGateway = configuration.external.host_ip;
       } // (if configuration ? home then {
-        systemd_units.systemd_services = {
-          router = {
-            description = "${tsp_router.name}";
+        systemd_units.systemd_services = builtins.listToAttrs [{
+          name = tsp_router.name;
+          value = {
+            description = tsp_router.name;
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/router-start";
               Restart = "always";
             };
           };
-        };
+        }];
       } else {});
       module =
         pkg: { config, pkgs, ... }:
@@ -137,7 +138,7 @@ tsp.container ({ global, configuration, containerLib }:
             networking.nat.externalInterface = configuration.external.interface;
             networking.nat.internalIPs = [ "${configuration.external.network}/${toString configuration.external.prefix}" ];
 
-            systemd.services.tsp_router_firewall_nat = {
+            systemd.services.tsp-router-network = {
               description = "Firewall NAT for TSP Router";
               before = ["${pkg.name}.service"];
               requires = ["${pkg.name}.service" "network.target"];

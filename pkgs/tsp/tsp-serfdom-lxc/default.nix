@@ -17,7 +17,7 @@ tsp.container ({ global, configuration, containerLib }:
     };
   in
     {
-      name = "serfdom-lxc";
+      name = "${serfdom.name}-lxc";
       storeMounts = { home          = tsp_home;
                       network       = tsp_network;
                       systemd_guest = tsp_systemd_guest;
@@ -36,15 +36,16 @@ tsp.container ({ global, configuration, containerLib }:
         home.uid   = 1000;
         home.group = "serfdom";
         home.gid   = 1000;
-        systemd_units.systemd_services = {
-          serfdom = {
-            description = "${serfdom.name}";
+        systemd_units.systemd_services = builtins.listToAttrs [{
+          name = serfdom.name;
+          value = {
+            description = serfdom.name;
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/serfdom-start";
               Restart = "always";
             };
           };
-        };
+        }];
       };
     })

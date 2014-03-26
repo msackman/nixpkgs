@@ -9,7 +9,7 @@ tsp.container ({ global, configuration, containerLib }:
     module = pkg: { config, pkgs, ... }:
       {
         config = pkgs.lib.mkIf (! configuration.disable) {
-          systemd.services.tsp_libvirt_disable_network_lxc = {
+          systemd.services.libvirtd-disable-default-network = {
             description = "Disable libvirtd default network";
             requires = ["libvirtd.service"];
             after = ["libvirtd.service"];

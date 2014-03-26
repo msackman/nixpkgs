@@ -43,14 +43,15 @@ tsp.container ({ global, configuration, containerLib }:
         home.group = "http";
         home.gid   = 1000;
       } // (if configuration ? home then {
-        systemd_units.systemd_services = {
-          http = {
-            description = "${tsp_http.name}";
+        systemd_units.systemd_services = builtins.listToAttrs [{
+          name = tsp_http.name;
+          value = {
+            description = tsp_http.name;
             serviceConfig = {
               Type = "simple";
               ExecStart = "${wrapped}/sbin/http-start";
             };
           };
-        };
+        }];
       } else {});
     })
