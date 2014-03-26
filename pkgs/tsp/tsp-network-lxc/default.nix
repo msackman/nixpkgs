@@ -11,9 +11,8 @@ tsp.container ({ global, configuration, containerLib }:
       type  = "veth"; ## In truth, we don't support anything else just ATM.
       link  = "br0";
       flags = "up";
-      mtu   = 1300; ## TEMPORARY HACK
     };
-    validKeys = (attrNames baseNetwork) ++ ["ipv4" "hwaddr"];
+    validKeys = (attrNames baseNetwork) ++ ["ipv4" "hwaddr" "mtu"];
 
     extendNetwork = network:
       baseNetwork // (listToAttrs (fold (key: acc:

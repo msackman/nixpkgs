@@ -129,8 +129,8 @@ tsp.container ({ global, configuration, containerLib }:
                 { name = configuration.external.bridge; value = { interfaces = []; }; }
               ];
             networking.interfaces = builtins.listToAttrs [
-                { name = configuration.sdn.bridge; value = {                     ## TEMPORARY HACK MTU
-                    ipAddress = configuration.sdn.host_ip; prefixLength = configuration.sdn.prefix; mtu = 1300; }; }
+                { name = configuration.sdn.bridge; value = {
+                    ipAddress = configuration.sdn.host_ip; prefixLength = configuration.sdn.prefix; }; }
                 { name = configuration.external.bridge; value = {
                     ipAddress = configuration.external.host_ip; prefixLength = configuration.external.prefix; }; }
               ];

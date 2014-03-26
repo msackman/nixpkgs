@@ -62,14 +62,23 @@ let
         fetcher = git;
         deps = [ ];
       };
+    gen_icmp =
+      {
+        name = "gen_icmp";
+        url = "git://github.com/msantos/gen_icmp.git";
+        rev = "52aaac7f3062a46bef87580fef9f32647d6005c7";
+        sha256 = "34f57ea6b191f703bfaa95bf160162e4a9f96fee6b4b99354d74ff2d15d90f88";
+        fetcher = git;
+        deps = [ procket pkt ];
+      };
     router =
       {
         name = "tsp-demo-router";
         url = "http://hg.rabbitmq.com/tsp-demo-router/";
-        sha256 = "0f7aj5g914c7k5rjpzscvkwckl7d2jvlsgq6xziz9z71wynmsai4";
-        tag = "a27412c0c857";
+        sha256 = "0czjn6jgsl73mza8bsl02icpsz8cl94vpiikj5ih3sjf1l30g0cm";
+        tag = "424c69f786c0";
         fetcher = hg;
-        deps = [ procket msgpack pkt tunctl mochiweb lager goldrush ];
+        deps = [ procket msgpack pkt tunctl mochiweb lager goldrush gen_icmp ];
       };
   };
   git = desc: fetchgit { inherit (desc) url rev sha256; };
