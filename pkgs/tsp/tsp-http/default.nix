@@ -13,7 +13,7 @@ let
     http =
       {
         name = "tsp-demo-http";
-        url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-http";
+        url = "http://hg.rabbitmq.com/tsp-demo-http/";
         sha256 = "1a0xgwndpyix4scj6ls9zgwzxnl1jn3h53llz0q9gll6kmx8892w";
         tag = "200b48e899a8";
         fetcher = hg;

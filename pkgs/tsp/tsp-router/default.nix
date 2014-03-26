@@ -65,7 +65,7 @@ let
     router =
       {
         name = "tsp-demo-router";
-        url = "http://rabbit-hg-private.lon.pivotallabs.com/tsp-demo-router";
+        url = "http://hg.rabbitmq.com/tsp-demo-router/";
         sha256 = "0f7aj5g914c7k5rjpzscvkwckl7d2jvlsgq6xziz9z71wynmsai4";
         tag = "a27412c0c857";
         fetcher = hg;
