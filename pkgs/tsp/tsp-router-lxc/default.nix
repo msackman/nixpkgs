@@ -32,12 +32,14 @@ tsp.container ({ global, configuration, containerLib }:
             {serf_addr, "${configuration.serfdom}"},
             {tap_name,  "tsp%%d"},
             {eth_dev,   undefined},
-            {bridge,    "${configuration.internal_bridge}"}
+            {bridge,    "${configuration.internal_bridge}"},
+            {join_at_start, [${peers}]}
            ]}
         ].
         ' > $out/config.config
       '';
     };
+    peers = toString (lib.intersperse "," (map (e: ''"${e}"'') configuration.peers));
     cookieStr = if containerLib.hasConfigurationPath configuration ["erlang" "cookie"] then
                   "-setcookie ${configuration.erlang.cookie}"
                 else
@@ -95,6 +97,7 @@ tsp.container ({ global, configuration, containerLib }:
         serfdom         = containerLib.mkOption { optional = false; };
         internal_bridge = containerLib.mkOption { optional = true; default = "internalBridge"; };
         erlang.cookie   = containerLib.mkOption { optional = true; };
+        peers           = containerLib.mkOption { optional = true; default = []; };
       };
       configuration = {
         home.user  = "router";
