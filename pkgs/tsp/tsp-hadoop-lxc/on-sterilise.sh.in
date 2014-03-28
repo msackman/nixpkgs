@@ -1,0 +1,5 @@
+dir=$1;
+
+@coreutils@/bin/rm -f $dir/rootfs/bin/bash
+@coreutils@/bin/rm -f $dir/rootfs/bin/mv
+@coreutils@/bin/rm -f $dir/rootfs/bin/ls

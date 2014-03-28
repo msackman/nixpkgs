@@ -92,7 +92,18 @@
     storeMountsConfigsOptions = pkg: configuration:
       let result = analyse { inherit pkg configuration; global = configuration; }; in
       if configuration == result.configuration then
-        result // { configuration = extendConfig result.options configuration; }
+        # configuration is now stable but we have the risk that some
+        # of the values we've collected were based not on this
+        # configuration as it's modified on the way up. So we need to
+        # rerun again...
+        let
+          extendedConfig = extendConfig result.options configuration;
+          result2 = analyse { inherit pkg; configuration = extendedConfig; global = extendedConfig; };
+        in
+          if configuration == result2.configuration then
+            result2
+          else
+            storeMountsConfigsOptions pkg result2.configuration
       else
         storeMountsConfigsOptions pkg result.configuration;
 

@@ -10,6 +10,9 @@ tsp.container ({ global, configuration, containerLib }:
   let
     name = "tsp-systemd-units";
 
+    escapeSystemdPath = s:
+      replaceChars ["/" "-" " "] ["-" "\\x2d" "\\x20"] (substring 1 (stringLength s) s);
+
     makeJobScript = name: text:
       let x = pkgs.writeTextFile { name = "unit-script"; executable = true; destination = "/bin/${name}"; inherit text; };
       in "${x}/bin/${name}";
@@ -93,7 +96,7 @@ tsp.container ({ global, configuration, containerLib }:
       } config;
 
     transformService = name: config: recursiveUpdate (rec {
-        path = [pkgs.systemd];
+        path = [pkgs.systemd] ++ (if config ? path then config.path else []);
         environment.PATH = "${makeSearchPath "bin" path}:${makeSearchPath "sbin" path}";
         serviceConfig = listToAttrs (concatLists [
           (if config.preStart != serviceDefaults.preStart then
@@ -237,8 +240,8 @@ tsp.container ({ global, configuration, containerLib }:
     servicesList = containerLib.gatherPathsWithSuffix ["systemd_services"] global;
     socketsList = containerLib.gatherPathsWithSuffix ["systemd_sockets"] global;
     timersList = containerLib.gatherPathsWithSuffix ["systemd_timers"] global;
-    mountsList = containerLib.gatherPathsWithSuffix ["systemd_mounts"] global;
-    automountsList = containerLib.gatherPathsWithSuffix ["systemd_automounts"] global;
+    mountsList = concatLists (containerLib.gatherPathsWithSuffix ["systemd_mounts"] global);
+    automountsList = concatLists (containerLib.gatherPathsWithSuffix ["systemd_automounts"] global);
 
     targets = fold (attrSet: acc: acc // attrSet) {} targetsList;
     services = fold (attrSet: acc: acc // attrSet) {} servicesList;

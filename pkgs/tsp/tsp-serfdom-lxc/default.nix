@@ -26,7 +26,6 @@ tsp.container ({ global, configuration, containerLib }:
                       inherit wrapped;
                     };
       options = {
-        start        = containerLib.mkOption { optional = true; default = false; };
         routerIP     = containerLib.mkOption { optional = false; };
         rpcIP        = containerLib.mkOption { optional = false; };
         identity     = containerLib.mkOption { optional = false; };
