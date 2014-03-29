@@ -7,17 +7,13 @@ tsp.container ({ global, configuration, containerLib }:
     tsp_systemd_guest = callPackage ../tsp-systemd-guest-lxc { };
     tsp_systemd_units = callPackage ../tsp-systemd-units-lxc { };
     wrapped = stdenv.mkDerivation {
-      name = "${hadoop.name}-namenode-wrapper";
-      # Thankfully, -format with -nonInteractive makes format
-      # idempotent: it detects the existing format if it exists and
-      # does not continue.
+      name = "${hadoop.name}-datanode-wrapper";
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        ${hadoop}/bin/hdfs --config ${confDir} namenode -format -nonInteractive
-        exec ${hadoop}/sbin/hadoop-daemon.sh --config ${confDir} --script hdfs start namenode
-        ' > $out/sbin/hadoop-namenode-start
-        chmod +x $out/sbin/hadoop-namenode-start
+        exec ${hadoop}/sbin/hadoop-daemon.sh --config ${confDir} --script hdfs start datanode
+        ' > $out/sbin/hadoop-datanode-start
+        chmod +x $out/sbin/hadoop-datanode-start
       '';
     };
     confDir = configuration.hadoop.config;
@@ -26,7 +22,7 @@ tsp.container ({ global, configuration, containerLib }:
                        configuration.hadoop ? hadoopLogDir;
   in
     {
-      name = "${hadoop.name}-namenode-lxc";
+      name = "${hadoop.name}-datanode-lxc";
       storeMounts = {
         network       = tsp_network;
         systemd_guest = tsp_systemd_guest;
@@ -48,8 +44,8 @@ tsp.container ({ global, configuration, containerLib }:
             path = [ coreutils procps ];
             serviceConfig = {
               Type = "forking";
-              ExecStart = "${wrapped}/sbin/hadoop-namenode-start";
-              PIDFile = "${configuration.hadoop.pidDir}/hadoop--namenode.pid";
+              ExecStart = "${wrapped}/sbin/hadoop-datanode-start";
+              PIDFile = "${configuration.hadoop.pidDir}/hadoop--datanode.pid";
               Restart = "always";
             };
           };

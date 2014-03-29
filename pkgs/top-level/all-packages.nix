@@ -6468,6 +6468,7 @@ let
   tsp_shell_lxc = callPackage ../tsp/tsp-shell-lxc { };
   tsp_hosts_lxc = callPackage ../tsp/tsp-hosts-lxc { };
   tsp_hadoop_namenode_lxc = callPackage ../tsp/tsp-hadoop-namenode-lxc { };
+  tsp_hadoop_datanode_lxc = callPackage ../tsp/tsp-hadoop-datanode-lxc { };
   tsp = rec {
           container = buildLXC;
           module = thing:

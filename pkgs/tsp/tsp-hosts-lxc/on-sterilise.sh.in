@@ -1,3 +1,4 @@
 dir=$1
 
 @coreutils@/bin/rm -f $dir/rootfs/etc/hosts
+@coreutils@/bin/rm -f $dir/rootfs/etc/nsswitch.conf

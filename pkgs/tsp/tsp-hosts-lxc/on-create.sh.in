@@ -2,3 +2,4 @@ dir=$1
 
 @coreutils@/bin/mkdir -p $dir/rootfs/etc
 @coreutils@/bin/ln -s @hosts@ $dir/rootfs/etc/hosts
+printf 'hosts:     files  dns   myhostname\n' > $dir/rootfs/etc/nsswitch.conf

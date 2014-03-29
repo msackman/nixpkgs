@@ -55,13 +55,13 @@ tsp.container ({ global, configuration, containerLib }:
       httpfsSite = "httpfs-site.xml";
       mapredSite = "mapred-site.xml";
       yarnSite   = "yarn-site.xml";
+      slaves     = "slaves";
     };
   in
     {
       name = "${hadoop.name}-lxc";
       storeMounts = {
         home = tsp_home;
-        inherit (tsp) systemd_host;
         inherit coreutils tsp_bash;
       };
       onCreate = [ create ];
