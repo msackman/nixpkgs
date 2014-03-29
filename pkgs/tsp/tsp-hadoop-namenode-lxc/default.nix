@@ -1,4 +1,4 @@
-{ stdenv, tsp, coreutils, lib, callPackage, hadoop }:
+{ stdenv, tsp, coreutils, lib, procps, callPackage, hadoop }:
 
 tsp.container ({ global, configuration, containerLib }:
   let
@@ -14,14 +14,16 @@ tsp.container ({ global, configuration, containerLib }:
       buildCommand = ''
         mkdir -p $out/sbin
         printf '#! ${stdenv.shell}
-        ${coreutils}/bin/mkdir -p "$HADOOP_PID_DIR"
-        ${hadoop}/bin/hdfs --config ${confDir}/ namenode -format -nonInteractive
-        exec ${hadoop}/bin/hdfs --config ${confDir}/ namenode' > $out/sbin/hadoop-namenode-start
+        ${hadoop}/bin/hdfs --config ${confDir} namenode -format -nonInteractive
+        exec ${hadoop}/sbin/hadoop-daemon.sh --config ${confDir} --script hdfs start namenode
+        ' > $out/sbin/hadoop-namenode-start
         chmod +x $out/sbin/hadoop-namenode-start
       '';
     };
     confDir = configuration.hadoop.config;
-    hasConfDir = configuration ? hadoop && configuration.hadoop ? config;
+    hadoopConfigured = configuration ? hadoop &&
+                       configuration.hadoop ? config &&
+                       configuration.hadoop ? hadoopLogDir;
   in
     {
       name = "${hadoop.name}-namenode-lxc";
@@ -31,29 +33,25 @@ tsp.container ({ global, configuration, containerLib }:
         hadoop = tsp_hadoop;
         systemd_units = tsp_systemd_units;
       };
-      configuration = if hasConfDir then {
+      configuration = if hadoopConfigured then {
         systemd_units.systemd_services = builtins.listToAttrs [{
           name = hadoop.name;
           value = {
             description = hadoop.name;
             environment = {
-              HADOOP_LOG_DIR = configuration.hadoopLogDir;
-              YARN_LOG_DIR   = configuration.yarnLogDir;
-              HADOOP_PID_DIR = configuration.pidDir;
+              HADOOP_LOG_DIR  = configuration.hadoop.hadoopLogDir;
+              YARN_LOG_DIR    = configuration.hadoop.yarnLogDir;
+              HADOOP_CONF_DIR = configuration.hadoop.config;
+              HADOOP_PID_DIR  = configuration.hadoop.pidDir;
             };
-            path = [ coreutils ];
+            path = [ coreutils procps ];
             serviceConfig = {
               Type = "forking";
               ExecStart = "${wrapped}/sbin/hadoop-namenode-start";
-              PIDFile = "${configuration.pidDir}/hadoop-root-namenode.pid";
+              PIDFile = "${configuration.hadoop.pidDir}/hadoop--namenode.pid";
               Restart = "always";
             };
           };
         }];
       } else {};
-      options = {
-        hadoopLogDir = containerLib.mkOption { optional = true; default = "/var/log/hadoop"; };
-        yarnLogDir = containerLib.mkOption { optional = true; default = "/var/log/yarn"; };
-        pidDir = containerLib.mkOption { optional = true; default = "/run/hadoop"; };
-      };
     })

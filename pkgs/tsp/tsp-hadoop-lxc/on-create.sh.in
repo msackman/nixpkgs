@@ -4,3 +4,6 @@ dir=$1
 @coreutils@/bin/ln -s /bin/sh $dir/rootfs/bin/bash
 @coreutils@/bin/ln -s @coreutils@/bin/ls $dir/rootfs/bin/ls
 @coreutils@/bin/ln -s @coreutils@/bin/mv $dir/rootfs/bin/mv
+for d in @dirs@; do
+  @coreutils@/bin/mkdir -p $dir/rootfs$d
+done

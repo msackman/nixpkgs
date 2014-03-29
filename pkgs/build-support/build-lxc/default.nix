@@ -39,6 +39,23 @@
             conf // { value = [(extendContainerConf tl values foundVal)] ++
                               (if conf ? value then others else []); };
 
+      setValue = path: default: fun: conf:
+        if path == [] then
+          fun conf
+        else
+          let
+            hd = head path;
+            tl = tail path;
+            confValueList = ensureList conf.value;
+            found = filter (e: e.name == hd) confValueList;
+            foundVal = head found;
+            others = filter (e: e != foundVal) confValueList;
+          in
+            if found == [] then
+              extendContainerConf path default conf
+            else
+              conf // { value = [(setValue tl default fun foundVal)] ++ others; };
+
       gatherPathsWithSuffix = suffixPath: config:
         assert isList suffixPath;
         if suffixPath == [] then
@@ -92,10 +109,11 @@
     storeMountsConfigsOptions = pkg: configuration:
       let result = analyse { inherit pkg configuration; global = configuration; }; in
       if configuration == result.configuration then
-        # configuration is now stable but we have the risk that some
-        # of the values we've collected were based not on this
-        # configuration as it's modified on the way up. So we need to
-        # rerun again...
+        # Configuration is now stable but are stable without any
+        # missing defaults from options mixed in. Thus we now need to
+        # mix those in and run through once again. Eventually, we
+        # should find that mixing in any defaults makes no change
+        # whatsoever, and then we finally exit.
         let
           extendedConfig = extendConfig result.options configuration;
           result2 = analyse { inherit pkg; configuration = extendedConfig; global = extendedConfig; };

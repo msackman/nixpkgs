@@ -12,6 +12,7 @@ tsp.container ({ global, configuration, containerLib }:
       buildCommand = ''
         sed -e "s|@coreutils@|${coreutils}|g" \
             -e "s|@config@|${config}|g" \
+            -e "s|@dirs@|${configuration.hadoopLogDir} ${configuration.yarnLogDir} ${configuration.pidDir}|g" \
             ${createIn} > $out
         chmod +x $out
       '';
@@ -61,10 +62,17 @@ tsp.container ({ global, configuration, containerLib }:
       storeMounts = {
         home = tsp_home;
         inherit (tsp) systemd_host;
-        inherit coreutils;
+        inherit coreutils tsp_bash;
       };
       onCreate = [ create ];
       onSterilise = [ sterilise ];
+      containerConf = containerLib.setValue ["memory"]
+                        { name = "memory"; unit = "MiB"; value = "1024"; }
+                        # In theory I should ensure the new setting is
+                        # max old.value and new.value but that would
+                        # involve interpreting units and I CBA right
+                        # now.
+                        (_old: { name = "memory"; unit = "MiB"; value = "1024"; });
       configuration = {
         home.user  = "hadoop";
         home.uid   = 1000;
@@ -72,8 +80,12 @@ tsp.container ({ global, configuration, containerLib }:
         home.gid   = 1000;
         config = "${config}";
       };
-      options =
-        { config = containerLib.mkOption { optional = true; default = null; }; } //
+      options = {
+        config = containerLib.mkOption { optional = false; };
+        hadoopLogDir = containerLib.mkOption { optional = true; default = "/var/log/hadoop"; };
+        yarnLogDir = containerLib.mkOption { optional = true; default = "/var/log/yarn"; };
+        pidDir = containerLib.mkOption { optional = true; default = "/run/hadoop"; };
+      } //
         builtins.listToAttrs (map (
           name: {inherit name; value = containerLib.mkOption { optional = true; default = null; };}
         ) (builtins.attrNames siteConfigFiles));

@@ -50,7 +50,13 @@ tsp.container ({ global, configuration, containerLib }:
     };
     serviceDefaults = unitDefaults // {
       environment = {};
-      path = [];
+      path =
+        [ pkgs.coreutils
+          pkgs.findutils
+          pkgs.gnugrep
+          pkgs.gnused
+          pkgs.systemd
+        ];
       script = "";
       scriptArgs = "";
       preStart = "";
@@ -96,8 +102,7 @@ tsp.container ({ global, configuration, containerLib }:
       } config;
 
     transformService = name: config: recursiveUpdate (rec {
-        path = [pkgs.systemd] ++ (if config ? path then config.path else []);
-        environment.PATH = "${makeSearchPath "bin" path}:${makeSearchPath "sbin" path}";
+        environment.PATH = "${makeSearchPath "bin" config.path}:${makeSearchPath "sbin" config.path}";
         serviceConfig = listToAttrs (concatLists [
           (if config.preStart != serviceDefaults.preStart then
              [{name = "ExecStartPre"; value = makeJobScript "${name}-pre-start" ''
