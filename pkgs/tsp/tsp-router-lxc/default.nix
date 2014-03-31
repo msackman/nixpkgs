@@ -152,30 +152,30 @@ tsp.container ({ global, configuration, containerLib }:
                 RemainAfterExit = true;
               };
               script = ''
-                ${iptables}/sbin/iptables -t nat -D PREROUTING -p tcp --dport 33441 \
+                ${iptables}/sbin/iptables -w -t nat -D PREROUTING -p tcp --dport 33441 \
                   -i "${configuration.external.interface}" -j DNAT \
                   --to-destination "${configuration.external.guest_ip}" || true
-                ${iptables}/sbin/iptables -t nat -D PREROUTING -p udp --dport 33441 \
+                ${iptables}/sbin/iptables -w -t nat -D PREROUTING -p udp --dport 33441 \
                   -i "${configuration.external.interface}" -j DNAT \
                   --to-destination "${configuration.external.guest_ip}" || true
 
-                ${iptables}/sbin/iptables -t nat -I PREROUTING -p tcp --dport 33441 \
+                ${iptables}/sbin/iptables -w -t nat -I PREROUTING -p tcp --dport 33441 \
                   -i "${configuration.external.interface}" -j DNAT \
                   --to-destination "${configuration.external.guest_ip}"
-                ${iptables}/sbin/iptables -t nat -I PREROUTING -p udp --dport 33441 \
+                ${iptables}/sbin/iptables -w -t nat -I PREROUTING -p udp --dport 33441 \
                   -i "${configuration.external.interface}" -j DNAT \
                   --to-destination "${configuration.external.guest_ip}"
 
-                ${iptables}/sbin/iptables -t nat -D POSTROUTING -o "${configuration.external.interface}" \
+                ${iptables}/sbin/iptables -w -t nat -D POSTROUTING -o "${configuration.external.interface}" \
                   -s "${configuration.sdn.network}/${toString configuration.sdn.prefix}" -j MASQUERADE || true
-                ${iptables}/sbin/iptables -t nat -D POSTROUTING -o "${configuration.sdn.bridge}" \
+                ${iptables}/sbin/iptables -w -t nat -D POSTROUTING -o "${configuration.sdn.bridge}" \
                   ! -s "${configuration.sdn.network}/${toString configuration.sdn.prefix}" \
                   -d "${configuration.sdn.network}/${toString configuration.sdn.prefix}" \
                   -j MASQUERADE || true
 
-                ${iptables}/sbin/iptables -t nat -I POSTROUTING -o "${configuration.external.interface}" \
+                ${iptables}/sbin/iptables -w -t nat -I POSTROUTING -o "${configuration.external.interface}" \
                   -s "${configuration.sdn.network}/${toString configuration.sdn.prefix}" -j MASQUERADE
-                ${iptables}/sbin/iptables -t nat -I POSTROUTING -o "${configuration.sdn.bridge}" \
+                ${iptables}/sbin/iptables -w -t nat -I POSTROUTING -o "${configuration.sdn.bridge}" \
                   ! -s "${configuration.sdn.network}/${toString configuration.sdn.prefix}" \
                   -d "${configuration.sdn.network}/${toString configuration.sdn.prefix}" \
                   -j MASQUERADE
