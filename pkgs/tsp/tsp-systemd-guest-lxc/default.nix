@@ -219,10 +219,8 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${name}-lxc";
-      storeMounts = {
-                      inherit systemd release;
-                      units = allUnitsDerivation;
-                    } // (if doInit then { inherit (tsp) init; } else {});
+      storeMounts = [ systemd release allUnitsDerivation ];
+      imports = if doInit then { inherit (tsp) init; } else {};
       options = {
         asInit = containerLib.mkOption { optional = true; default = true; };
         allUnits = containerLib.mkOption { optional = true; default = allUnits; };

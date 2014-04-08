@@ -10,12 +10,14 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "shell-lxc";
-      storeMounts = { bash          = tsp_bash;
-                      network       = tsp_network;
-                      home          = tsp_home;
-                      systemd_units = tsp_systemd_units;
-                      systemd_guest = tsp_systemd_guest;
-                      inherit utillinux erlang nettools coreutils iproute netcat host; };
+      imports = {
+        bash          = tsp_bash;
+        network       = tsp_network;
+        home          = tsp_home;
+        systemd_units = tsp_systemd_units;
+        systemd_guest = tsp_systemd_guest;
+      };
+      storeMounts = [ utillinux erlang nettools coreutils iproute netcat host ];
       configuration = {
         home.user  = "shell";
         home.uid   = 1000;

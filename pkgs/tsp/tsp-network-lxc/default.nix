@@ -138,7 +138,7 @@ tsp.container ({ global, configuration, containerLib }:
     containerConf = containerLib.extendContainerConf ["devices"] (map (e: e.containerConf) networks);
     onCreate = [ create ];
     onSterilise = [ sterilise ];
-    storeMounts = { systemd_units = tsp_systemd_units; };
+    imports = { systemd_units = tsp_systemd_units; };
     configuration = { systemd_units.systemd_services = gatewaySystemdUnit //
                         (listToAttrs (map (e: e.systemd_unit_pair) networks)); };
     options = {

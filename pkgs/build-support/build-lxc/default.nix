@@ -80,16 +80,16 @@
     isLxcPkg = thing: isAttrs thing && thing ? _isLxc && thing._isLxc;
     lxcPkgs = filter isLxcPkg;
     runPkg = { pkg, global, configuration, ...}:
-        ({ name, containerConf ? id, storeMounts ? {}, onCreate ? [], onSterilise ? [],
+        ({ name, containerConf ? id, storeMounts ? [], imports ? {}, onCreate ? [], onSterilise ? [],
            options ? {}, configuration ? {}, module ? (_: {})}:
-           { inherit name onCreate onSterilise options configuration module storeMounts containerConf; })
+           { inherit name onCreate onSterilise options configuration module storeMounts imports containerConf; })
         (pkg.fun { inherit global configuration containerLib; });
     isOption = thing: isAttrs thing && thing ? _isOption && thing._isOption;
     sequence = list: init: foldl (acc: f: f acc) init list;
 
-    descendPkg = storeMounts: global: configuration: name:
+    descendPkg = imports: global: configuration: name:
       { inherit name global;
-        pkg = getAttr name storeMounts;
+        pkg = getAttr name imports;
         configuration = if hasAttr name configuration then
                           getAttr name configuration
                         else
@@ -99,14 +99,14 @@
     descend = descenderFun: pkgFun: pkgConf@{ global, configuration, ...}: acc:
       let
         pkgSet = runPkg pkgConf;
-        pkgStoreMounts = pkgSet.storeMounts;
+        pkgImports = pkgSet.imports;
         childResult = fold (name: acc:
-                             descenderFun (descendPkg pkgStoreMounts global configuration name) acc
-                           ) acc (attrNames pkgStoreMounts);
+                             descenderFun (descendPkg pkgImports global configuration name) acc
+                           ) acc (attrNames pkgImports);
       in
         pkgFun childResult pkgSet;
 
-    storeMountsConfigsOptions = pkg: configuration:
+    importsConfigsOptions = pkg: configuration:
       let result = analyse { inherit pkg configuration; global = configuration; }; in
       if configuration == result.configuration then
         # Configuration is now stable but are stable without any
@@ -121,9 +121,9 @@
           if configuration == result2.configuration then
             result2
           else
-            storeMountsConfigsOptions pkg result2.configuration
+            importsConfigsOptions pkg result2.configuration
       else
-        storeMountsConfigsOptions pkg result.configuration;
+        importsConfigsOptions pkg result.configuration;
 
     analyse = pkgConfOrig@{ global, configuration, ... }:
       let
@@ -144,23 +144,21 @@
         pkgSet = pkgConf.pkgSet;
       in
         let
-          pkgStoreMounts = pkgSet.storeMounts;
+          pkgImports = pkgSet.imports;
           configForChildren = recursiveUpdate configuration pkgSet.configuration;
-          gathered = fold (name: acc@{configurationAcc, optionsAcc, storeMountsAcc}:
-            let childPkgConf = descendPkg pkgStoreMounts global configForChildren name; in
-            if isLxcPkg childPkgConf.pkg then
-              let childResult = analyse childPkgConf; in
-              {
-                configurationAcc = [{inherit name; value = childResult.configuration;}] ++ configurationAcc;
-                optionsAcc       = [{inherit name; value = childResult.options;}] ++ optionsAcc;
-                storeMountsAcc   = [{inherit name; value = childResult.storeMounts;}] ++ storeMountsAcc;
-              }
-            else
-              acc // { storeMountsAcc = [{inherit name; value = {};}] ++ storeMountsAcc; })
-            {configurationAcc = []; optionsAcc = []; storeMountsAcc = [];} (attrNames pkgStoreMounts);
+          gathered = fold (name: acc@{configurationAcc, optionsAcc, importsAcc}:
+            let childPkgConf = descendPkg pkgImports global configForChildren name; in
+            assert isLxcPkg childPkgConf.pkg;
+            let childResult = analyse childPkgConf; in
+            {
+              configurationAcc = [{inherit name; value = childResult.configuration;}] ++ configurationAcc;
+              optionsAcc       = [{inherit name; value = childResult.options;}] ++ optionsAcc;
+              importsAcc       = [{inherit name; value = childResult.imports;}] ++ importsAcc;
+            })
+            {configurationAcc = []; optionsAcc = []; importsAcc = [];} (attrNames pkgImports);
           childrenConfiguration = listToAttrs gathered.configurationAcc;
           childrenOptions = listToAttrs gathered.optionsAcc;
-          childrenStoreMounts = listToAttrs gathered.storeMountsAcc;
+          childrenImports = listToAttrs gathered.importsAcc;
         in
           {
             # The newer value should always win, but the newer value
@@ -170,7 +168,7 @@
             # finished with everything.
             configuration = recursiveUpdate configForChildren childrenConfiguration;
             options       = recursiveUpdate childrenOptions pkgConf.pkgOptions;
-            storeMounts   = childrenStoreMounts;
+            imports       = childrenImports;
           };
 
     extendConfig = options: configuration:
@@ -372,31 +370,22 @@
     groupPkgs = pkgConf:
       let
         f = pkgConf: acc:
-          descend (child: acc@{all, lxc, other}:
-                    if isLxcPkg child.pkg then
-                      f child acc
-                    else
-                      {
-                        all = [child.pkg] ++ all;
-                        other = [child.pkg] ++ other;
-                        inherit lxc;
-                      })
-                  ({all, lxc, other}: pkgSet:
+          descend (child: acc: f child acc)
+                  ({lxc, other}: pkgSet:
                     {
-                      all = [pkgSet] ++ all;
                       lxc = [pkgSet] ++ lxc;
-                      inherit other;
+                      other = pkgSet.storeMounts ++ other;
                     })
                   pkgConf acc;
       in
-        f pkgConf {all = []; lxc = []; other = [];};
+        f pkgConf {lxc = []; other = [];};
 
   in fun:
     assert isFunction fun;
     let
       pkg = {
         inherit fun pkg name validated mounts scripts module containerConfig;
-        inherit (mountsConfigOptions) configuration options;
+        inherit (importsConfigOptions) configuration options;
         global = pkg.configuration;
         create    = "${scripts}/bin/lxc-create-${name}";
         sterilise = "${scripts}/bin/lxc-sterilise-${name}";
@@ -405,9 +394,9 @@
         stop      = "${scripts}/bin/lxc-stop-${name}";
         _isLxc    = true;
       };
-      mountsConfigOptions = storeMountsConfigsOptions pkg {};
-      validated = (validateRequiredOptions mountsConfigOptions) &&
-                  (validateUsedOptionsDeclared mountsConfigOptions);
+      importsConfigOptions = importsConfigsOptions pkg {};
+      validated = (validateRequiredOptions importsConfigOptions) &&
+                  (validateUsedOptionsDeclared importsConfigOptions);
       name = (runPkg pkg).name;
       mounts = if validated then
                  storeMountsFile name groupedPkgs.other

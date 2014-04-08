@@ -26,14 +26,14 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${tsp_erlinetrc.name}-lxc";
-      storeMounts = { bash          = tsp_bash;
-                      home          = tsp_home;
-                      network       = tsp_network;
-                      systemd_guest = tsp_systemd_guest;
-                      systemd_units = tsp_systemd_units;
-                      inherit (tsp) systemd_host;
-                      inherit wrapped;
-                    };
+      imports = {
+        bash          = tsp_bash;
+        home          = tsp_home;
+        network       = tsp_network;
+        systemd_guest = tsp_systemd_guest;
+        systemd_units = tsp_systemd_units;
+        inherit (tsp) systemd_host;
+      };
       options = {
         name            = containerLib.mkOption { optional = false; };
         router.hostname = containerLib.mkOption { optional = false; };

@@ -23,7 +23,7 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${hadoop.name}-datanode-lxc";
-      storeMounts = {
+      imports = {
         network       = tsp_network;
         systemd_guest = tsp_systemd_guest;
         hadoop        = tsp_hadoop;

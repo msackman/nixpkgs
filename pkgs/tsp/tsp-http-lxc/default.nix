@@ -25,14 +25,14 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${tsp_http.name}-lxc";
-      storeMounts = { bash          = tsp_bash;
-                      home          = tsp_home;
-                      network       = tsp_network;
-                      systemd_guest = tsp_systemd_guest;
-                      systemd_units = tsp_systemd_units;
-                      inherit (tsp) systemd_host;
-                      inherit wrapped;
-                    };
+      imports = {
+        bash          = tsp_bash;
+        home          = tsp_home;
+        network       = tsp_network;
+        systemd_guest = tsp_systemd_guest;
+        systemd_units = tsp_systemd_units;
+        inherit (tsp) systemd_host;
+      };
       options = {
         router.hostname = containerLib.mkOption { optional = false; };
         erlang.cookie   = containerLib.mkOption { optional = true; };

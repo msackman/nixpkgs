@@ -18,13 +18,13 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${serfdom.name}-lxc";
-      storeMounts = { home          = tsp_home;
-                      network       = tsp_network;
-                      systemd_guest = tsp_systemd_guest;
-                      systemd_units = tsp_systemd_units;
-                      inherit (tsp) systemd_host;
-                      inherit wrapped;
-                    };
+      imports = {
+        home          = tsp_home;
+        network       = tsp_network;
+        systemd_guest = tsp_systemd_guest;
+        systemd_units = tsp_systemd_units;
+        inherit (tsp) systemd_host;
+      };
       options = {
         routerIP     = containerLib.mkOption { optional = false; };
         rpcIP        = containerLib.mkOption { optional = false; };

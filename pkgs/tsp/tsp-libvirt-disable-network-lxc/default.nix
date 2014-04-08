@@ -1,4 +1,4 @@
-{ stdenv, tsp_router, erlang, bridge_utils, iproute, tsp, coreutils, iptables, lib, callPackage }:
+{ stdenv, tsp }:
 
 tsp.container ({ global, configuration, containerLib }:
   {

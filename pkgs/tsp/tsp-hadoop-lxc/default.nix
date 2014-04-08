@@ -60,10 +60,11 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${hadoop.name}-lxc";
-      storeMounts = {
+      imports = {
         home = tsp_home;
-        inherit coreutils tsp_bash;
+        inherit tsp_bash;
       };
+      storeMounts = [ coreutils ];
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       containerConf = containerLib.setValue ["memory"]

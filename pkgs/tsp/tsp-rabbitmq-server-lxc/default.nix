@@ -20,11 +20,12 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "rabbitmq-server-lxc";
-      storeMounts = { bash          = tsp_bash;
-                      network       = tsp_network;
-                      home          = tsp_home;
-                      inherit wrapped;
-                    };
+      imports = {
+        bash    = tsp_bash;
+        network = tsp_network;
+        home    = tsp_home;
+      };
+      storeMounts = [ wrapped ];
       configuration = {
         home.user  = "rabbit";
         home.uid   = 1000;

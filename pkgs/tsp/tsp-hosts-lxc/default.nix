@@ -31,7 +31,7 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${name}-lxc";
-      storeMounts = { inherit hosts; };
+      storeMounts = [ hosts ];
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {

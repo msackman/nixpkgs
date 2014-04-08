@@ -29,7 +29,7 @@ tsp.container ({ global, configuration, containerLib }:
   in
     {
       name = "${name}-lxc";
-      storeMounts = { inherit bash; };
+      storeMounts = [ bash ];
       onCreate = [ create ];
       onSterilise = [ sterilise ];
       options = {
